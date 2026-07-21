@@ -60,7 +60,11 @@ $Manifest = [ordered]@{
     }
   }
 }
-$Manifest | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath (Join-Path $OutputDirectory "latest.json") -Encoding UTF8
+$ManifestJson = $Manifest | ConvertTo-Json -Depth 5
+# Windows PowerShell's `Set-Content -Encoding UTF8` writes a BOM. Tauri's
+# updater expects strict JSON, so write UTF-8 explicitly without a BOM.
+$Utf8WithoutBom = New-Object System.Text.UTF8Encoding($false)
+[IO.File]::WriteAllText((Join-Path $OutputDirectory "latest.json"), $ManifestJson, $Utf8WithoutBom)
 
 Write-Host "Release artifacts ready in $OutputDirectory"
 Write-Host "Upload $InstallerName, $InstallerName.sig and latest.json to GitHub Release v$Version"
