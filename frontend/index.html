@@ -253,7 +253,7 @@
         <section class="glass-panel account-list-card account-directory">
           <div class="card-title-row">
             <div><p class="eyebrow">已连接</p><h3 id="accountListTitle">账户列表</h3></div>
-            <div class="table-actions"><button class="mini-button" id="exportAccountsButton">导出 JSON</button><button class="mini-button" id="retryFailedButton">重试失败账户</button><button class="mini-button" id="syncAccountsButton"><span>全部同步</span></button></div>
+            <div class="table-actions"><button class="mini-button" id="retryFailedButton">重试失败账户</button><button class="mini-button" id="syncAccountsButton"><span>全部同步</span></button></div>
           </div>
           <div id="accountsEmpty" class="accounts-empty"><span class="empty-account-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="10" cy="8" r="3.5"/><path d="M3.5 19c.7-3.7 2.9-5.5 6.5-5.5 1.5 0 2.8.3 3.8 1M18 11.5v7M14.5 15h7"/></svg></span><b>还没有真实账户</b><p>点击“添加账户”连接平台，同一平台可以添加多个账号。</p><button class="soft-button" data-open-account-dialog>添加第一个账户</button></div>
           <div id="accountsList" class="accounts-list account-directory-list"></div>
@@ -284,7 +284,8 @@
           <span id="settingsSaveStatus" class="settings-save-status"><i></i>改动会自动保存</span>
         </section>
         <div id="settingsForm" class="settings-page-grid">
-          <article class="glass-panel settings-section-card">
+          <div class="settings-page-column">
+            <article class="glass-panel settings-section-card">
             <div class="settings-card-heading"><span class="settings-card-icon" aria-hidden="true">◐</span><div><h4>外观</h4><p>主题切换会立即应用到主界面和所有页面。</p></div></div>
             <label class="settings-field"><span><b>外观模式</b><small>可固定明暗主题，也可以跟随 Windows。</small></span><div class="glass-combobox settings-combo" data-combobox>
               <input id="appearanceMode" type="hidden" value="system" />
@@ -295,25 +296,9 @@
                 <button type="button" class="combo-option" data-value="dark" role="option">深色模式<span>降低夜间亮度</span></button>
               </div>
             </div></label>
-          </article>
+            </article>
 
-          <article class="glass-panel settings-section-card">
-            <div class="settings-card-heading"><span class="settings-card-icon" aria-hidden="true">↻</span><div><h4>同步</h4><p>控制远端数据何时刷新，不会读取本地会话日志。</p></div></div>
-            <label class="settings-field"><span><b>自动同步</b><small>已暂停的账户不会参与自动同步。</small></span><div class="glass-combobox settings-combo" data-combobox>
-              <input id="autoSyncMinutes" type="hidden" value="30" />
-              <button class="combo-trigger" type="button" data-combo-trigger aria-haspopup="listbox" aria-expanded="false"><span data-combo-label>每 30 分钟</span><i></i></button>
-              <div class="combo-menu" role="listbox">
-                <button type="button" class="combo-option" data-value="0" role="option">关闭<span>仅手动同步</span></button>
-                <button type="button" class="combo-option" data-value="15" role="option">每 15 分钟<span>高频监控</span></button>
-                <button type="button" class="combo-option selected" data-value="30" role="option">每 30 分钟<span>推荐</span></button>
-                <button type="button" class="combo-option" data-value="60" role="option">每小时<span>平衡</span></button>
-                <button type="button" class="combo-option" data-value="180" role="option">每 3 小时<span>低频</span></button>
-              </div>
-            </div></label>
-            <label class="check-setting"><input id="syncOnStartup" type="checkbox"/><span><b>启动后同步一次</b><small>启动后自动拉取已启用账户的最新远端数据。</small></span></label>
-          </article>
-
-          <article class="glass-panel settings-section-card">
+            <article class="glass-panel settings-section-card">
             <div class="settings-card-heading"><span class="settings-card-icon" aria-hidden="true">!</span><div><h4>提醒</h4><p>阈值修改后立即用于下一次同步与提醒判断。</p></div></div>
             <div class="settings-threshold-grid">
               <label><span>低余额提醒阈值</span><div class="input-with-unit"><input id="lowBalanceThreshold" type="number" min="0" step="0.01" value="10"/><b>账户币种</b></div></label>
@@ -321,17 +306,9 @@
             </div>
             <label class="check-setting"><input id="notificationsEnabled" type="checkbox" checked/><span><b>Windows 通知</b><small>同步后发现低余额、额度超限或连接失败时提醒。</small></span></label>
             <button id="testNotificationButton" class="soft-button settings-action" type="button">发送测试通知</button>
-          </article>
+            </article>
 
-          <article class="glass-panel settings-section-card">
-            <div class="settings-card-heading"><span class="settings-card-icon" aria-hidden="true">▣</span><div><h4>窗口与托盘</h4><p>控制关闭窗口后的行为；托盘菜单始终可以明确退出应用。</p></div></div>
-            <label class="check-setting"><input id="closeToTray" type="checkbox" checked/><span><b>关闭时隐藏到托盘</b><small>开启后，右上角关闭按钮、Alt+F4 和系统关闭操作都会隐藏窗口并继续监控。</small></span></label>
-            <label class="check-setting"><input id="launchAtStartup" type="checkbox"/><span><b>登录 Windows 后自动启动</b><small>以后台模式启动到托盘，不会在登录后突然弹出最大化窗口。</small></span></label>
-            <div class="settings-info-row"><span><b>托盘左键</b><small>单击托盘图标即可恢复主窗口</small></span><strong>打开 Prismeter</strong></div>
-            <button id="exitAppButton" class="soft-button settings-action danger-action" type="button">完全退出 Prismeter</button>
-          </article>
-
-          <article class="glass-panel settings-section-card">
+            <article class="glass-panel settings-section-card">
             <div class="settings-card-heading"><span class="settings-card-icon" aria-hidden="true">↑</span><div><h4>应用更新</h4><p>更新包由 Prismeter 的独立更新密钥签名并在安装前校验。</p></div></div>
             <label class="settings-field"><span><b>检查更新</b><small>自动检查只会在应用启动后进行，不会自动安装。</small></span><div class="glass-combobox settings-combo" data-combobox>
               <input id="updateCheckMode" type="hidden" value="startup" />
@@ -343,14 +320,35 @@
             </div></label>
             <div class="settings-info-row"><span><b>当前版本</b><small id="updateStatusText">尚未检查更新</small></span><strong id="updateCurrentVersion">—</strong></div>
             <button id="checkUpdateButton" class="soft-button settings-action" type="button"><span>检查更新</span></button>
-          </article>
+            </article>
+          </div>
 
-          <article class="glass-panel settings-section-card">
-            <div class="settings-card-heading"><span class="settings-card-icon" aria-hidden="true">⌁</span><div><h4>数据与应用</h4><p>导出内容不包含 API Key、Secret Key 或登录令牌。</p></div></div>
-            <div class="settings-info-row"><span><b>数据来源</b><small>只使用平台官方远端接口</small></span><strong>远端数据</strong></div>
-            <div class="settings-info-row"><span><b>应用版本</b><small>Windows Tauri 桌面版</small></span><strong id="settingsVersion">—</strong></div>
-            <button id="settingsExportButton" class="soft-button settings-action" type="button">导出全部远端数据</button>
-          </article>
+          <div class="settings-page-column">
+            <article class="glass-panel settings-section-card">
+              <div class="settings-card-heading"><span class="settings-card-icon" aria-hidden="true">↻</span><div><h4>同步</h4><p>控制远端数据何时刷新，不会读取本地会话日志。</p></div></div>
+              <label class="settings-field"><span><b>自动同步</b><small>已暂停的账户不会参与自动同步。</small></span><div class="glass-combobox settings-combo" data-combobox>
+                <input id="autoSyncMinutes" type="hidden" value="30" />
+                <button class="combo-trigger" type="button" data-combo-trigger aria-haspopup="listbox" aria-expanded="false"><span data-combo-label>每 30 分钟</span><i></i></button>
+                <div class="combo-menu" role="listbox">
+                  <button type="button" class="combo-option" data-value="0" role="option">关闭<span>仅手动同步</span></button>
+                  <button type="button" class="combo-option" data-value="15" role="option">每 15 分钟<span>高频监控</span></button>
+                  <button type="button" class="combo-option selected" data-value="30" role="option">每 30 分钟<span>推荐</span></button>
+                  <button type="button" class="combo-option" data-value="60" role="option">每小时<span>平衡</span></button>
+                  <button type="button" class="combo-option" data-value="180" role="option">每 3 小时<span>低频</span></button>
+                </div>
+              </div></label>
+              <label class="check-setting"><input id="syncOnStartup" type="checkbox"/><span><b>启动后同步一次</b><small>启动后自动拉取已启用账户的最新远端数据。</small></span></label>
+            </article>
+
+            <article class="glass-panel settings-section-card">
+              <div class="settings-card-heading"><span class="settings-card-icon" aria-hidden="true">▣</span><div><h4>窗口与托盘</h4><p>控制主窗口关闭后的行为，以及应用是否继续在后台运行。</p></div></div>
+              <label class="check-setting"><input id="closeToTray" type="checkbox" checked/><span><b>关闭时隐藏到托盘</b><small>开启后，右上角关闭按钮和 Alt+F4 会隐藏窗口，账户同步仍会继续。</small></span></label>
+              <label class="check-setting"><input id="launchAtStartup" type="checkbox"/><span><b>登录 Windows 后自动启动</b><small>以后台模式启动到托盘，不会在登录后弹出主窗口。</small></span></label>
+              <div class="settings-info-row"><span><b>托盘左键</b><small>单击托盘图标即可恢复主窗口</small></span><strong>打开主窗口</strong></div>
+              <div class="settings-exit-copy"><b>退出应用</b><small>结束后台同步、关闭托盘图标并退出 Prismeter。</small></div>
+              <button id="exitAppButton" class="soft-button settings-action danger-action" type="button">退出 Prismeter</button>
+            </article>
+          </div>
         </div>
       </div>
     </section>

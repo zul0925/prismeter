@@ -1,6 +1,6 @@
 [package]
 name = "prismeter"
-version = "0.18.0"
+version = "0.18.1"
 description = "AI usage center for Windows"
 authors = ["Prismeter"]
 edition = "2021"

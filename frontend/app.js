@@ -61,7 +61,7 @@ function platformLogo(providerId, sizeClass = "") {
 
 function resource(name, type, badge, metrics) { return { name, type, badge, metrics }; }
 
-const state = { view: "overview", provider: "volcengine", accountId: null, renameAccountId: null, connectionAccountId: null, diagnosticAccountId: null, alertFilter: "all", syncEventFilter: "all", products: {}, backend: { accounts: [], history: [], syncEvents: [] }, desktopPreferencesSignature: null, syncPollTimer: null, syncPollUsers: 0, updateCheckStarted: false, availableUpdate: null };
+const state = { view: "overview", provider: "volcengine", accountId: null, renameAccountId: null, connectionAccountId: null, diagnosticAccountId: null, alertFilter: "all", syncEventFilter: "all", products: {}, backend: { accounts: [], history: [], syncEvents: [] }, desktopPreferences: { closeToTray:null, launchAtStartup:null }, syncPollTimer: null, syncPollUsers: 0, updateCheckStarted: false, availableUpdate: null };
 Object.entries(providers).forEach(([id, p]) => state.products[id] = p.primaryProduct);
 function remotePlaceholder(platformName, supported = false) {
   return {
@@ -119,6 +119,13 @@ function providerStyle(id) {
 
 function escapeHtml(value = "") {
   return String(value).replace(/[&<>'"]/g, char => ({"&":"&amp;","<":"&lt;",">":"&gt;","'":"&#39;",'"':"&quot;"}[char]));
+}
+
+function errorMessage(error, fallback = "操作未完成，请稍后重试") {
+  if (typeof error === "string" && error.trim()) return error;
+  if (typeof error?.message === "string" && error.message.trim()) return error.message;
+  if (typeof error?.error === "string" && error.error.trim()) return error.error;
+  return fallback;
 }
 
 function moneySymbol(currency) { return currency === "CNY" ? "¥" : currency === "USD" ? "$" : `${currency || ""} `; }
@@ -228,24 +235,6 @@ function exportCurrentProduct() {
   ].join("\r\n");
   downloadText(`Prismeter-${safeFilePart(provider.name)}-${safeFilePart(product.name)}-${new Date().toISOString().slice(0,10)}.csv`, csv, "text/csv;charset=utf-8");
   showToast("远端产品明细已导出");
-}
-
-function exportAllAccounts() {
-  const payload = {
-    schemaVersion: "1.0",
-    appVersion: state.backend.version || "未知版本",
-    exportedAt: new Date().toISOString(),
-    source: "平台远端官方接口；不包含凭据，不包含本地日志估算",
-    settings: state.backend.settings || {},
-    capabilities: state.backend.capabilities || {},
-    providerOrder: state.backend.providerOrder || [],
-    alerts: state.backend.alerts || [],
-    accounts: state.backend.accounts || [],
-    remoteBalanceSnapshots: state.backend.history || [],
-    syncEvents: state.backend.syncEvents || []
-  };
-  downloadText(`Prismeter-remote-data-${new Date().toISOString().slice(0,10)}.json`, JSON.stringify(payload, null, 2), "application/json;charset=utf-8");
-  showToast("账户远端数据已导出；文件不包含凭据");
 }
 
 function getSelectedAccount(providerId = state.provider) {
@@ -386,7 +375,7 @@ async function loadBackendState({quiet = false} = {}) {
     const payload = await apiRequest("/api/state");
     state.backend = payload;
     applyTheme(payload.settings?.appearanceMode || "system");
-    syncDesktopPreferences(payload.settings);
+    await syncDesktopPreferences(payload.settings);
     if (state.accountId && !payload.accounts.some(account => account.id === state.accountId)) state.accountId = null;
     applyDeepSeekAccountData();
     applyOpenAIAccountData();
@@ -403,7 +392,7 @@ async function loadBackendState({quiet = false} = {}) {
     if (!quiet) els.syncText.textContent = state.backend.accounts.length ? formatSyncSetting() : "等待连接账户";
   } catch (error) {
     els.syncText.textContent = "本地服务异常";
-    if (!quiet) showToast(error.message);
+    if (!quiet) showToast(errorMessage(error));
   }
 }
 
@@ -557,18 +546,26 @@ function formatSyncSetting() {
   return minutes ? `每 ${minutes} 分钟自动同步` : "自动同步已关闭";
 }
 
-async function syncDesktopPreferences(settings = state.backend.settings, throwOnError = false) {
+async function syncDesktopPreferences(settings = state.backend.settings, strictKeys = []) {
   const invoke = window.__TAURI__?.core?.invoke;
   if (!invoke) return;
-  const signature = `${settings?.closeToTray !== false}:${Boolean(settings?.launchAtStartup)}`;
-  if (state.desktopPreferencesSignature === signature) return;
-  try {
-    await invoke("set_close_to_tray", { value:settings?.closeToTray !== false });
-    await invoke("set_launch_on_startup", { value:Boolean(settings?.launchAtStartup) });
-    state.desktopPreferencesSignature = signature;
-  } catch (error) {
-    console.error("同步 Windows 桌面设置失败", error);
-    if (throwOnError) throw error;
+  const desired = {
+    closeToTray:settings?.closeToTray !== false,
+    launchAtStartup:Boolean(settings?.launchAtStartup)
+  };
+  const commands = {
+    closeToTray:"set_close_to_tray",
+    launchAtStartup:"set_launch_on_startup"
+  };
+  for (const key of Object.keys(commands)) {
+    if (state.desktopPreferences[key] === desired[key]) continue;
+    try {
+      await invoke(commands[key], { value:desired[key] });
+      state.desktopPreferences[key] = desired[key];
+    } catch (error) {
+      console.error(`应用桌面设置 ${key} 失败`, error);
+      if (strictKeys.includes(key)) throw new Error(errorMessage(error, "Windows 拒绝应用此设置"));
+    }
   }
 }
 
@@ -584,7 +581,6 @@ function populateSettings() {
   els.syncOnStartup.checked = Boolean(settings.syncOnStartup);
   els.closeToTray.checked = settings.closeToTray !== false;
   els.launchAtStartup.checked = Boolean(settings.launchAtStartup);
-  els.settingsVersion.textContent = state.backend.version || "—";
   els.updateCurrentVersion.textContent = state.backend.version || "—";
 }
 
@@ -1199,7 +1195,7 @@ async function persistAccountOrder(nextAccounts, successText = "顺序已保存"
     showToast(successText);
   } catch (error) {
     updateOrderedAccountSurfaces(previousAccounts);
-    showToast(error.message, "error");
+    showToast(errorMessage(error), "error");
   }
 }
 
@@ -1239,7 +1235,7 @@ async function persistProviderOrder(providerOrder) {
     showToast("平台顺序已保存");
   } catch (error) {
     updateProviderOrder(previousOrder);
-    showToast(error.message, "error");
+    showToast(errorMessage(error), "error");
   }
 }
 
@@ -1406,7 +1402,7 @@ document.addEventListener("click", async e => {
       await apiRequest(`/api/accounts/${toggleAccount.dataset.toggleAccount}`, { method:"PATCH", body:JSON.stringify({enabled:nextEnabled}) });
       await loadBackendState({quiet:true});
       showToast(nextEnabled ? "账户监控已恢复" : "账户监控已暂停；已有数据会保留");
-    } catch (error) { showToast(error.message); }
+    } catch (error) { showToast(errorMessage(error)); }
   }
   const syncAccount = e.target.closest("[data-sync-account]");
   if (syncAccount) {
@@ -1419,7 +1415,7 @@ document.addEventListener("click", async e => {
       await loadBackendState({quiet:true});
       const synced = state.backend.accounts.find(account => account.id === syncAccount.dataset.syncAccount);
       showToast(synced?.enabled === false ? "远端数据已同步；账户监控仍处于暂停状态" : synced?.provider === "volcengine" ? "火山方舟用量已同步" : synced?.provider === "openai" ? "Codex 远端用量已同步" : synced?.provider === "mimo" ? "MiMo 官方模型列表已同步" : "DeepSeek 余额已同步");
-    } catch (error) { await loadBackendState({quiet:true}); showToast(error.message); }
+    } catch (error) { await loadBackendState({quiet:true}); showToast(errorMessage(error)); }
     finally { stopSyncPolling(); syncAccount.disabled = false; if (label) label.textContent = "立即同步"; }
   }
   const deleteAccount = e.target.closest("[data-delete-account]");
@@ -1428,7 +1424,7 @@ document.addEventListener("click", async e => {
       await apiRequest(`/api/accounts/${deleteAccount.dataset.deleteAccount}`, { method:"DELETE" });
       await loadBackendState({quiet:true});
       showToast("账户已从本机移除");
-    } catch (error) { showToast(error.message); }
+    } catch (error) { showToast(errorMessage(error)); }
   }
 });
 
@@ -1478,7 +1474,7 @@ els.refreshButton.addEventListener("click", async () => {
     const failed = results.length - succeeded;
     els.syncText.textContent = failed ? `${succeeded} 成功 · ${failed} 失败` : succeeded ? `${succeeded} 个账户已同步` : "尚未添加账户";
     showToast(failed ? `同步完成：${succeeded} 个成功，${failed} 个失败` : succeeded ? `已从远端更新 ${succeeded} 个账户` : "尚未添加真实账户", failed ? "warning" : succeeded ? "success" : "info");
-  } catch (error) { els.syncText.textContent = "同步失败"; showToast(error.message); }
+  } catch (error) { els.syncText.textContent = "同步失败"; showToast(errorMessage(error)); }
   finally {
     stopSyncPolling();
     els.refreshButton.classList.remove("spinning");
@@ -1514,7 +1510,7 @@ els.accountForm.addEventListener("submit", async event => {
     await loadBackendState({quiet:true});
     els.accountDialog.close();
     showToast(provider === "volcengine" ? `火山方舟已连接 · 发现 ${result.account.products?.length || 0} 个产品` : provider === "openai" ? `OpenAI 已连接 · ChatGPT 与 Codex 已分开` : provider === "mimo" ? "Xiaomi MiMo 已连接 · 官方模型列表已同步" : "DeepSeek 账户连接成功");
-  } catch (error) { showToast(error.message); }
+  } catch (error) { showToast(errorMessage(error)); }
   finally {
     button.disabled = false;
     button.classList.remove("loading");
@@ -1540,7 +1536,6 @@ els.retryFailedButton.addEventListener("click", async () => {
   showToast(succeeded === failed.length ? `已恢复 ${succeeded} 个账户` : `重试完成：${succeeded} 成功，${failed.length - succeeded} 仍失败`);
 });
 els.exportProductButton.addEventListener("click", exportCurrentProduct);
-els.exportAccountsButton.addEventListener("click", exportAllAccounts);
 els.dialogClose.addEventListener("click",()=>els.metricDialog.close());
 els.diagnosticDialogClose.addEventListener("click",()=>els.diagnosticDialog.close());
 els.diagnosticDialogDone.addEventListener("click",()=>els.diagnosticDialog.close());
@@ -1575,7 +1570,7 @@ els.connectionForm.addEventListener("submit", async event => {
     await loadBackendState({quiet:true});
     els.connectionDialog.close();
     showToast(`${providers[account.provider]?.name || account.provider} 连接设置已更新`);
-  } catch (error) { showToast(error.message); }
+  } catch (error) { showToast(errorMessage(error)); }
   finally { stopSyncPolling(); button.disabled = false; button.querySelector("span").textContent = "验证并保存"; }
 });
 els.renameAccountForm.addEventListener("submit", async event => {
@@ -1589,7 +1584,7 @@ els.renameAccountForm.addEventListener("submit", async event => {
     await loadBackendState({quiet:true});
     els.renameAccountDialog.close();
     showToast("账户名称已更新");
-  } catch (error) { showToast(error.message); }
+  } catch (error) { showToast(errorMessage(error)); }
   finally { button.disabled = false; button.querySelector("span").textContent = "保存名称"; }
 });
 els.testNotificationButton.addEventListener("click", async () => {
@@ -1599,10 +1594,9 @@ els.testNotificationButton.addEventListener("click", async () => {
   try {
     await apiRequest("/api/notifications/test", { method:"POST" });
     showToast("测试通知已发送到 Windows 通知中心");
-  } catch (error) { showToast(error.message); }
+  } catch (error) { showToast(errorMessage(error)); }
   finally { button.disabled = false; button.textContent = "发送测试通知"; }
 });
-els.settingsExportButton.addEventListener("click", exportAllAccounts);
 els.checkUpdateButton.addEventListener("click", () => checkForUpdates({manual:true}));
 els.updateDialogClose.addEventListener("click", () => els.updateDialog.close());
 els.laterUpdateButton.addEventListener("click", () => els.updateDialog.close());
@@ -1619,11 +1613,16 @@ els.installUpdateButton.addEventListener("click", () => {
   else checkForUpdates({manual:true});
 });
 els.exitAppButton.addEventListener("click", async () => {
-  if (!confirm("完全退出 Prismeter？退出后将停止自动同步和 Windows 提醒。")) return;
   const invoke = window.__TAURI__?.core?.invoke;
-  if (!invoke) { showToast("仅桌面应用支持完全退出", "info"); return; }
+  if (!invoke) { showToast("仅桌面应用支持退出操作", "info"); return; }
+  els.exitAppButton.disabled = true;
+  els.exitAppButton.textContent = "正在退出…";
   try { await invoke("exit_app"); }
-  catch (error) { showToast("无法退出应用：" + error.message, "error"); }
+  catch (error) {
+    els.exitAppButton.disabled = false;
+    els.exitAppButton.textContent = "退出 Prismeter";
+    showToast(errorMessage(error, "无法退出应用"), "error");
+  }
 });
 
 let settingsSaveTimer = null;
@@ -1667,20 +1666,21 @@ async function flushSettingsSave() {
   setSettingsSaveStatus("正在保存…", "saving");
   const previousSettings = state.backend.settings;
   const nextSettings = settingsPayload();
+  const strictDesktopKeys = ["closeToTray", "launchAtStartup"].filter(key => previousSettings?.[key] !== nextSettings[key]);
   try {
-    await syncDesktopPreferences(nextSettings, true);
+    await syncDesktopPreferences(nextSettings, strictDesktopKeys);
     const result = await apiRequest("/api/settings", { method:"PUT", body:JSON.stringify(nextSettings) });
     state.backend.settings = result.settings;
     applyTheme(result.settings.appearanceMode || "system");
     els.syncText.textContent = formatSyncSetting();
     setSettingsSaveStatus("已自动保存", "saved");
   } catch (error) {
-    state.desktopPreferencesSignature = null;
+    strictDesktopKeys.forEach(key => { state.desktopPreferences[key] = null; });
     await syncDesktopPreferences(previousSettings);
     populateSettings();
     applyTheme(state.backend.settings?.appearanceMode || "system");
     setSettingsSaveStatus("保存失败", "error");
-    showToast(error.message, "error");
+    showToast(errorMessage(error), "error");
   } finally {
     settingsSaveRunning = false;
     if (settingsSaveQueued) flushSettingsSave();

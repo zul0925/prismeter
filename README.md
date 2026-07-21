@@ -7,7 +7,7 @@
 [![Platform](https://img.shields.io/badge/platform-Windows-3578e5)](https://github.com/zul0925/prismeter)
 [![Tauri](https://img.shields.io/badge/Tauri-2-24c8db)](https://tauri.app/)
 [![Rust](https://img.shields.io/badge/backend-Rust-b7410e)](https://www.rust-lang.org/)
-[![Version](https://img.shields.io/badge/version-0.18.0-7458d6)](https://github.com/zul0925/prismeter/releases)
+[![Version](https://img.shields.io/badge/version-0.18.1-7458d6)](https://github.com/zul0925/prismeter/releases)
 [![License](https://img.shields.io/badge/license-Apache--2.0-3da639)](LICENSE)
 
 Prismeter brings usage data returned by different AI platforms into one desktop app and presents it by platform, account, plan, and model capability. It only displays metrics actually provided by remote services. It does not read local conversation logs or fill unavailable fields with simulated data.

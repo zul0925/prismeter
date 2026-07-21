@@ -39,4 +39,31 @@ if (retainedFixtures.length) {
   throw new Error(`Frontend validation failed: demo usage fixtures remain: ${retainedFixtures.join(", ")}`);
 }
 
+// The UI is served by Prismeter's loopback server, so every native command
+// invoked from the frontend must be explicitly allowed for that remote origin.
+// Keep this check close to the frontend to prevent a command from compiling
+// successfully while being rejected by Tauri's runtime ACL.
+const capabilityFile = path.join(__dirname, "src-tauri", "capabilities", "default.json");
+const capability = JSON.parse(fs.readFileSync(capabilityFile, "utf8"));
+const permissions = new Set(capability.permissions || []);
+const invokedCommands = [...new Set(
+  [...script.matchAll(/\binvoke\("([a-z][a-z0-9_]*)"/g)].map(match => match[1])
+)];
+const missingCommandPermissions = invokedCommands
+  .map(command => `allow-${command.replaceAll("_", "-")}`)
+  .filter(permission => !permissions.has(permission));
+if (missingCommandPermissions.length) {
+  throw new Error(
+    `Frontend validation failed: Tauri ACL permissions are missing: ${missingCommandPermissions.join(", ")}`
+  );
+}
+
+const removedExportAllFeatures = ["settingsExportButton", "exportAccountsButton", "exportAllAccounts"];
+const retainedExportAllFeatures = removedExportAllFeatures.filter(value => html.includes(value) || script.includes(value));
+if (retainedExportAllFeatures.length) {
+  throw new Error(
+    `Frontend validation failed: removed export-all controls remain: ${retainedExportAllFeatures.join(", ")}`
+  );
+}
+
 console.log("Prismeter frontend validated; no files were regenerated.");
