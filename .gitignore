@@ -1,0 +1,28 @@
+# JavaScript dependencies
+node_modules/
+
+# Rust / Tauri build output
+src-tauri/target/
+target/
+src-tauri/gen/
+
+# Packaged installers and local release output
+outputs/
+
+# Local QA artifacts and unused protocol references
+tauri-*-screen*.png
+protocol/
+
+# Local environment and logs
+.env
+.env.*
+!.env.example
+*.log
+*.tmp
+
+# Editors and operating systems
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+desktop.ini

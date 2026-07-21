@@ -1,0 +1,17 @@
+{
+  "name": "prismeter-tauri",
+  "private": true,
+  "version": "0.17.1",
+  "scripts": {
+    "tauri": "tauri",
+    "check:frontend": "node --check frontend/app.js && node BuildFrontend.js && node VerifyVolcengineSignature.js",
+    "check:backend": "cargo check --all-targets --manifest-path src-tauri/Cargo.toml",
+    "check": "npm run check:frontend && npm run check:backend",
+    "test:backend": "cargo test --manifest-path src-tauri/Cargo.toml",
+    "prebuild": "npm run check:frontend",
+    "build": "tauri build"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^2"
+  }
+}
