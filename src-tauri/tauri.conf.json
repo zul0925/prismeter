@@ -1,7 +1,7 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
   "productName": "Prismeter",
-  "version": "0.17.1",
+  "version": "0.18.0",
   "identifier": "com.prismeter.desktop",
   "build": {
     "frontendDist": "../frontend"
@@ -16,6 +16,7 @@
   },
   "bundle": {
     "active": true,
+    "createUpdaterArtifacts": true,
     "targets": ["nsis"],
     "publisher": "Prismeter",
     "shortDescription": "AI 用量中心",
@@ -32,6 +33,17 @@
         "installMode": "currentUser",
         "languages": ["SimpChinese"],
         "displayLanguageSelector": false
+      }
+    }
+  },
+  "plugins": {
+    "updater": {
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaW5pIHB1YmxpYyBrZXk6IEU1OEE1NDlEQkFCM0REMTQKUldRVTNiTzZuVlNLNWRiOSt2NHg0bTg2SkpteHdVNXVCTXhyeU5hSGljUFlISk93NmFUaUE0MlgK",
+      "endpoints": [
+        "https://github.com/zul0925/prismeter/releases/latest/download/latest.json"
+      ],
+      "windows": {
+        "installMode": "passive"
       }
     }
   }

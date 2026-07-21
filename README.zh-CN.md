@@ -7,7 +7,7 @@
 [![平台](https://img.shields.io/badge/platform-Windows-3578e5)](https://github.com/zul0925/prismeter)
 [![Tauri](https://img.shields.io/badge/Tauri-2-24c8db)](https://tauri.app/)
 [![Rust](https://img.shields.io/badge/backend-Rust-b7410e)](https://www.rust-lang.org/)
-[![版本](https://img.shields.io/badge/version-0.17.1-7458d6)](https://github.com/zul0925/prismeter/releases)
+[![版本](https://img.shields.io/badge/version-0.18.0-7458d6)](https://github.com/zul0925/prismeter/releases)
 [![许可证](https://img.shields.io/badge/license-Apache--2.0-3da639)](LICENSE)
 
 Prismeter（棱镜计量）将不同 AI 平台返回的数据汇聚到一个桌面应用中，再按平台、账户、套餐和模型能力分别展示。它只呈现平台实际提供的远端指标，不读取本地会话日志，也不会用模拟数据补齐平台未开放的字段。
@@ -23,6 +23,7 @@ Prismeter（棱镜计量）将不同 AI 平台返回的数据汇聚到一个桌�
 - 账户和平台卡片支持拖拽排序。
 - 浅色、深色和跟随 Windows 系统主题。
 - Windows 托盘、关闭到托盘、开机后台启动。
+- 支持来自 GitHub Release 的签名应用内更新，可手动或启动时检查，并可跳过指定版本。
 - 导出远端产品 CSV、账户数据 JSON 和脱敏诊断信息。
 
 ## 平台支持情况
@@ -102,6 +103,8 @@ NSIS 安装包会生成在：
 ```text
 src-tauri\target\release\bundle\nsis
 ```
+
+维护者可运行 `npm run build:release`，一次生成带更新签名的安装包、`.sig` 和 `latest.json`。`.tauri-keys/` 下的更新密钥与密码必须另行安全备份，且绝不能提交到仓库。
 
 ## 技术栈
 

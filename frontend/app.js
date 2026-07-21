@@ -61,7 +61,7 @@ function platformLogo(providerId, sizeClass = "") {
 
 function resource(name, type, badge, metrics) { return { name, type, badge, metrics }; }
 
-const state = { view: "overview", provider: "volcengine", accountId: null, renameAccountId: null, connectionAccountId: null, diagnosticAccountId: null, alertFilter: "all", syncEventFilter: "all", products: {}, backend: { accounts: [], history: [], syncEvents: [] }, desktopPreferencesSignature: null, syncPollTimer: null, syncPollUsers: 0 };
+const state = { view: "overview", provider: "volcengine", accountId: null, renameAccountId: null, connectionAccountId: null, diagnosticAccountId: null, alertFilter: "all", syncEventFilter: "all", products: {}, backend: { accounts: [], history: [], syncEvents: [] }, desktopPreferencesSignature: null, syncPollTimer: null, syncPollUsers: 0, updateCheckStarted: false, availableUpdate: null };
 Object.entries(providers).forEach(([id, p]) => state.products[id] = p.primaryProduct);
 function remotePlaceholder(platformName, supported = false) {
   return {
@@ -397,6 +397,7 @@ async function loadBackendState({quiet = false} = {}) {
     renderAccounts();
     renderAlerts();
     populateSettings();
+    maybeCheckForUpdates();
     if (state.view === "platforms") renderPlatform();
     if (state.view === "models") renderComparisons();
     if (!quiet) els.syncText.textContent = state.backend.accounts.length ? formatSyncSetting() : "等待连接账户";
@@ -576,6 +577,7 @@ function populateSettings() {
   if (!settings) return;
   setComboboxValue(els.appearanceMode, settings.appearanceMode || "system", false);
   setComboboxValue(els.autoSyncMinutes, String(settings.autoSyncMinutes), false);
+  setComboboxValue(els.updateCheckMode, settings.updateCheckMode || "startup", false);
   els.lowBalanceThreshold.value = settings.lowBalanceThreshold;
   els.usageThreshold.value = settings.usageThreshold || 80;
   els.notificationsEnabled.checked = settings.notificationsEnabled;
@@ -583,6 +585,7 @@ function populateSettings() {
   els.closeToTray.checked = settings.closeToTray !== false;
   els.launchAtStartup.checked = Boolean(settings.launchAtStartup);
   els.settingsVersion.textContent = state.backend.version || "—";
+  els.updateCurrentVersion.textContent = state.backend.version || "—";
 }
 
 function closeComboboxes(except) {
@@ -1025,6 +1028,105 @@ function showToast(text, requestedTone = "auto") {
   toastTimer = setTimeout(()=>els.toast.classList.remove("show"), 2400);
 }
 
+function setUpdateStatus(text, tone = "") {
+  els.updateStatusText.textContent = text;
+  els.updateStatusText.className = tone ? `update-status-${tone}` : "";
+}
+
+function showUpdateDialog(update) {
+  state.availableUpdate = update;
+  els.updateDialogTitle.textContent = `Prismeter ${update.version} 已可用`;
+  els.updateDialogSummary.textContent = `当前版本 ${update.currentVersion}。下载安装前会验证更新签名，安装时应用将自动关闭。`;
+  els.updateReleaseNotes.textContent = update.notes?.trim() || "此版本暂未提供更新说明。";
+  els.updateProgress.hidden = true;
+  els.updateProgressBar.style.width = "0%";
+  els.updateProgressText.textContent = "准备下载…";
+  [els.updateDialogClose, els.skipUpdateButton, els.laterUpdateButton, els.installUpdateButton].forEach(button => button.disabled = false);
+  els.installUpdateButton.querySelector("span").textContent = "下载并安装";
+  if (!els.updateDialog.open) els.updateDialog.showModal();
+}
+
+async function checkForUpdates({manual = false} = {}) {
+  const invoke = window.__TAURI__?.core?.invoke;
+  if (!invoke) {
+    if (manual) showToast("仅安装版支持应用内更新", "info");
+    return;
+  }
+  const button = els.checkUpdateButton;
+  button.disabled = true;
+  button.classList.add("checking");
+  button.querySelector("span").textContent = "正在检查…";
+  setUpdateStatus("正在连接 GitHub Release…");
+  try {
+    const update = await invoke("check_for_update");
+    if (!update) {
+      state.availableUpdate = null;
+      setUpdateStatus("当前已是最新版本", "success");
+      if (manual) showToast("当前已是最新版本");
+      return;
+    }
+    setUpdateStatus(`发现 ${update.version}`, "available");
+    const skipped = state.backend.settings?.skippedUpdateVersion === update.version;
+    if (manual || !skipped) showUpdateDialog(update);
+  } catch (error) {
+    const message = String(error || "无法检查更新");
+    setUpdateStatus("检查失败，请稍后重试", "error");
+    if (manual) showToast(message, "error");
+    else console.warn("自动检查更新失败", message);
+  } finally {
+    button.disabled = false;
+    button.classList.remove("checking");
+    button.querySelector("span").textContent = "检查更新";
+  }
+}
+
+function maybeCheckForUpdates() {
+  if (state.updateCheckStarted || !state.backend.settings) return;
+  state.updateCheckStarted = true;
+  if ((state.backend.settings.updateCheckMode || "startup") === "startup") {
+    window.setTimeout(() => checkForUpdates(), 1600);
+  }
+}
+
+async function installAvailableUpdate() {
+  const invoke = window.__TAURI__?.core?.invoke;
+  const Channel = window.__TAURI__?.core?.Channel;
+  if (!invoke || !Channel) { showToast("当前环境无法安装更新", "error"); return; }
+  let downloaded = 0;
+  let contentLength = 0;
+  const channel = new Channel();
+  channel.onmessage = message => {
+    const event = String(message?.event || "").toLowerCase();
+    const data = message?.data || {};
+    if (event === "started") {
+      contentLength = Number(data.contentLength ?? data.content_length ?? 0);
+      els.updateProgressText.textContent = contentLength ? "开始下载更新…" : "正在下载更新…";
+    } else if (event === "progress") {
+      downloaded += Number(data.chunkLength ?? data.chunk_length ?? 0);
+      if (contentLength > 0) {
+        const percent = Math.min(100, Math.round(downloaded / contentLength * 100));
+        els.updateProgressBar.style.width = `${percent}%`;
+        els.updateProgressText.textContent = `已下载 ${percent}%`;
+      }
+    } else if (event === "finished") {
+      els.updateProgressBar.style.width = "100%";
+      els.updateProgressText.textContent = "下载完成，正在验证并安装…";
+    }
+  };
+  [els.updateDialogClose, els.skipUpdateButton, els.laterUpdateButton, els.installUpdateButton].forEach(button => button.disabled = true);
+  els.updateProgress.hidden = false;
+  els.installUpdateButton.querySelector("span").textContent = "正在安装…";
+  try {
+    await invoke("install_update", { onEvent: channel });
+  } catch (error) {
+    setUpdateStatus("安装失败，请重新检查", "error");
+    showToast(String(error || "更新安装失败"), "error");
+    [els.updateDialogClose, els.skipUpdateButton, els.laterUpdateButton, els.installUpdateButton].forEach(button => button.disabled = false);
+    els.installUpdateButton.querySelector("span").textContent = "重新检查";
+    state.availableUpdate = null;
+  }
+}
+
 let dragState = null;
 let suppressClickUntil = 0;
 
@@ -1338,6 +1440,7 @@ els.modelSearchInput.addEventListener("input", renderComparisons);
 els.accountProvider.addEventListener("change", updateCredentialFields);
 els.appearanceMode.addEventListener("change", () => { applyTheme(els.appearanceMode.value); queueSettingsSave(); });
 els.autoSyncMinutes.addEventListener("change", () => queueSettingsSave());
+els.updateCheckMode.addEventListener("change", () => queueSettingsSave());
 els.mimoBaseUrl.addEventListener("input", syncMimoEndpointPresets);
 els.mimoApiKey.addEventListener("input", () => {
   const key = els.mimoApiKey.value.trim();
@@ -1500,6 +1603,21 @@ els.testNotificationButton.addEventListener("click", async () => {
   finally { button.disabled = false; button.textContent = "发送测试通知"; }
 });
 els.settingsExportButton.addEventListener("click", exportAllAccounts);
+els.checkUpdateButton.addEventListener("click", () => checkForUpdates({manual:true}));
+els.updateDialogClose.addEventListener("click", () => els.updateDialog.close());
+els.laterUpdateButton.addEventListener("click", () => els.updateDialog.close());
+els.skipUpdateButton.addEventListener("click", () => {
+  if (!state.availableUpdate || !state.backend.settings) return;
+  state.backend.settings.skippedUpdateVersion = state.availableUpdate.version;
+  queueSettingsSave();
+  els.updateDialog.close();
+  setUpdateStatus(`${state.availableUpdate.version} 已跳过`);
+  showToast(`已跳过 ${state.availableUpdate.version}，仍可手动检查`, "info");
+});
+els.installUpdateButton.addEventListener("click", () => {
+  if (state.availableUpdate) installAvailableUpdate();
+  else checkForUpdates({manual:true});
+});
 els.exitAppButton.addEventListener("click", async () => {
   if (!confirm("完全退出 Prismeter？退出后将停止自动同步和 Windows 提醒。")) return;
   const invoke = window.__TAURI__?.core?.invoke;
@@ -1521,7 +1639,9 @@ function settingsPayload() {
     appearanceMode:els.appearanceMode.value,
     syncOnStartup:els.syncOnStartup.checked,
     closeToTray:els.closeToTray.checked,
-    launchAtStartup:els.launchAtStartup.checked
+    launchAtStartup:els.launchAtStartup.checked,
+    updateCheckMode:els.updateCheckMode.value,
+    skippedUpdateVersion:state.backend.settings?.skippedUpdateVersion || ""
   };
 }
 

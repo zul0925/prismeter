@@ -47,6 +47,10 @@ struct Settings {
     close_to_tray: bool,
     #[serde(default)]
     launch_at_startup: bool,
+    #[serde(default = "default_update_check_mode")]
+    update_check_mode: String,
+    #[serde(default)]
+    skipped_update_version: String,
 }
 
 impl Default for Settings {
@@ -60,6 +64,8 @@ impl Default for Settings {
             sync_on_startup: false,
             close_to_tray: default_close_to_tray(),
             launch_at_startup: false,
+            update_check_mode: default_update_check_mode(),
+            skipped_update_version: String::new(),
         }
     }
 }
@@ -70,6 +76,7 @@ fn default_low_balance() -> f64 { 10.0 }
 fn default_usage_threshold() -> f64 { 80.0 }
 fn default_notifications() -> bool { true }
 fn default_close_to_tray() -> bool { true }
+fn default_update_check_mode() -> String { "startup".into() }
 
 #[derive(Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -774,6 +781,12 @@ fn route_api(method: &Method, path: &str, body: &str, store: &Arc<Store>) -> App
         if !matches!(input.appearance_mode.as_str(), "system" | "light" | "dark") {
             return Err("外观模式无效。".into());
         }
+        if !matches!(input.update_check_mode.as_str(), "startup" | "manual") {
+            return Err("更新检查策略无效。".into());
+        }
+        if input.skipped_update_version.len() > 32 {
+            return Err("跳过的版本号无效。".into());
+        }
         if input.auto_sync_minutes != 0 && !(5..=1440).contains(&input.auto_sync_minutes) {
             return Err("自动同步间隔应在 5 分钟到 24 小时之间。".into());
         }
@@ -1156,6 +1169,7 @@ mod tests {
         assert!(public.contains("\"usageThreshold\":80.0"));
         assert!(public.contains("\"closeToTray\":true"));
         assert!(public.contains("\"launchAtStartup\":false"));
+        assert!(public.contains("\"updateCheckMode\":\"startup\""));
         assert!(!public.contains("secret-ciphertext"));
         assert!(directory.join("accounts.pre-rust-0.8.1.json").exists());
         fs::remove_dir_all(directory).unwrap();

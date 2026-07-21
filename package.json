@@ -1,7 +1,7 @@
 {
   "name": "prismeter-tauri",
   "private": true,
-  "version": "0.17.1",
+  "version": "0.18.0",
   "license": "Apache-2.0",
   "scripts": {
     "tauri": "tauri",
@@ -10,7 +10,8 @@
     "check": "npm run check:frontend && npm run check:backend",
     "test:backend": "cargo test --manifest-path src-tauri/Cargo.toml",
     "prebuild": "npm run check:frontend",
-    "build": "tauri build"
+    "build": "tauri build",
+    "build:release": "powershell -ExecutionPolicy Bypass -File scripts/BuildSignedRelease.ps1"
   },
   "devDependencies": {
     "@tauri-apps/cli": "^2"

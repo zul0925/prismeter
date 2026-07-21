@@ -7,6 +7,84 @@ mod mimo;
 mod notifications;
 mod volcengine;
 
+mod app_updates {
+    use std::sync::Mutex;
+
+    use serde::Serialize;
+    use tauri::{ipc::Channel, AppHandle, State};
+    use tauri_plugin_updater::{Update, UpdaterExt};
+
+    #[derive(Default)]
+    pub struct PendingUpdate(pub Mutex<Option<Update>>);
+
+    #[derive(Clone, Serialize)]
+    #[serde(rename_all = "camelCase")]
+    pub struct UpdateMetadata {
+        version: String,
+        current_version: String,
+        notes: String,
+    }
+
+    #[derive(Clone, Serialize)]
+    #[serde(tag = "event", content = "data", rename_all = "camelCase")]
+    pub enum DownloadEvent {
+        Started { content_length: Option<u64> },
+        Progress { chunk_length: usize },
+        Finished,
+    }
+
+    #[tauri::command]
+    pub async fn check_for_update(
+        app: AppHandle,
+        pending_update: State<'_, PendingUpdate>,
+    ) -> Result<Option<UpdateMetadata>, String> {
+        let update = app
+            .updater()
+            .map_err(|error| format!("无法初始化更新服务：{error}"))?
+            .check()
+            .await
+            .map_err(|error| format!("无法检查更新：{error}"))?;
+        let metadata = update.as_ref().map(|item| UpdateMetadata {
+            version: item.version.clone(),
+            current_version: item.current_version.clone(),
+            notes: item.body.clone().unwrap_or_default(),
+        });
+        *pending_update.0.lock().map_err(|_| "更新状态暂时不可用。".to_string())? = update;
+        Ok(metadata)
+    }
+
+    #[tauri::command]
+    pub async fn install_update(
+        app: AppHandle,
+        pending_update: State<'_, PendingUpdate>,
+        on_event: Channel<DownloadEvent>,
+    ) -> Result<(), String> {
+        let update = pending_update
+            .0
+            .lock()
+            .map_err(|_| "更新状态暂时不可用。".to_string())?
+            .take()
+            .ok_or_else(|| "没有等待安装的更新，请重新检查。".to_string())?;
+        let mut started = false;
+        update
+            .download_and_install(
+                |chunk_length, content_length| {
+                    if !started {
+                        let _ = on_event.send(DownloadEvent::Started { content_length });
+                        started = true;
+                    }
+                    let _ = on_event.send(DownloadEvent::Progress { chunk_length });
+                },
+                || {
+                    let _ = on_event.send(DownloadEvent::Finished);
+                },
+            )
+            .await
+            .map_err(|error| format!("更新安装失败：{error}"))?;
+        app.restart();
+    }
+}
+
 use std::{
     path::PathBuf,
     process::{Command, Stdio},
@@ -98,10 +176,18 @@ fn main() {
     let start_in_background = std::env::args().any(|argument| argument == "--background");
     tauri::Builder::default()
         .manage(ClosePreference::default())
-        .invoke_handler(tauri::generate_handler![set_close_to_tray, set_launch_on_startup, exit_app])
+        .manage(app_updates::PendingUpdate::default())
+        .invoke_handler(tauri::generate_handler![
+            set_close_to_tray,
+            set_launch_on_startup,
+            exit_app,
+            app_updates::check_for_update,
+            app_updates::install_update
+        ])
         .plugin(tauri_plugin_single_instance::init(|app, args, _cwd| {
             if !args.iter().any(|argument| argument == "--background") { show_main(app); }
         }))
+        .plugin(tauri_plugin_updater::Builder::new().build())
         .setup(move |app| {
             let backend_url = backend::start(legacy_data_dir()?)?;
 

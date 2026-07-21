@@ -17,6 +17,7 @@ protocol/
 .env
 .env.*
 !.env.example
+.tauri-keys/
 *.log
 *.tmp
 
