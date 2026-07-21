@@ -2,6 +2,7 @@
   "name": "prismeter-tauri",
   "private": true,
   "version": "0.17.1",
+  "license": "Apache-2.0",
   "scripts": {
     "tauri": "tauri",
     "check:frontend": "node --check frontend/app.js && node BuildFrontend.js && node VerifyVolcengineSignature.js",

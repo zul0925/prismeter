@@ -133,3 +133,9 @@ prismeter/
 项目仍处于早期开发阶段。不同平台接口和返回字段可能发生变化，使用前建议核对平台权限与应用中标注的数据来源。
 
 欢迎提交 Issue 反馈平台兼容性、数据字段或界面问题。
+
+## 许可证
+
+Prismeter 的项目代码和原创文档采用 [Apache License 2.0](LICENSE) 授权。你可以在遵守许可证条款的前提下使用、修改和分发本项目。
+
+第三方平台名称、商标、Logo、API 和服务不包含在本项目的 Apache-2.0 授权范围内，仍受各自权利人条款约束。Prismeter 与 OpenAI、火山引擎、DeepSeek、小米及其他兼容平台不存在官方隶属、认可或背书关系。详情参见 [NOTICE](NOTICE) 和 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)。
