@@ -35,6 +35,8 @@ type AppResult<T> = Result<T, String>;
 #[derive(Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 struct Settings {
+    #[serde(default = "default_interface_language")]
+    interface_language: String,
     #[serde(default = "default_appearance_mode")]
     appearance_mode: String,
     #[serde(default = "default_auto_sync")]
@@ -64,6 +66,7 @@ struct Settings {
 impl Default for Settings {
     fn default() -> Self {
         Self {
+            interface_language: default_interface_language(),
             appearance_mode: default_appearance_mode(),
             auto_sync_minutes: default_auto_sync(),
             low_balance_threshold: default_low_balance(),
@@ -80,6 +83,7 @@ impl Default for Settings {
     }
 }
 
+fn default_interface_language() -> String { "zh-CN".into() }
 fn default_appearance_mode() -> String { "system".into() }
 fn default_auto_sync() -> i32 { 30 }
 fn default_low_balance() -> f64 { 10.0 }
@@ -992,6 +996,9 @@ fn route_api(method: &Method, path: &str, body: &str, store: &Arc<Store>) -> App
     if method == &Method::Get && path == "/api/state" { return Ok((200, store.public_state())); }
     if method == &Method::Put && path == "/api/settings" {
         let mut input: Settings = serde_json::from_str(body).map_err(|_| "设置数据无效。")?;
+        if !matches!(input.interface_language.as_str(), "zh-CN" | "en") {
+            return Err("界面语言无效。".into());
+        }
         if !matches!(input.appearance_mode.as_str(), "system" | "light" | "dark") {
             return Err("外观模式无效。".into());
         }

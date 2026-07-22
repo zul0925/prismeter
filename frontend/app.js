@@ -71,7 +71,7 @@ function platformLogo(providerId, sizeClass = "") {
 
 function resource(name, type, badge, metrics) { return { name, type, badge, metrics }; }
 
-const state = { view: "overview", provider: "volcengine", accountId: null, renameAccountId: null, deleteAccountId: null, alertAccountId: null, connectionAccountId: null, diagnosticAccountId: null, alertFilter: "all", syncEventFilter: "all", products: {}, backend: { accounts: [], history: [], syncEvents: [] }, desktopPreferences: { closeToTray:null, launchAtStartup:null }, syncPollTimer: null, syncPollUsers: 0, updateCheckStarted: false, availableUpdate: null, storageNoticeShown: false, metricRangeDays: 7, metricHistoryCache: new Map(), metricSelections: {}, metricHistoryRequestKey: "", trayTooltip: "" };
+const state = { view: "overview", provider: "volcengine", accountId: null, renameAccountId: null, deleteAccountId: null, alertAccountId: null, connectionAccountId: null, diagnosticAccountId: null, alertFilter: "all", syncEventFilter: "all", products: {}, backend: { accounts: [], history: [], syncEvents: [] }, desktopPreferences: { closeToTray:null, launchAtStartup:null }, syncPollTimer: null, syncPollUsers: 0, updateCheckStarted: false, availableUpdate: null, storageNoticeShown: false, metricRangeDays: 7, metricHistoryCache: new Map(), metricSelections: {}, metricHistoryRequestKey: "", trayTooltip: "", interfaceLanguage: "zh-CN" };
 Object.entries(providers).forEach(([id, p]) => state.products[id] = p.primaryProduct);
 function remotePlaceholder(platformName, supported = false) {
   return {
@@ -107,6 +107,35 @@ function initializeRemoteOnlyProviders() {
 
 const els = Object.fromEntries([...document.querySelectorAll("[id]")].map(el => [el.id, el]));
 const systemThemeQuery = window.matchMedia("(prefers-color-scheme: dark)");
+const localizedTextNodes = new WeakMap();
+const englishUi = Object.freeze({
+  "总览":"Overview", "模型对比":"Model comparison", "提醒":"Alerts", "账户":"Accounts", "设置":"Settings", "已连接账户":"Connected accounts",
+  "应用设置":"Application settings", "按你的习惯使用 Prismeter":"Make Prismeter work your way", "改动会自动保存":"Changes save automatically",
+  "语言 / Language":"Language", "界面语言立即切换；平台返回的模型名与远端数据保持原样。":"Changes apply immediately. Provider model names and remote data remain unchanged.",
+  "界面语言":"Interface language", "当前提供简体中文和 English。":"Simplified Chinese and English are available.", "简体中文":"Simplified Chinese", "默认语言":"Default language",
+  "外观":"Appearance", "外观模式":"Appearance mode", "跟随系统":"Follow system", "浅色模式":"Light", "深色模式":"Dark",
+  "提醒":"Alerts", "低余额提醒阈值":"Low-balance threshold", "套餐额度提醒阈值":"Quota threshold", "Windows 通知":"Windows notifications", "发送测试通知":"Send test notification",
+  "应用更新":"App updates", "检查更新":"Check for updates", "启动时自动检查":"Check on startup", "仅手动检查":"Manual only", "当前版本":"Current version",
+  "同步":"Sync", "自动同步":"Automatic sync", "关闭":"Off", "每 15 分钟":"Every 15 minutes", "每 30 分钟":"Every 30 minutes", "每小时":"Hourly", "每 3 小时":"Every 3 hours",
+  "启动后同步一次":"Sync once on launch", "数据过期提醒":"Stale-data alert", "本地历史":"Local history", "保留时间":"Retention", "当前记录":"Current records", "清除历史记录":"Clear history",
+  "窗口与托盘":"Window and tray", "关闭时隐藏到托盘":"Close to tray", "登录 Windows 后自动启动":"Launch at Windows sign-in", "退出应用":"Quit app", "退出 Prismeter":"Quit Prismeter",
+  "添加平台账户":"Add platform account", "平台":"Platform", "账户名称":"Account name", "连接并验证":"Connect and verify", "新建连接":"New connection",
+  "安全更新":"Secure update", "发现新版本":"Update available", "稍后处理":"Later", "立即安装":"Install now", "检查更新":"Check for updates"
+});
+
+function applyInterfaceLanguage(language = "zh-CN") {
+  const normalized = language === "en" ? "en" : "zh-CN";
+  state.interfaceLanguage = normalized;
+  document.documentElement.lang = normalized;
+  document.title = normalized === "en" ? "Prismeter · AI usage center" : "Prismeter · AI 用量中心";
+  const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+  for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+    if (["SCRIPT", "STYLE"].includes(node.parentElement?.tagName)) continue;
+    const original = localizedTextNodes.get(node) || node.nodeValue;
+    if (!localizedTextNodes.has(node)) localizedTextNodes.set(node, original);
+    node.nodeValue = normalized === "en" && englishUi[original] ? englishUi[original] : original;
+  }
+}
 
 function applyTheme(mode = "system", persist = true) {
   const normalized = ["system", "light", "dark"].includes(mode) ? mode : "system";
@@ -144,7 +173,7 @@ function formatDate(value) {
   if (!value) return "尚未同步";
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return "时间无效";
-  return new Intl.DateTimeFormat("zh-CN", { month:"2-digit", day:"2-digit", hour:"2-digit", minute:"2-digit" }).format(date);
+  return new Intl.DateTimeFormat(state.interfaceLanguage, { month:"2-digit", day:"2-digit", hour:"2-digit", minute:"2-digit" }).format(date);
 }
 
 function relativeSyncTime(value) {
@@ -422,6 +451,7 @@ async function loadBackendState({quiet = false} = {}) {
     const payload = await apiRequest("/api/state");
     state.backend = payload;
     updateTrayTooltip(payload);
+    applyInterfaceLanguage(payload.settings?.interfaceLanguage || "zh-CN");
     applyTheme(payload.settings?.appearanceMode || "system");
     await syncDesktopPreferences(payload.settings);
     if (state.accountId && !payload.accounts.some(account => account.id === state.accountId)) state.accountId = null;
@@ -638,7 +668,7 @@ function metricHistoryKey(account, productId) {
 function formatMetricNumber(value, unit = "") {
   const number = Number(value);
   const formatted = Number.isFinite(number)
-    ? new Intl.NumberFormat("zh-CN", { maximumFractionDigits:Math.abs(number) < 10 ? 2 : 1 }).format(number)
+    ? new Intl.NumberFormat(state.interfaceLanguage, { maximumFractionDigits:Math.abs(number) < 10 ? 2 : 1 }).format(number)
     : "—";
   if (unit === "CNY") return `¥ ${formatted}`;
   if (unit === "USD") return `$ ${formatted}`;
@@ -820,6 +850,7 @@ async function syncDesktopPreferences(settings = state.backend.settings, strictK
 function populateSettings() {
   const settings = state.backend.settings;
   if (!settings) return;
+  setComboboxValue(els.interfaceLanguage, settings.interfaceLanguage || "zh-CN", false);
   setComboboxValue(els.appearanceMode, settings.appearanceMode || "system", false);
   setComboboxValue(els.autoSyncMinutes, String(settings.autoSyncMinutes), false);
   setComboboxValue(els.staleAfterMinutes, String(settings.staleAfterMinutes || 0), false);
@@ -1800,6 +1831,7 @@ els.modelFamilySelect.addEventListener("change", renderComparisons);
 els.modelLevelSelect.addEventListener("change", renderComparisons);
 els.modelSearchInput.addEventListener("input", renderComparisons);
 els.accountProvider.addEventListener("change", updateCredentialFields);
+els.interfaceLanguage.addEventListener("change", () => { applyInterfaceLanguage(els.interfaceLanguage.value); queueSettingsSave(); });
 els.appearanceMode.addEventListener("change", () => { applyTheme(els.appearanceMode.value); queueSettingsSave(); });
 els.autoSyncMinutes.addEventListener("change", () => queueSettingsSave());
 els.staleAfterMinutes.addEventListener("change", () => queueSettingsSave());
@@ -2083,6 +2115,7 @@ function settingsPayload() {
     lowBalanceThreshold:Number(els.lowBalanceThreshold.value),
     usageThreshold:Number(els.usageThreshold.value),
     notificationsEnabled:els.notificationsEnabled.checked,
+    interfaceLanguage:els.interfaceLanguage.value,
     appearanceMode:els.appearanceMode.value,
     syncOnStartup:els.syncOnStartup.checked,
     closeToTray:els.closeToTray.checked,
@@ -2145,7 +2178,7 @@ async function flushSettingsSave() {
   input.addEventListener("change", () => { if (input.checkValidity() && input.value !== "") queueSettingsSave(); });
 });
 
-initializeRemoteOnlyProviders(); applyDeepSeekAccountData(null); applyOpenAIAccountData(null); applyVolcengineAccountData(null); updateCredentialFields(); renderNavigation(); renderOverview(); renderAlerts(); renderComparisons(); renderAccounts(); switchView("overview");
+initializeRemoteOnlyProviders(); applyDeepSeekAccountData(null); applyKimiAccountData(null); applyOpenAIAccountData(null); applyVolcengineAccountData(null); updateCredentialFields(); applyInterfaceLanguage(); renderNavigation(); renderOverview(); renderAlerts(); renderComparisons(); renderAccounts(); switchView("overview");
 loadBackendState();
 setInterval(() => { if (!state.backend.accounts?.length) return; renderOverview(); renderAccounts(); renderAlerts(); if (state.view === "platforms") renderPlatform(); }, RELATIVE_TIME_REFRESH_MS);
 setInterval(() => { if (state.backend.accounts?.length) loadBackendState({quiet:true}); }, BACKGROUND_STATE_REFRESH_MS);
