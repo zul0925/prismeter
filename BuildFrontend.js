@@ -58,6 +58,22 @@ if (missingCommandPermissions.length) {
   );
 }
 
+const requiredWindowPermissions = [
+  ['runWindowAction("minimize")', "core:window:allow-minimize"],
+  ['runWindowAction("toggleMaximize")', "core:window:allow-toggle-maximize"],
+  ["current.isMaximized(", "core:window:allow-is-maximized"],
+  ['runWindowAction("close")', "core:window:allow-close"],
+  ["current.startResizeDragging(", "core:window:allow-start-resize-dragging"]
+];
+const missingWindowPermissions = requiredWindowPermissions
+  .filter(([signature, permission]) => script.includes(signature) && !permissions.has(permission))
+  .map(([, permission]) => permission);
+if (missingWindowPermissions.length) {
+  throw new Error(
+    `Frontend validation failed: Tauri window permissions are missing: ${missingWindowPermissions.join(", ")}`
+  );
+}
+
 const removedExportAllFeatures = ["settingsExportButton", "exportAccountsButton", "exportAllAccounts"];
 const retainedExportAllFeatures = removedExportAllFeatures.filter(value => html.includes(value) || script.includes(value));
 if (retainedExportAllFeatures.length) {

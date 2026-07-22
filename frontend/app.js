@@ -1738,7 +1738,10 @@ document.addEventListener("DOMContentLoaded",()=>{
       await current[action]();
       if(action==="toggleMaximize") await updateMaximizeState();
     }
-    catch(error) { console.error(`窗口操作 ${action} 失败`,error); }
+    catch(error) {
+      console.error(`窗口操作 ${action} 失败`,error);
+      showToast(errorMessage(error, "窗口操作未完成"), "error");
+    }
   };
   document.getElementById("windowMinimize")?.addEventListener("click",runWindowAction("minimize"));
   maximizeButton?.addEventListener("click",runWindowAction("toggleMaximize"));
