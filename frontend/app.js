@@ -312,7 +312,8 @@ function applyOpenAIAccountData(account = getSelectedAccount("openai")) {
       usage: item.usage || "—",
       usageLabel: item.usageLabel || "远端用量",
       progress: percent ? Math.max(0, Math.min(100, Number(percent[1]))) : 0,
-      reset: `同步于 ${formatDate(account.lastSync)}`,
+      resetAt: item.resetAt || null,
+      reset: item.resetAt ? `额度 ${relativeFutureTime(item.resetAt)} 恢复` : `同步于 ${formatDate(account.lastSync)}`,
       summaries: (item.summaries || []).map(metric => [metric.label, metric.value, metric.note]),
       columns: item.columns || [],
       rows: (item.rows || []).map(row => resource(row.name, row.type, row.badge, (row.metrics || []).map(metric => [metric.value, metric.unit])))
@@ -425,8 +426,20 @@ function monitoringSummary(payload = state.backend) {
   const stale = monitored.find(account => accountFreshness(account).level === "stale" || accountFreshness(account).level === "never");
   if (stale) return { level:"attention", title:"需要刷新", detail:`${stale.name} ${accountFreshness(stale).label}` };
   const alerts = actionableAlerts(payload);
-  if (alerts.length) return { level:"attention", title:"请留意用量", detail:`${alerts.length} 条提醒等待处理` };
+  if (alerts.length) {
+    const alert = alerts[0];
+    const account = monitored.find(item => item.id === alert.accountId);
+    const resetAt = alert.kind === "quota" ? productResetAt(account, alert.productId) : null;
+    const recovery = resetAt ? ` · ${relativeFutureTime(resetAt)} 恢复` : "";
+    return { level:"attention", title:"请留意用量", detail:`${alert.title || `${alerts.length} 条提醒等待处理`}${recovery}` };
+  }
   return { level:"healthy", title:"可以继续使用", detail:`${monitored.length} 个账户状态正常` };
+}
+
+function productResetAt(account, productId = "") {
+  const product = (account?.products || []).find(item => !productId || item.id === productId);
+  const value = product?.resetAt;
+  return value && Number.isFinite(new Date(value).getTime()) ? value : null;
 }
 
 function isAlertSnoozed(alert) {
@@ -543,7 +556,9 @@ function renderActionCenter() {
     const actions = canSync
       ? `<button class="mini-button" data-sync-account="${escapeHtml(account.id)}"><span>立即同步</span></button><button class="mini-button" data-view-account="${escapeHtml(account.id)}" data-account-provider="${escapeHtml(account.provider)}">查看账户</button>`
       : `<button class="mini-button" data-target-view="alerts">查看提醒</button>${account ? `<button class="mini-button" data-account-alerts="${escapeHtml(account.id)}">调整规则</button>` : ""}`;
-    return `<article class="action-item"><span class="action-symbol ${["sync", "freshness", "status"].includes(item.kind) ? "sync" : ""}">${symbols[item.kind] || "!"}</span><div class="action-copy"><b>${escapeHtml(item.title || "远端状态需要关注")}</b><span>${escapeHtml(item.message || "请查看提醒中心了解详情")}</span></div><div class="action-actions">${actions}</div></article>`;
+    const resetAt = item.kind === "quota" ? productResetAt(account, item.productId) : null;
+    const detail = `${item.message || "请查看提醒中心了解详情"}${resetAt ? ` · 预计 ${relativeFutureTime(resetAt)} 恢复` : ""}`;
+    return `<article class="action-item"><span class="action-symbol ${["sync", "freshness", "status"].includes(item.kind) ? "sync" : ""}">${symbols[item.kind] || "!"}</span><div class="action-copy"><b>${escapeHtml(item.title || "远端状态需要关注")}</b><span>${escapeHtml(detail)}</span></div><div class="action-actions">${actions}</div></article>`;
   }).join("") : `<article class="action-item"><span class="action-symbol good">✓</span><div class="action-copy"><b>没有需要立即处理的事项</b><span>已暂缓的提醒仍会保留在提醒中心，且不会影响首页或托盘状态。</span></div></article>`;
 }
 

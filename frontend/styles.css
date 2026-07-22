@@ -1206,8 +1206,8 @@ input[type="number"]::-webkit-inner-spin-button,input[type="number"]::-webkit-ou
 .update-status-success { color:#238866!important; }
 .update-status-available { color:#6072dc!important; }
 .update-status-error { color:#bd6654!important; }
-#checkUpdateButton { position:relative; }
-#checkUpdateButton.checking::before { content:""; width:13px; height:13px; margin-right:8px; border:2px solid rgba(96,114,220,.22); border-top-color:#6072dc; border-radius:50%; animation:spin .7s linear infinite; }
+#checkUpdateButton { position:relative; display:inline-flex; align-items:center; justify-content:center; gap:8px; }
+#checkUpdateButton.checking::before { content:""; display:block; box-sizing:border-box; flex:0 0 13px; width:13px; height:13px; border:2px solid rgba(96,114,220,.22); border-top-color:#6072dc; border-radius:50%; animation:spin .7s linear infinite; }
 .update-dialog { width:min(560px,calc(100vw - 32px)); }
 .update-release-notes { max-height:210px; margin:17px 0; padding:14px 15px; overflow:auto; border:1px solid rgba(103,115,148,.10); border-radius:15px; background:rgba(255,255,255,.38); color:var(--muted); font-size:11px; line-height:1.65; }
 .update-release-notes h3,.update-release-notes h4 { margin:12px 0 6px; color:var(--ink); font-size:12px; }

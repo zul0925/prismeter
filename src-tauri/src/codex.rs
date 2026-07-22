@@ -8,7 +8,7 @@ use std::{
     time::Duration,
 };
 
-use chrono::{Local, TimeZone};
+use chrono::{Local, TimeZone, Utc};
 use serde_json::{json, Value};
 
 type Result<T> = std::result::Result<T, String>;
@@ -167,7 +167,8 @@ fn build_codex_product(plan: &str, limits_result: &Value, usage_result: &Value) 
     let summary = usage_result.get("summary").unwrap_or(&Value::Null);
     let used = integer(primary, "usedPercent");
     let duration = integer(primary, "windowDurationMins");
-    let reset = unix_seconds(integer(primary, "resetsAt"));
+    let reset_timestamp = integer(primary, "resetsAt");
+    let reset = unix_seconds(reset_timestamp);
     let lifetime = integer(summary, "lifetimeTokens");
     let peak = integer(summary, "peakDailyTokens");
     let streak = integer(summary, "currentStreakDays");
@@ -199,6 +200,7 @@ fn build_codex_product(plan: &str, limits_result: &Value, usage_result: &Value) 
     json!({
         "id": "codex", "name": format!("Codex · {}", plan_name(plan)), "kind": "Codex 用量",
         "usage": primary_value, "usageLabel": format!("{}已用", window_label(duration)),
+        "resetAt": unix_seconds_iso(reset_timestamp),
         "status": first_non_empty(&[text(limits, "rateLimitReachedType"), "Running".into()]),
         "summaries": [
             metric("当前周期", &primary_value, &format!("{} · {} 重置", window_label(duration), reset)),
@@ -219,6 +221,7 @@ fn value_text(value: &Value) -> String {
 fn integer(source: &Value, key: &str) -> i64 { source.get(key).and_then(|value| value.as_i64().or_else(|| value.as_str()?.parse().ok())).unwrap_or(0) }
 fn first_non_empty(values: &[String]) -> String { values.iter().find(|value| !value.trim().is_empty()).cloned().unwrap_or_default() }
 fn unix_seconds(value: i64) -> String { if value <= 0 { "—".into() } else { Local.timestamp_opt(value, 0).single().map(|time| time.format("%m-%d %H:%M").to_string()).unwrap_or_else(|| "—".into()) } }
+fn unix_seconds_iso(value: i64) -> String { if value <= 0 { String::new() } else { Utc.timestamp_opt(value, 0).single().map(|time| time.to_rfc3339()).unwrap_or_default() } }
 fn window_label(minutes: i64) -> String {
     if minutes >= 1440 && minutes % 1440 == 0 { format!("{} 天周期", minutes / 1440) }
     else if minutes >= 60 && minutes % 60 == 0 { format!("{} 小时周期", minutes / 60) }
@@ -258,6 +261,7 @@ mod tests {
         let usage = json!({"summary":{"lifetimeTokens":1500000,"peakDailyTokens":1000,"currentStreakDays":3},"dailyUsageBuckets":[{"startDate":"2026-07-20","tokens":500}]});
         let product = build_codex_product("plus", &limits, &usage);
         assert_eq!(product["usage"], "25%");
+        assert_eq!(product["resetAt"], "2027-01-15T08:00:00+00:00");
         assert_eq!(product["summaries"][1]["value"], "40%");
         assert_eq!(product["rows"][0]["metrics"][1]["value"], "500");
     }
