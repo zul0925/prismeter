@@ -424,9 +424,17 @@ function monitoringSummary(payload = state.backend) {
   if (failed) return { level:"attention", title:"需要处理", detail:`${failed.name} 同步失败` };
   const stale = monitored.find(account => accountFreshness(account).level === "stale" || accountFreshness(account).level === "never");
   if (stale) return { level:"attention", title:"需要刷新", detail:`${stale.name} ${accountFreshness(stale).label}` };
-  const alerts = payload.alerts || [];
+  const alerts = actionableAlerts(payload);
   if (alerts.length) return { level:"attention", title:"请留意用量", detail:`${alerts.length} 条提醒等待处理` };
   return { level:"healthy", title:"可以继续使用", detail:`${monitored.length} 个账户状态正常` };
+}
+
+function isAlertSnoozed(alert) {
+  return Boolean(alert?.snoozedUntil) && new Date(alert.snoozedUntil).getTime() > Date.now();
+}
+
+function actionableAlerts(payload = state.backend) {
+  return (payload.alerts || []).filter(alert => !isAlertSnoozed(alert));
 }
 
 function automaticSyncLabel(settings = state.backend.settings) {
@@ -462,7 +470,7 @@ function renderNavigation() {
 function renderOverview() {
   const accounts = state.backend.accounts || [];
   const connectedCount = accounts.length;
-  const alertCount = (state.backend.alerts || []).length;
+  const alertCount = actionableAlerts().length;
   const freshness = overallFreshness(accounts);
   const activeCount = freshness.monitored;
   const monitoring = monitoringSummary();
@@ -483,6 +491,7 @@ function renderOverview() {
   document.querySelector("#heroAttention").textContent = String(freshness.attention);
   document.querySelector("#heroPaused").textContent = String(freshness.counts.paused);
   document.querySelector("#heroSchedule").textContent = automaticSyncLabel();
+  renderActionCenter();
   const insight = document.querySelector(".insight-card");
   insight.querySelector("h3").textContent = "所有指标均来自平台远端";
   insight.querySelector("p:not(.eyebrow)").innerHTML = connectedCount
@@ -520,6 +529,22 @@ function renderOverview() {
       : escapeHtml(primary?.usage || "—");
     const freshness = accountFreshness(account); return `<div class="activity-item">${platformLogo(account.provider, "activity-brand-logo")}<div class="activity-main"><b>${escapeHtml(account.name)}</b><span>${escapeHtml(provider?.name || account.provider)} · 远端同步</span></div><div class="activity-value"><b>${value}</b><span class="freshness-text ${freshness.level}">${escapeHtml(freshness.label)} · ${escapeHtml(relativeSyncTime(account.lastSync))}</span></div></div>`;
   }).join("") : `<div class="history-empty">连接账户并完成远端同步后，这里才会显示活动。</div>`;
+}
+
+function renderActionCenter() {
+  const alerts = actionableAlerts();
+  const priority = { sync:0, freshness:1, status:1, balance:2, quota:2 };
+  const symbols = { sync:"!", freshness:"↻", status:"!", balance:"¥", quota:"%" };
+  const items = alerts.slice().sort((left, right) => (priority[left.kind] ?? 3) - (priority[right.kind] ?? 3)).slice(0, 3);
+  els.actionCenterTitle.textContent = items.length ? `${items.length} 项需要处理` : "当前无需处理";
+  els.actionList.innerHTML = items.length ? items.map(item => {
+    const account = (state.backend.accounts || []).find(candidate => candidate.id === item.accountId);
+    const canSync = account && ["sync", "freshness", "status"].includes(item.kind);
+    const actions = canSync
+      ? `<button class="mini-button" data-sync-account="${escapeHtml(account.id)}"><span>立即同步</span></button><button class="mini-button" data-view-account="${escapeHtml(account.id)}" data-account-provider="${escapeHtml(account.provider)}">查看账户</button>`
+      : `<button class="mini-button" data-target-view="alerts">查看提醒</button>${account ? `<button class="mini-button" data-account-alerts="${escapeHtml(account.id)}">调整规则</button>` : ""}`;
+    return `<article class="action-item"><span class="action-symbol ${["sync", "freshness", "status"].includes(item.kind) ? "sync" : ""}">${symbols[item.kind] || "!"}</span><div class="action-copy"><b>${escapeHtml(item.title || "远端状态需要关注")}</b><span>${escapeHtml(item.message || "请查看提醒中心了解详情")}</span></div><div class="action-actions">${actions}</div></article>`;
+  }).join("") : `<article class="action-item"><span class="action-symbol good">✓</span><div class="action-copy"><b>没有需要立即处理的事项</b><span>已暂缓的提醒仍会保留在提醒中心，且不会影响首页或托盘状态。</span></div></article>`;
 }
 
 function renderPlatform() {
@@ -943,14 +968,14 @@ function renderAlerts() {
     button.setAttribute("aria-pressed", String(active));
   });
   const visibleAlerts = state.alertFilter === "all" ? allAlerts : allAlerts.filter(item => category(item) === state.alertFilter);
-  const snoozedCount = visibleAlerts.filter(item => item.snoozedUntil && new Date(item.snoozedUntil).getTime() > Date.now()).length;
+  const snoozedCount = visibleAlerts.filter(isAlertSnoozed).length;
   els.alertFilterResult.textContent = `${visibleAlerts.length} 条提醒${snoozedCount ? ` · ${snoozedCount} 条已暂缓` : ""}`;
   const symbols = { balance:"¥", quota:"%", sync:"!", freshness:"↻", status:"!" };
   const badges = { balance:"余额", quota:"额度", sync:"同步", freshness:"时效", status:"状态" };
   els.alertList.innerHTML = visibleAlerts.length ? visibleAlerts.map(item => {
     const account = (state.backend.accounts || []).find(candidate => candidate.id === item.accountId);
     const kind = category(item);
-    const snoozed = item.snoozedUntil && new Date(item.snoozedUntil).getTime() > Date.now();
+    const snoozed = isAlertSnoozed(item);
     const snoozeButton = item.alertKey ? `<button class="mini-button" ${snoozed ? "data-resume-alert" : "data-snooze-alert"}="${escapeHtml(item.alertKey)}">${snoozed ? "恢复提醒" : "暂缓 24 小时"}</button>` : "";
     return `<article class="alert-item glass-panel live-alert ${kind}${snoozed ? " snoozed" : ""}" data-alert-kind="${kind}">
       <div class="alert-symbol">${symbols[item.kind] || "!"}</div>

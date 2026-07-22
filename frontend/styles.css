@@ -138,6 +138,17 @@ button { color: inherit; }
 .text-button span { padding-left: 5px; }
 
 .platform-grid { display: grid; grid-template-columns: repeat(4, minmax(190px, 1fr)); gap: 14px; }
+.action-center { margin-top:14px; padding:19px 21px; border-radius:var(--radius-lg); }
+.action-list { display:grid; gap:8px; margin-top:13px; }
+.action-item { display:grid; grid-template-columns:30px minmax(0,1fr) auto; align-items:center; gap:11px; padding:10px 2px; border-bottom:1px solid var(--line); }
+.action-item:last-child { border-bottom:0; }
+.action-symbol { display:grid; place-items:center; width:29px; height:29px; border-radius:9px; color:#ba6a27; background:rgba(216,132,54,.12); font-size:13px; font-weight:800; }
+.action-symbol.sync { color:#b24d5b; background:rgba(210,78,94,.12); }
+.action-symbol.good { color:var(--green); background:rgba(24,166,117,.10); }
+.action-copy { min-width:0; }
+.action-copy b { display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:12px; }
+.action-copy span { display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; margin-top:3px; color:var(--muted); font-size:10px; }
+.action-actions { display:flex; gap:6px; }
 .platform-card { position: relative; overflow: hidden; border-radius: var(--radius-lg); padding: 17px; min-height: 190px; cursor: pointer; transition: transform .25s ease, box-shadow .25s ease; background: linear-gradient(145deg, rgba(255,255,255,.72), rgba(255,255,255,.38)); border: 1px solid rgba(255,255,255,.76); box-shadow: 0 16px 35px rgba(58,71,105,.11), inset 0 1px 0 rgba(255,255,255,.9); backdrop-filter: blur(20px); }
 .platform-card:hover { transform: translateY(-4px); box-shadow: 0 25px 48px rgba(58,71,105,.16), inset 0 1px 0 #fff; }
 .platform-card-top { display: flex; justify-content: space-between; align-items: center; }
@@ -340,6 +351,8 @@ button { color: inherit; }
   .side-label, .platform-nav button span:last-child, .settings-button, .privacy-note { display: none; }
   .platform-nav button { justify-content: center; padding: 7px; }
   .hero { grid-template-columns: 1fr; }
+  .action-item { grid-template-columns:30px minmax(0,1fr); }
+  .action-actions { grid-column:2; justify-content:flex-start; }
   .bottom-grid { grid-template-columns: 1fr; }
   .comparison-grid { grid-template-columns: 1fr; }
 }
