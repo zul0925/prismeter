@@ -34,6 +34,15 @@ const providers = {
     description: "余额官方查询，历史用量从 Prismeter 连接后开始采集",
     primaryProduct: "remote",
     products: {}
+  },
+  kimi: {
+    name: "Kimi API",
+    short: "Ki",
+    color: "#4338ca",
+    gradient: "linear-gradient(135deg,#5b4ce8,#a66df4)",
+    description: "Kimi 官方余额查询，历史用量从 Prismeter 连接后开始采集",
+    primaryProduct: "remote",
+    products: {}
   }
 };
 
@@ -293,6 +302,29 @@ function applyDeepSeekAccountData(account = getSelectedAccount("deepseek")) {
   if (!provider.products[state.products.deepseek]) state.products.deepseek = "api";
 }
 
+function applyKimiAccountData(account = getSelectedAccount("kimi")) {
+  const provider = providers.kimi;
+  if (!account) {
+    provider.products = { remote: remotePlaceholder(provider.name, true) };
+    provider.primaryProduct = "remote";
+    provider.description = "尚未连接真实账户；添加 API Key 后读取 Kimi 官方余额数据";
+    state.products.kimi = "remote";
+    return;
+  }
+  const balance = account.balances?.find(item => item.currency === "CNY") || account.balances?.[0];
+  const historyCount = state.backend.history.filter(item => item.accountId === account.id).length;
+  provider.description = `${account.name} · Kimi 官方余额查询 · ${account.keyHint}`;
+  provider.products = { api: {
+    name: "Kimi API", kind: "按量计费", usage: balance ? `¥ ${balance.total}` : "—", usageLabel: "当前可用余额", progress: 0,
+    reset: `同步于 ${formatDate(account.lastSync)}`,
+    summaries: [["可用余额", balance ? `¥ ${balance.total}` : "—", "Kimi 官方"], ["代金券余额", balance ? `¥ ${balance.granted}` : "—", "Kimi 官方"], ["现金余额", balance ? `¥ ${balance.toppedUp}` : "—", "Kimi 官方"], ["本地快照", `${historyCount} 条`, "连接后采集"]],
+    columns: ["币种", "可用余额", "代金券余额", "现金余额"],
+    rows: (account.balances || []).map(item => resource(account.name, account.isAvailable ? "API 可调用" : "余额不可用", "Ki", [[item.currency, "官方"], [`¥ ${item.total}`, "官方"], [`¥ ${item.granted}`, "官方"], [`¥ ${item.toppedUp}`, "官方"]]))
+  }};
+  provider.primaryProduct = "api";
+  if (!provider.products[state.products.kimi]) state.products.kimi = "api";
+}
+
 function applyOpenAIAccountData(account = getSelectedAccount("openai")) {
   const provider = providers.openai;
   if (!account) {
@@ -534,10 +566,10 @@ function renderOverview() {
   }
   els.activityList.innerHTML = accounts.length ? accounts.map(account => {
     const provider = providers[account.provider];
-    const primary = account.provider === "deepseek"
+    const primary = ["deepseek", "kimi"].includes(account.provider)
       ? account.balances?.[0]
       : account.products?.[0];
-    const value = account.provider === "deepseek"
+    const value = ["deepseek", "kimi"].includes(account.provider)
       ? (primary ? escapeHtml(`${moneySymbol(primary.currency)} ${primary.total}`) : "—")
       : escapeHtml(primary?.usage || "—");
     const freshness = accountFreshness(account); return `<div class="activity-item">${platformLogo(account.provider, "activity-brand-logo")}<div class="activity-main"><b>${escapeHtml(account.name)}</b><span>${escapeHtml(provider?.name || account.provider)} · 远端同步</span></div><div class="activity-value"><b>${value}</b><span class="freshness-text ${freshness.level}">${escapeHtml(freshness.label)} · ${escapeHtml(relativeSyncTime(account.lastSync))}</span></div></div>`;
@@ -569,6 +601,7 @@ function renderPlatform() {
     return renderPlatform();
   }
   if (id === "deepseek") applyDeepSeekAccountData(account);
+  if (id === "kimi") applyKimiAccountData(account);
   if (id === "openai") applyOpenAIAccountData(account);
   if (id === "volcengine") applyVolcengineAccountData(account);
   if (id === "mimo") applyMimoAccountData(account);
@@ -831,11 +864,13 @@ function updateCredentialFields() {
   const isVolcengine = provider === "volcengine";
   const isOpenAI = provider === "openai";
   const isMimo = provider === "mimo";
+  const isKimi = provider === "kimi";
   els.deepseekCredentials.hidden = isVolcengine || isOpenAI || isMimo;
   els.volcengineCredentials.hidden = !isVolcengine;
   els.openaiCredentials.hidden = !isOpenAI;
   els.mimoCredentials.hidden = !isMimo;
-  els.deepseekCapability.hidden = isVolcengine || isOpenAI || isMimo;
+  els.deepseekCapability.hidden = isVolcengine || isOpenAI || isMimo || isKimi;
+  els.kimiCapability.hidden = !isKimi;
   els.volcengineCapability.hidden = !isVolcengine;
   els.openaiCapability.hidden = !isOpenAI;
   els.mimoCapability.hidden = !isMimo;
@@ -843,7 +878,7 @@ function updateCredentialFields() {
   els.volcAccessKey.required = isVolcengine;
   els.volcSecretKey.required = isVolcengine;
   els.mimoApiKey.required = isMimo;
-  els.accountName.placeholder = isVolcengine ? "例如：火山工作账户" : isOpenAI ? "例如：OpenAI 个人账户" : isMimo ? "例如：MiMo Token Plan" : "例如：工作室主账户";
+  els.accountName.placeholder = isVolcengine ? "例如：火山工作账户" : isOpenAI ? "例如：OpenAI 个人账户" : isMimo ? "例如：MiMo Token Plan" : isKimi ? "例如：Kimi 工作账户" : "例如：工作室主账户";
   syncMimoEndpointPresets();
 }
 
@@ -859,7 +894,7 @@ function openConnectionDialog(account) {
   state.connectionAccountId = account.id;
   els.connectionDialogTitle.textContent = `${account.name} · 连接设置`;
   els.connectionDialogSubtitle.textContent = `${providers[account.provider]?.name || account.provider} · ${account.keyHint || "当前凭据已保存"}`;
-  els.editDeepseekCredentials.hidden = account.provider !== "deepseek";
+  els.editDeepseekCredentials.hidden = !["deepseek", "kimi"].includes(account.provider);
   els.editVolcengineCredentials.hidden = account.provider !== "volcengine";
   els.editMimoCredentials.hidden = account.provider !== "mimo";
   els.editAccountKey.value = "";

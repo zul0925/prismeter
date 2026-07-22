@@ -3,6 +3,7 @@
 mod backend;
 mod codex;
 mod credential;
+mod kimi;
 mod mimo;
 mod notifications;
 mod volcengine;

@@ -545,6 +545,7 @@
           <button class="combo-trigger" type="button" data-combo-trigger aria-haspopup="listbox" aria-expanded="false"><span data-combo-label>DeepSeek 官方 API</span><i></i></button>
           <div class="combo-menu" role="listbox">
             <button type="button" class="combo-option selected" data-value="deepseek" role="option">DeepSeek 官方 API<span>余额接口</span></button>
+            <button type="button" class="combo-option" data-value="kimi" role="option">Kimi API<span>官方余额接口</span></button>
             <button type="button" class="combo-option" data-value="volcengine" role="option">火山方舟<span>Agent / Coding / API</span></button>
             <button type="button" class="combo-option disabled-option" data-value="mimo" role="option" disabled aria-disabled="true">Xiaomi MiMo<span>暂不可添加 · 官方未开放第三方用量统计接口</span></button>
             <button type="button" class="combo-option" data-value="openai" role="option">OpenAI<span>ChatGPT 订阅 / Codex 用量</span></button>
@@ -584,6 +585,11 @@
       <b>DeepSeek 官方可用指标</b>
       <span>可调用状态 · 币种 · 总余额 · 赠送余额 · 充值余额</span>
       <small>API Key 由 Windows DPAPI 加密，历史趋势从首次连接后开始记录。</small>
+    </div>
+    <div id="kimiCapability" class="capability-note" hidden>
+      <b>Kimi 官方可用指标</b>
+      <span>可用余额 · 代金券余额 · 现金余额</span>
+      <small>通过 Kimi 官方余额接口读取。API Key 仅经 Windows DPAPI 加密保存；连接后将采集趋势快照并参与低余额提醒与耗尽预估。</small>
     </div>
     <div id="volcengineCapability" class="capability-note volcengine-note" hidden>
       <b>火山方舟按实际授权发现产品</b>
