@@ -132,11 +132,47 @@ const englishUi = Object.freeze({
   "清除历史记录":"Clear history", "确认清除":"Clear", "确认移除":"Remove", "发送测试通知":"Send test notification", "退出 Prismeter":"Quit Prismeter", "打开主窗口":"Open main window"
 });
 
+// Static HTML is kept in Chinese so the first paint is useful offline. Dynamic UI
+// must use these keyed messages instead of assembling Chinese sentences at render time.
+const uiMessages = Object.freeze({
+  "zh-CN": {
+    operationIncomplete:"操作未完成，请稍后重试", localServiceError:"本地服务返回异常", operationFailed:"操作失败",
+    notSynced:"尚未同步", invalidTime:"时间无效", neverSynced:"从未同步", justNow:"刚刚",
+    minutesAgo:"{count} 分钟前", hoursAgo:"{count} 小时前", daysAgo:"{count} 天前", retrySoon:"即将自动重试",
+    retryMinutes:"{count} 分钟后自动重试", retryHours:"{count} 小时后自动重试", monitoringPaused:"监控已暂停",
+    pausedDetail:"不会参与自动或全部同步", firstSync:"等待首次远端同步", repeatedFailure:"持续失败", syncFailed:"同步失败",
+    lastSuccess:"上次成功：{time}", dataFresh:"数据新鲜", refreshRecommended:"建议刷新", dataStale:"数据已过期",
+    updatedAt:"更新于 {time}", noDuration:"尚无耗时记录", autoSyncOff:"自动同步已关闭", autoSyncEvery:"每 {minutes} 分钟自动同步",
+    desktopPreferenceFailed:"Windows 拒绝应用此设置", percentagePoints:"{sign}{value} 个百分点"
+  },
+  en: {
+    operationIncomplete:"The operation did not finish. Please try again.", localServiceError:"The local service returned an invalid response.", operationFailed:"Operation failed",
+    notSynced:"Not synced", invalidTime:"Invalid time", neverSynced:"Never synced", justNow:"Just now",
+    minutesAgo:"{count} minutes ago", hoursAgo:"{count} hours ago", daysAgo:"{count} days ago", retrySoon:"Retrying automatically soon",
+    retryMinutes:"Retrying automatically in {count} minutes", retryHours:"Retrying automatically in {count} hours", monitoringPaused:"Monitoring paused",
+    pausedDetail:"This account is excluded from automatic and manual syncs", firstSync:"Waiting for the first remote sync", repeatedFailure:"Repeated failures", syncFailed:"Sync failed",
+    lastSuccess:"Last successful sync: {time}", dataFresh:"Data is fresh", refreshRecommended:"Refresh recommended", dataStale:"Data is stale",
+    updatedAt:"Updated {time}", noDuration:"No duration recorded", autoSyncOff:"Automatic sync is off", autoSyncEvery:"Sync automatically every {minutes} minutes",
+    desktopPreferenceFailed:"Windows rejected this setting", percentagePoints:"{sign}{value} percentage points"
+  }
+});
+
+function t(key, values = {}) {
+  const source = uiMessages[state.interfaceLanguage === "en" ? "en" : "zh-CN"];
+  const template = source[key] || uiMessages["zh-CN"][key] || key;
+  return template.replace(/\{(\w+)\}/g, (_, name) => String(values[name] ?? ""));
+}
+
+function translateStatic(value) {
+  if (state.interfaceLanguage !== "en") return value;
+  return englishUi[value] || value;
+}
+
 function localizeTextNode(node) {
   if (!node || node.nodeType !== Node.TEXT_NODE || ["SCRIPT", "STYLE"].includes(node.parentElement?.tagName)) return;
   const original = localizedTextNodes.get(node) || node.nodeValue;
   if (!localizedTextNodes.has(node)) localizedTextNodes.set(node, original);
-  const translated = state.interfaceLanguage === "en" && englishUi[original] ? englishUi[original] : original;
+  const translated = translateStatic(original);
   if (node.nodeValue !== translated) node.nodeValue = translated;
 }
 
@@ -145,6 +181,17 @@ function localizeSubtree(root) {
   if (root.nodeType === Node.TEXT_NODE) return localizeTextNode(root);
   const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
   for (let node = walker.nextNode(); node; node = walker.nextNode()) localizeTextNode(node);
+  if (root.nodeType === Node.ELEMENT_NODE) {
+    [root, ...root.querySelectorAll("[title], [aria-label], [placeholder]")].forEach(element => {
+      ["title", "aria-label", "placeholder"].forEach(attribute => {
+        if (!element.hasAttribute(attribute)) return;
+        const original = element.dataset[`i18n${attribute.replace(/-([a-z])/g, (_, char) => char.toUpperCase())}`] || element.getAttribute(attribute);
+        const dataKey = `i18n${attribute.replace(/-([a-z])/g, (_, char) => char.toUpperCase())}`;
+        if (!element.dataset[dataKey]) element.dataset[dataKey] = original;
+        element.setAttribute(attribute, translateStatic(original));
+      });
+    });
+  }
 }
 
 function applyInterfaceLanguage(language = "zh-CN") {
@@ -160,6 +207,7 @@ const interfaceLanguageObserver = new MutationObserver(records => {
   for (const record of records) {
     if (record.type === "characterData") localizeTextNode(record.target);
     record.addedNodes.forEach(localizeSubtree);
+    if (record.type === "attributes") localizeSubtree(record.target);
   }
 });
 
@@ -186,7 +234,7 @@ function escapeHtml(value = "") {
   return String(value).replace(/[&<>'"]/g, char => ({"&":"&amp;","<":"&lt;",">":"&gt;","'":"&#39;",'"':"&quot;"}[char]));
 }
 
-function errorMessage(error, fallback = "操作未完成，请稍后重试") {
+function errorMessage(error, fallback = t("operationIncomplete")) {
   if (typeof error === "string" && error.trim()) return error;
   if (typeof error?.message === "string" && error.message.trim()) return error.message;
   if (typeof error?.error === "string" && error.error.trim()) return error.error;
@@ -196,23 +244,23 @@ function errorMessage(error, fallback = "操作未完成，请稍后重试") {
 function moneySymbol(currency) { return currency === "CNY" ? "¥" : currency === "USD" ? "$" : `${currency || ""} `; }
 
 function formatDate(value) {
-  if (!value) return "尚未同步";
+  if (!value) return t("notSynced");
   const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "时间无效";
+  if (Number.isNaN(date.getTime())) return t("invalidTime");
   return new Intl.DateTimeFormat(state.interfaceLanguage, { month:"2-digit", day:"2-digit", hour:"2-digit", minute:"2-digit" }).format(date);
 }
 
 function relativeSyncTime(value) {
-  if (!value) return "从未同步";
+  if (!value) return t("neverSynced");
   const timestamp = new Date(value).getTime();
-  if (!Number.isFinite(timestamp)) return "时间无效";
+  if (!Number.isFinite(timestamp)) return t("invalidTime");
   const elapsed = Math.max(0, Date.now() - timestamp);
   const minutes = Math.floor(elapsed / 60000);
-  if (minutes < 1) return "刚刚";
-  if (minutes < 60) return `${minutes} 分钟前`;
+  if (minutes < 1) return t("justNow");
+  if (minutes < 60) return t("minutesAgo", { count:minutes });
   const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `${hours} 小时前`;
-  return `${Math.floor(hours / 24)} 天前`;
+  if (hours < 24) return t("hoursAgo", { count:hours });
+  return t("daysAgo", { count:Math.floor(hours / 24) });
 }
 
 function relativeFutureTime(value) {
@@ -220,14 +268,14 @@ function relativeFutureTime(value) {
   const timestamp = new Date(value).getTime();
   if (!Number.isFinite(timestamp)) return "";
   const remaining = timestamp - Date.now();
-  if (remaining <= 0) return "即将自动重试";
+  if (remaining <= 0) return t("retrySoon");
   const minutes = Math.max(1, Math.ceil(remaining / 60000));
-  return minutes < 60 ? `${minutes} 分钟后自动重试` : `${Math.ceil(minutes / 60)} 小时后自动重试`;
+  return minutes < 60 ? t("retryMinutes", { count:minutes }) : t("retryHours", { count:Math.ceil(minutes / 60) });
 }
 
 function accountFreshness(account) {
-  if (account?.enabled === false) return { level:"paused", label:"监控已暂停", detail:"不会参与自动或全部同步" };
-  if (!account?.lastSync) return { level:"never", label:"尚未同步", detail:"等待首次远端同步" };
+  if (account?.enabled === false) return { level:"paused", label:t("monitoringPaused"), detail:t("pausedDetail") };
+  if (!account?.lastSync) return { level:"never", label:t("notSynced"), detail:t("firstSync") };
   const elapsedMinutes = Math.max(0, (Date.now() - new Date(account.lastSync).getTime()) / 60000);
   const configured = Number(state.backend.settings?.autoSyncMinutes || 0);
   const accountStaleLimit = account?.alertSettings?.staleAfterMinutes;
@@ -236,10 +284,10 @@ function accountFreshness(account) {
   const expectedFreshLimit = configured ? Math.max(15, configured * 1.5) : 60;
   const freshLimit = Math.min(expectedFreshLimit, staleLimit / 2);
   const relative = relativeSyncTime(account.lastSync);
-  if (account.lastError) return { level:"error", label:Number(account.consecutiveFailures || 0) >= 3 ? "持续失败" : "同步失败", detail:`上次成功：${relative}` };
-  if (elapsedMinutes <= freshLimit) return { level:"fresh", label:"数据新鲜", detail:`更新于 ${relative}` };
-  if (elapsedMinutes <= staleLimit) return { level:"aging", label:"建议刷新", detail:`更新于 ${relative}` };
-  return { level:"stale", label:"数据已过期", detail:`更新于 ${relative}` };
+  if (account.lastError) return { level:"error", label:Number(account.consecutiveFailures || 0) >= 3 ? t("repeatedFailure") : t("syncFailed"), detail:t("lastSuccess", { time:relative }) };
+  if (elapsedMinutes <= freshLimit) return { level:"fresh", label:t("dataFresh"), detail:t("updatedAt", { time:relative }) };
+  if (elapsedMinutes <= staleLimit) return { level:"aging", label:t("refreshRecommended"), detail:t("updatedAt", { time:relative }) };
+  return { level:"stale", label:t("dataStale"), detail:t("updatedAt", { time:relative }) };
 }
 
 function overallFreshness(accounts = state.backend.accounts || []) {
@@ -255,14 +303,14 @@ async function apiRequest(path, options = {}, allowPartial = false) {
     ...options,
     headers: { "Content-Type": "application/json", ...(options.headers || {}) }
   });
-  const payload = await response.json().catch(() => ({ error: "本地服务返回异常" }));
-  if (!response.ok || (!allowPartial && payload.ok === false)) throw new Error(payload.error || "操作失败");
+  const payload = await response.json().catch(() => ({ error: t("localServiceError") }));
+  if (!response.ok || (!allowPartial && payload.ok === false)) throw new Error(payload.error || t("operationFailed"));
   return payload;
 }
 
 function formatDuration(value) {
   const milliseconds = Number(value || 0);
-  if (!milliseconds) return "尚无耗时记录";
+  if (!milliseconds) return t("noDuration");
   return milliseconds < 1000 ? `${milliseconds} ms` : `${(milliseconds / 1000).toFixed(milliseconds < 10000 ? 1 : 0)} s`;
 }
 
@@ -839,7 +887,7 @@ function renderMetricTrend(account, productId) {
   els.trendPoints.innerHTML = points.map(point => `<circle cx="${point.x.toFixed(1)}" cy="${point.y.toFixed(1)}" r="4"><title>${escapeHtml(formatDate(point.timestamp))} · ${escapeHtml(formatMetricNumber(point.value, selected.unit))}</title></circle>`).join("");
   const change = values.at(-1) - values[0];
   els.trendChange.textContent = selected.unit === "%"
-    ? `${change > 0 ? "+" : ""}${change.toFixed(1)} 个百分点`
+    ? t("percentagePoints", { sign:change > 0 ? "+" : "", value:change.toFixed(1) })
     : `${change > 0 ? "+" : ""}${formatMetricNumber(change, selected.unit)}`;
   els.trendChange.classList.toggle("down", change < 0);
   els.trendEmpty.hidden = true;
@@ -847,7 +895,7 @@ function renderMetricTrend(account, productId) {
 
 function formatSyncSetting() {
   const minutes = state.backend.settings?.autoSyncMinutes || 0;
-  return minutes ? `每 ${minutes} 分钟自动同步` : "自动同步已关闭";
+  return minutes ? t("autoSyncEvery", { minutes }) : t("autoSyncOff");
 }
 
 async function syncDesktopPreferences(settings = state.backend.settings, strictKeys = []) {
@@ -868,7 +916,7 @@ async function syncDesktopPreferences(settings = state.backend.settings, strictK
       state.desktopPreferences[key] = desired[key];
     } catch (error) {
       console.error(`应用桌面设置 ${key} 失败`, error);
-      if (strictKeys.includes(key)) throw new Error(errorMessage(error, "Windows 拒绝应用此设置"));
+      if (strictKeys.includes(key)) throw new Error(errorMessage(error, t("desktopPreferenceFailed")));
     }
   }
 }
