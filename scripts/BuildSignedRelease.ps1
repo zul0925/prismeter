@@ -1,5 +1,5 @@
 param(
-  [string]$Notes = "Performance, stability, and usability improvements.",
+  [string]$Notes = "",
   [string]$Repository = "zul0925/prismeter"
 )
 
@@ -24,6 +24,13 @@ if ([string]::IsNullOrEmpty($KeyPassword)) {
 
 $Config = Get-Content -Raw -LiteralPath $ConfigPath -Encoding UTF8 | ConvertFrom-Json
 $Version = $Config.version
+$NotesPath = Join-Path $ProjectRoot "release-notes\v$Version.md"
+if ([string]::IsNullOrWhiteSpace($Notes)) {
+  if (-not (Test-Path -LiteralPath $NotesPath)) {
+    throw "Release notes not found: $NotesPath"
+  }
+  $Notes = (Get-Content -Raw -LiteralPath $NotesPath -Encoding UTF8).Trim()
+}
 $InstallerName = "Prismeter_${Version}_x64-setup.exe"
 $InstallerPath = Join-Path $BundleDirectory $InstallerName
 $SignaturePath = "$InstallerPath.sig"

@@ -1246,11 +1246,37 @@ function setUpdateStatus(text, tone = "") {
   els.updateStatusText.className = tone ? `update-status-${tone}` : "";
 }
 
+function renderUpdateNotes(notes) {
+  const source = String(notes || "").trim();
+  if (!source) return "<p>此版本暂未提供更新说明。</p>";
+  let inList = false;
+  const output = [];
+  const closeList = () => {
+    if (inList) { output.push("</ul>"); inList = false; }
+  };
+  for (const rawLine of source.split(/\r?\n/)) {
+    const line = rawLine.trim();
+    if (!line) { closeList(); continue; }
+    if (line === "---") { closeList(); output.push("<hr>"); continue; }
+    if (line.startsWith("### ")) { closeList(); output.push(`<h4>${escapeHtml(line.slice(4))}</h4>`); continue; }
+    if (line.startsWith("## ")) { closeList(); output.push(`<h3>${escapeHtml(line.slice(3))}</h3>`); continue; }
+    if (line.startsWith("- ")) {
+      if (!inList) { output.push("<ul>"); inList = true; }
+      output.push(`<li>${escapeHtml(line.slice(2))}</li>`);
+      continue;
+    }
+    closeList();
+    output.push(`<p>${escapeHtml(line)}</p>`);
+  }
+  closeList();
+  return output.join("");
+}
+
 function showUpdateDialog(update) {
   state.availableUpdate = update;
   els.updateDialogTitle.textContent = `Prismeter ${update.version} 已可用`;
   els.updateDialogSummary.textContent = `当前版本 ${update.currentVersion}。下载安装前会验证更新签名，安装时应用将自动关闭。`;
-  els.updateReleaseNotes.textContent = update.notes?.trim() || "此版本暂未提供更新说明。";
+  els.updateReleaseNotes.innerHTML = renderUpdateNotes(update.notes);
   els.updateProgress.hidden = true;
   els.updateProgressBar.style.width = "0%";
   els.updateProgressText.textContent = "准备下载…";

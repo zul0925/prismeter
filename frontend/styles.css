@@ -1209,7 +1209,13 @@ input[type="number"]::-webkit-inner-spin-button,input[type="number"]::-webkit-ou
 #checkUpdateButton { position:relative; }
 #checkUpdateButton.checking::before { content:""; width:13px; height:13px; margin-right:8px; border:2px solid rgba(96,114,220,.22); border-top-color:#6072dc; border-radius:50%; animation:spin .7s linear infinite; }
 .update-dialog { width:min(560px,calc(100vw - 32px)); }
-.update-release-notes { max-height:210px; margin:17px 0; padding:14px 15px; overflow:auto; border:1px solid rgba(103,115,148,.10); border-radius:15px; background:rgba(255,255,255,.38); color:var(--muted); font-size:11px; line-height:1.65; white-space:pre-wrap; }
+.update-release-notes { max-height:210px; margin:17px 0; padding:14px 15px; overflow:auto; border:1px solid rgba(103,115,148,.10); border-radius:15px; background:rgba(255,255,255,.38); color:var(--muted); font-size:11px; line-height:1.65; }
+.update-release-notes h3,.update-release-notes h4 { margin:12px 0 6px; color:var(--ink); font-size:12px; }
+.update-release-notes h3:first-child,.update-release-notes h4:first-child { margin-top:0; }
+.update-release-notes p { margin:6px 0; }
+.update-release-notes ul { margin:5px 0 10px; padding-left:18px; }
+.update-release-notes li { margin:4px 0; }
+.update-release-notes hr { border:0; border-top:1px solid var(--line); margin:13px 0; }
 .update-progress { margin:16px 0 4px; }
 .update-progress>div { height:7px; overflow:hidden; border-radius:999px; background:rgba(101,121,238,.12); }
 .update-progress i { display:block; width:0; height:100%; border-radius:inherit; background:linear-gradient(90deg,#4389f5,#765ee8,#50c9b0); transition:width .2s ease; }
