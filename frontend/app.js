@@ -61,7 +61,7 @@ function platformLogo(providerId, sizeClass = "") {
 
 function resource(name, type, badge, metrics) { return { name, type, badge, metrics }; }
 
-const state = { view: "overview", provider: "volcengine", accountId: null, renameAccountId: null, connectionAccountId: null, diagnosticAccountId: null, alertFilter: "all", syncEventFilter: "all", products: {}, backend: { accounts: [], history: [], syncEvents: [] }, desktopPreferences: { closeToTray:null, launchAtStartup:null }, syncPollTimer: null, syncPollUsers: 0, updateCheckStarted: false, availableUpdate: null };
+const state = { view: "overview", provider: "volcengine", accountId: null, renameAccountId: null, connectionAccountId: null, diagnosticAccountId: null, alertFilter: "all", syncEventFilter: "all", products: {}, backend: { accounts: [], history: [], syncEvents: [] }, desktopPreferences: { closeToTray:null, launchAtStartup:null }, syncPollTimer: null, syncPollUsers: 0, updateCheckStarted: false, availableUpdate: null, storageNoticeShown: false };
 Object.entries(providers).forEach(([id, p]) => state.products[id] = p.primaryProduct);
 function remotePlaceholder(platformName, supported = false) {
   return {
@@ -400,6 +400,10 @@ async function loadBackendState({quiet = false} = {}) {
     if (state.view === "platforms") renderPlatform();
     if (state.view === "models") renderComparisons();
     if (!quiet) els.syncText.textContent = state.backend.accounts.length ? formatSyncSetting() : "等待连接账户";
+    if (payload.startupNotice && !state.storageNoticeShown) {
+      state.storageNoticeShown = true;
+      showToast(payload.startupNotice, "warning");
+    }
   } catch (error) {
     els.syncText.textContent = "本地服务异常";
     if (!quiet) showToast(errorMessage(error));

@@ -222,10 +222,19 @@ struct DeepSeekBalance {
     #[serde(default)] topped_up_balance: String,
 }
 
+fn read_persisted_state(path: &Path) -> AppResult<PersistedState> {
+    let text = fs::read_to_string(path)
+        .map_err(|error| format!("无法读取 {}：{error}", path.display()))?;
+    serde_json::from_str(text.trim_start_matches('\u{feff}'))
+        .map_err(|error| format!("{} 格式无效：{error}", path.display()))
+}
+
 struct Store {
     state: Mutex<PersistedState>,
     syncing_accounts: Mutex<HashSet<String>>,
     state_path: PathBuf,
+    backup_path: PathBuf,
+    startup_notice: Option<String>,
     http: Client,
 }
 
@@ -233,10 +242,22 @@ impl Store {
     fn open(data_dir: &Path) -> AppResult<Self> {
         fs::create_dir_all(data_dir).map_err(|e| format!("无法创建数据目录：{e}"))?;
         let state_path = data_dir.join("accounts.json");
+        let backup_path = data_dir.join("accounts.backup.json");
+        let mut startup_notice = None;
         let mut state = if state_path.exists() {
-            let text = fs::read_to_string(&state_path).map_err(|e| format!("无法读取账户数据：{e}"))?;
-            serde_json::from_str(text.trim_start_matches('\u{feff}'))
-                .map_err(|e| format!("账户数据格式无效：{e}"))?
+            match read_persisted_state(&state_path) {
+                Ok(state) => state,
+                Err(primary_error) if backup_path.exists() => {
+                    let recovered = read_persisted_state(&backup_path).map_err(|backup_error| {
+                        format!("账户数据和自动备份均无法读取。主文件：{primary_error}；备份：{backup_error}")
+                    })?;
+                    fs::copy(&backup_path, &state_path)
+                        .map_err(|error| format!("已找到有效备份，但无法恢复账户数据：{error}"))?;
+                    startup_notice = Some("检测到本地状态文件异常，已从最近一次有效备份恢复。".into());
+                    recovered
+                }
+                Err(error) => return Err(error),
+            }
         } else {
             PersistedState::default()
         };
@@ -257,11 +278,14 @@ impl Store {
             state: Mutex::new(state),
             syncing_accounts: Mutex::new(HashSet::new()),
             state_path,
+            backup_path,
+            startup_notice,
             http,
         };
         if pruned_on_open.0 > 0 || pruned_on_open.1 > 0 {
             let state = store.state.lock().unwrap();
             store.save_locked(&state)?;
+            store.refresh_backup()?;
         }
         Ok(store)
     }
@@ -269,10 +293,23 @@ impl Store {
     fn save_locked(&self, state: &PersistedState) -> AppResult<()> {
         let temp = self.state_path.with_extension("json.tmp");
         let data = serde_json::to_vec(state).map_err(|e| format!("无法序列化账户数据：{e}"))?;
+        if self.state_path.exists() && read_persisted_state(&self.state_path).is_ok() {
+            let _ = fs::copy(&self.state_path, &self.backup_path);
+        }
         fs::write(&temp, data).map_err(|e| format!("无法写入账户数据：{e}"))?;
         fs::rename(&temp, &self.state_path).or_else(|_| {
             fs::copy(&temp, &self.state_path).map(|_| ()).and_then(|_| fs::remove_file(&temp))
-        }).map_err(|e| format!("无法保存账户数据：{e}"))
+        }).map_err(|e| format!("无法保存账户数据：{e}"))?;
+        if !self.backup_path.exists() {
+            let _ = fs::copy(&self.state_path, &self.backup_path);
+        }
+        Ok(())
+    }
+
+    fn refresh_backup(&self) -> AppResult<()> {
+        fs::copy(&self.state_path, &self.backup_path)
+            .map(|_| ())
+            .map_err(|error| format!("无法更新本地状态备份：{error}"))
     }
 
     fn protect(&self, value: &str) -> AppResult<String> {
@@ -710,6 +747,7 @@ impl Store {
         json!({
             "ok": true,
             "version": VERSION,
+            "startupNotice": self.startup_notice,
             "settings": state.settings,
             "providerOrder": ordered_providers(&state.accounts, &state.provider_order),
             "alerts": alerts(&state),
@@ -835,9 +873,10 @@ fn route_api(method: &Method, path: &str, body: &str, store: &Arc<Store>) -> App
         if !(50.0..=100.0).contains(&input.usage_threshold) { return Err("额度提醒阈值应在 50% 到 100% 之间。".into()); }
         let mut state = store.state.lock().unwrap();
         state.settings = input.clone();
-        prune_history(&mut state, Utc::now());
+        let pruned = prune_history(&mut state, Utc::now());
         if !input.notifications_enabled { state.notified_alert_keys.clear(); }
         store.save_locked(&state)?;
+        if pruned.0 > 0 || pruned.1 > 0 { store.refresh_backup()?; }
         return Ok((200, json!({ "ok": true, "settings": input })));
     }
     if method == &Method::Delete && path == "/api/history" {
@@ -847,6 +886,7 @@ fn route_api(method: &Method, path: &str, body: &str, store: &Arc<Store>) -> App
         state.history.clear();
         state.sync_events.clear();
         store.save_locked(&state)?;
+        store.refresh_backup()?;
         return Ok((200, json!({
             "ok": true,
             "removed": { "balanceSnapshots": balance_snapshots, "syncEvents": sync_events }
@@ -926,6 +966,7 @@ fn route_api(method: &Method, path: &str, body: &str, store: &Arc<Store>) -> App
             state.history.retain(|h| h.account_id != id);
             state.sync_events.retain(|event| event.account_id != id);
             store.save_locked(&state)?;
+            store.refresh_backup()?;
             return Ok((200, json!({ "ok": true })));
         }
     }
@@ -1341,6 +1382,66 @@ mod tests {
         assert_eq!(state.accounts[0].id, "kept-account");
         assert_eq!(state.settings.history_retention_days, 180);
         drop(state);
+        let backup = read_persisted_state(&directory.join("accounts.backup.json")).unwrap();
+        assert!(backup.history.is_empty());
+        assert!(backup.sync_events.is_empty());
+        assert_eq!(backup.accounts[0].id, "kept-account");
+        fs::remove_dir_all(directory).unwrap();
+    }
+
+    #[test]
+    fn removing_an_account_also_removes_it_from_the_recovery_backup() {
+        let directory = std::env::temp_dir().join(format!("prismeter-test-{}", new_id()));
+        let store = Arc::new(Store::open(&directory).unwrap());
+        {
+            let mut state = store.state.lock().unwrap();
+            state.accounts.push(Account { id:"delete-account".into(), encrypted_key:"encrypted-secret".into(), ..Account::default() });
+            store.save_locked(&state).unwrap();
+        }
+        route_api(&Method::Delete, "/api/accounts/delete-account", "", &store).unwrap();
+        let backup = read_persisted_state(&directory.join("accounts.backup.json")).unwrap();
+        assert!(backup.accounts.is_empty());
+        assert!(!fs::read_to_string(directory.join("accounts.backup.json")).unwrap().contains("encrypted-secret"));
+        drop(store);
+        fs::remove_dir_all(directory).unwrap();
+    }
+
+    #[test]
+    fn saving_state_keeps_the_previous_valid_backup() {
+        let directory = std::env::temp_dir().join(format!("prismeter-test-{}", new_id()));
+        let store = Store::open(&directory).unwrap();
+        {
+            let mut state = store.state.lock().unwrap();
+            state.accounts.push(Account { id:"backup-account".into(), name:"第一版".into(), ..Account::default() });
+            store.save_locked(&state).unwrap();
+            state.accounts[0].name = "第二版".into();
+            store.save_locked(&state).unwrap();
+        }
+        let backup = read_persisted_state(&directory.join("accounts.backup.json")).unwrap();
+        assert_eq!(backup.accounts[0].name, "第一版");
+        let current = read_persisted_state(&directory.join("accounts.json")).unwrap();
+        assert_eq!(current.accounts[0].name, "第二版");
+        drop(store);
+        fs::remove_dir_all(directory).unwrap();
+    }
+
+    #[test]
+    fn corrupted_primary_state_recovers_from_the_valid_backup() {
+        let directory = std::env::temp_dir().join(format!("prismeter-test-{}", new_id()));
+        let store = Store::open(&directory).unwrap();
+        {
+            let mut state = store.state.lock().unwrap();
+            state.accounts.push(Account { id:"recovered-account".into(), name:"可恢复账户".into(), ..Account::default() });
+            store.save_locked(&state).unwrap();
+        }
+        drop(store);
+        fs::write(directory.join("accounts.json"), b"{broken-json").unwrap();
+
+        let recovered = Store::open(&directory).unwrap();
+        assert_eq!(recovered.state.lock().unwrap().accounts[0].id, "recovered-account");
+        assert!(recovered.startup_notice.as_deref().unwrap().contains("已从最近一次有效备份恢复"));
+        assert_eq!(read_persisted_state(&directory.join("accounts.json")).unwrap().accounts.len(), 1);
+        drop(recovered);
         fs::remove_dir_all(directory).unwrap();
     }
 

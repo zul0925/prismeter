@@ -7,7 +7,7 @@
 [![平台](https://img.shields.io/badge/platform-Windows-3578e5)](https://github.com/zul0925/prismeter)
 [![Tauri](https://img.shields.io/badge/Tauri-2-24c8db)](https://tauri.app/)
 [![Rust](https://img.shields.io/badge/backend-Rust-b7410e)](https://www.rust-lang.org/)
-[![版本](https://img.shields.io/badge/version-0.18.5-7458d6)](https://github.com/zul0925/prismeter/releases)
+[![版本](https://img.shields.io/badge/version-0.18.6-7458d6)](https://github.com/zul0925/prismeter/releases)
 [![许可证](https://img.shields.io/badge/license-Apache--2.0-3da639)](LICENSE)
 
 Prismeter（棱镜计量）将不同 AI 平台返回的数据汇聚到一个桌面应用中，再按平台、账户、套餐和模型能力分别展示。它只呈现平台实际提供的远端指标，不读取本地会话日志，也不会用模拟数据补齐平台未开放的字段。
@@ -19,6 +19,7 @@ Prismeter（棱镜计量）将不同 AI 平台返回的数据汇聚到一个桌�
 - 手动同步、定时同步、启动时同步、单账户重试，以及失败后的 2/5/15 分钟分级重试。
 - 同步状态、失败原因、请求耗时和最近同步历史。
 - 可设置本地历史保留 30/90/180/365 天，并可单独清除历史而不影响账户和凭据。
+- 主状态文件损坏时，可从最近一次有效且仍保持加密的本地备份自动恢复。
 - 余额、额度、同步失败和数据过期提醒。
 - 按真实远端字段进行模型与产品分析。
 - 账户和平台卡片支持拖拽排序。
@@ -41,6 +42,7 @@ Prismeter（棱镜计量）将不同 AI 平台返回的数据汇聚到一个桌�
 ## 隐私与数据安全
 
 - API Key、Access Key 和 Secret Key 使用 Windows DPAPI 在本机加密。
+- 恢复备份中的凭据同样保持 DPAPI 加密；移除账户和清除历史会同时更新主文件与备份。
 - 凭据不会通过前端状态接口返回，也不会出现在 JSON 导出和诊断信息中。
 - 不读取聊天记录、Codex 本地会话日志或其他模型客户端历史。
 - 余额快照和同步记录仅保存在本机，用于趋势、状态和故障诊断。
