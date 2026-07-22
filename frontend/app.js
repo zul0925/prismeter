@@ -165,8 +165,10 @@ function accountFreshness(account) {
   if (!account?.lastSync) return { level:"never", label:"尚未同步", detail:"等待首次远端同步" };
   const elapsedMinutes = Math.max(0, (Date.now() - new Date(account.lastSync).getTime()) / 60000);
   const configured = Number(state.backend.settings?.autoSyncMinutes || 0);
-  const freshLimit = configured ? Math.max(15, configured * 1.5) : 60;
-  const staleLimit = configured ? Math.max(60, configured * 3) : 360;
+  const explicitStaleLimit = Number(state.backend.settings?.staleAfterMinutes || 0);
+  const staleLimit = explicitStaleLimit || (configured ? Math.max(60, configured * 3) : 360);
+  const expectedFreshLimit = configured ? Math.max(15, configured * 1.5) : 60;
+  const freshLimit = Math.min(expectedFreshLimit, staleLimit / 2);
   const relative = relativeSyncTime(account.lastSync);
   if (account.lastError) return { level:"error", label:Number(account.consecutiveFailures || 0) >= 3 ? "持续失败" : "同步失败", detail:`上次成功：${relative}` };
   if (elapsedMinutes <= freshLimit) return { level:"fresh", label:"数据新鲜", detail:`更新于 ${relative}` };
@@ -588,6 +590,7 @@ function populateSettings() {
   if (!settings) return;
   setComboboxValue(els.appearanceMode, settings.appearanceMode || "system", false);
   setComboboxValue(els.autoSyncMinutes, String(settings.autoSyncMinutes), false);
+  setComboboxValue(els.staleAfterMinutes, String(settings.staleAfterMinutes || 0), false);
   setComboboxValue(els.updateCheckMode, settings.updateCheckMode || "startup", false);
   setComboboxValue(els.historyRetentionDays, String(settings.historyRetentionDays || 90), false);
   els.lowBalanceThreshold.value = settings.lowBalanceThreshold;
@@ -1470,6 +1473,7 @@ els.modelSearchInput.addEventListener("input", renderComparisons);
 els.accountProvider.addEventListener("change", updateCredentialFields);
 els.appearanceMode.addEventListener("change", () => { applyTheme(els.appearanceMode.value); queueSettingsSave(); });
 els.autoSyncMinutes.addEventListener("change", () => queueSettingsSave());
+els.staleAfterMinutes.addEventListener("change", () => queueSettingsSave());
 els.updateCheckMode.addEventListener("change", () => queueSettingsSave());
 els.historyRetentionDays.addEventListener("change", () => queueSettingsSave());
 els.mimoBaseUrl.addEventListener("input", syncMimoEndpointPresets);
@@ -1702,7 +1706,8 @@ function settingsPayload() {
     launchAtStartup:els.launchAtStartup.checked,
     updateCheckMode:els.updateCheckMode.value,
     skippedUpdateVersion:state.backend.settings?.skippedUpdateVersion || "",
-    historyRetentionDays:Number(els.historyRetentionDays.value)
+    historyRetentionDays:Number(els.historyRetentionDays.value),
+    staleAfterMinutes:Number(els.staleAfterMinutes.value)
   };
 }
 

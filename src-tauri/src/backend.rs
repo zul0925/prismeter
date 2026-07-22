@@ -53,6 +53,8 @@ struct Settings {
     skipped_update_version: String,
     #[serde(default = "default_history_retention_days")]
     history_retention_days: i32,
+    #[serde(default)]
+    stale_after_minutes: i32,
 }
 
 impl Default for Settings {
@@ -69,6 +71,7 @@ impl Default for Settings {
             update_check_mode: default_update_check_mode(),
             skipped_update_version: String::new(),
             history_retention_days: default_history_retention_days(),
+            stale_after_minutes: 0,
         }
     }
 }
@@ -893,6 +896,9 @@ fn route_api(method: &Method, path: &str, body: &str, store: &Arc<Store>) -> App
         if !matches!(input.history_retention_days, 30 | 90 | 180 | 365) {
             return Err("历史记录保留时间无效。".into());
         }
+        if !matches!(input.stale_after_minutes, 0 | 60 | 180 | 360 | 720 | 1440 | 10080) {
+            return Err("数据过期提醒时间无效。".into());
+        }
         if !(0.0..=10_000_000.0).contains(&input.low_balance_threshold) { return Err("余额提醒阈值无效。".into()); }
         if input.usage_threshold <= 0.0 { input.usage_threshold = 80.0; }
         if !(50.0..=100.0).contains(&input.usage_threshold) { return Err("额度提醒阈值应在 50% 到 100% 之间。".into()); }
@@ -1204,11 +1210,7 @@ fn error_status(error: &str) -> u16 {
 fn alerts(state: &PersistedState) -> Vec<Value> {
     let mut result = Vec::new();
     let current_time = Utc::now();
-    let stale_minutes = if state.settings.auto_sync_minutes > 0 {
-        i64::from((state.settings.auto_sync_minutes * 3).max(60))
-    } else {
-        360
-    };
+    let stale_minutes = stale_after_minutes(&state.settings);
     for account in state.accounts.iter().filter(|a| a.enabled != Some(false)) {
         for balance in &account.balances {
             if balance.total.parse::<f64>().ok().is_some_and(|v| v < state.settings.low_balance_threshold) {
@@ -1261,6 +1263,16 @@ fn alerts(state: &PersistedState) -> Vec<Value> {
         }
     }
     result
+}
+
+fn stale_after_minutes(settings: &Settings) -> i64 {
+    if settings.stale_after_minutes > 0 {
+        i64::from(settings.stale_after_minutes)
+    } else if settings.auto_sync_minutes > 0 {
+        i64::from((settings.auto_sync_minutes * 3).max(60))
+    } else {
+        360
+    }
 }
 
 fn usage_percent(value: &str) -> Option<f64> {
@@ -1395,6 +1407,7 @@ mod tests {
         assert!(public.contains("\"closeToTray\":true"));
         assert!(public.contains("\"launchAtStartup\":false"));
         assert!(public.contains("\"updateCheckMode\":\"startup\""));
+        assert!(public.contains("\"staleAfterMinutes\":0"));
         assert!(!public.contains("secret-ciphertext"));
         assert!(directory.join("accounts.pre-rust-0.8.1.json").exists());
         fs::remove_dir_all(directory).unwrap();
@@ -1626,6 +1639,21 @@ mod tests {
         assert_eq!(freshness["accountId"], "stale-account");
         assert!(freshness["message"].as_str().unwrap().contains("数据可能已过期"));
         assert!(notification_key(freshness).contains("|freshness|"));
+    }
+
+    #[test]
+    fn stale_alert_threshold_can_follow_sync_or_use_an_explicit_value() {
+        let mut settings = Settings::default();
+        settings.auto_sync_minutes = 15;
+        assert_eq!(stale_after_minutes(&settings), 60);
+        settings.auto_sync_minutes = 180;
+        assert_eq!(stale_after_minutes(&settings), 540);
+        settings.stale_after_minutes = 1440;
+        assert_eq!(stale_after_minutes(&settings), 1440);
+        settings.auto_sync_minutes = 0;
+        assert_eq!(stale_after_minutes(&settings), 1440);
+        settings.stale_after_minutes = 0;
+        assert_eq!(stale_after_minutes(&settings), 360);
     }
 
     #[test]

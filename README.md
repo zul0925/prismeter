@@ -7,7 +7,7 @@
 [![Platform](https://img.shields.io/badge/platform-Windows-3578e5)](https://github.com/zul0925/prismeter)
 [![Tauri](https://img.shields.io/badge/Tauri-2-24c8db)](https://tauri.app/)
 [![Rust](https://img.shields.io/badge/backend-Rust-b7410e)](https://www.rust-lang.org/)
-[![Version](https://img.shields.io/badge/version-0.18.7-7458d6)](https://github.com/zul0925/prismeter/releases)
+[![Version](https://img.shields.io/badge/version-0.18.8-7458d6)](https://github.com/zul0925/prismeter/releases)
 [![License](https://img.shields.io/badge/license-Apache--2.0-3da639)](LICENSE)
 
 Prismeter brings usage data returned by different AI platforms into one desktop app and presents it by platform, account, plan, and model capability. It only displays metrics actually provided by remote services. It does not read local conversation logs or fill unavailable fields with simulated data.
@@ -21,6 +21,7 @@ Prismeter brings usage data returned by different AI platforms into one desktop 
 - Configurable 30/90/180/365-day local history retention, with an isolated history-clear action that preserves accounts and credentials.
 - Automatic recovery from the latest valid encrypted local-state backup when the primary state file is damaged.
 - Alerts for balances, quotas, synchronization failures, and stale data, with per-alert 24-hour snooze and resume controls.
+- Configurable stale-data detection that can follow the synchronization schedule or use an explicit threshold from one hour to seven days.
 - Model and product analysis based only on real remote fields.
 - Drag-and-drop ordering for accounts and platform cards.
 - Light, dark, and Windows system theme modes.

@@ -338,6 +338,19 @@
                 </div>
               </div></label>
               <label class="check-setting"><input id="syncOnStartup" type="checkbox"/><span><b>启动后同步一次</b><small>启动后自动拉取已启用账户的最新远端数据。</small></span></label>
+              <label class="settings-field"><span><b>数据过期提醒</b><small>超过所选时间仍未成功同步时，在总览和提醒中心标记为过期。</small></span><div class="glass-combobox settings-combo" data-combobox>
+                <input id="staleAfterMinutes" type="hidden" value="0" />
+                <button class="combo-trigger" type="button" data-combo-trigger aria-haspopup="listbox" aria-expanded="false"><span data-combo-label>自动判断</span><i></i></button>
+                <div class="combo-menu" role="listbox">
+                  <button type="button" class="combo-option selected" data-value="0" role="option">自动判断<span>同步间隔的 3 倍，至少 1 小时</span></button>
+                  <button type="button" class="combo-option" data-value="60" role="option">1 小时<span>适合高频监控</span></button>
+                  <button type="button" class="combo-option" data-value="180" role="option">3 小时<span>较快发现数据中断</span></button>
+                  <button type="button" class="combo-option" data-value="360" role="option">6 小时<span>手动同步的默认标准</span></button>
+                  <button type="button" class="combo-option" data-value="720" role="option">12 小时<span>减少非必要提醒</span></button>
+                  <button type="button" class="combo-option" data-value="1440" role="option">24 小时<span>每日检查</span></button>
+                  <button type="button" class="combo-option" data-value="10080" role="option">7 天<span>仅提醒长期未更新</span></button>
+                </div>
+              </div></label>
             </article>
 
             <article class="glass-panel settings-section-card">
