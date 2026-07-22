@@ -620,6 +620,52 @@ function clearMetricTrend(message) {
   els.trendChange.classList.remove("down");
   els.trendEmpty.textContent = message;
   els.trendEmpty.hidden = false;
+  renderTrendForecast(null);
+}
+
+function forecastDuration(milliseconds) {
+  const minutes = Math.max(0, Math.round(milliseconds / 60000));
+  if (minutes < 60) return `${minutes} 分钟`;
+  const hours = Math.round(minutes / 60);
+  if (hours < 48) return `${hours} 小时`;
+  return `${Math.round(hours / 24)} 天`;
+}
+
+function estimateMetricExhaustion(snapshots, metric, resetAt) {
+  if (snapshots.length < 3) return { state:"collecting", title:`还需 ${3 - snapshots.length} 个快照`, detail:"至少积累 3 个跨时段远端快照后，才会估算消耗节奏。", meta:"预测尚未开始" };
+  const first = snapshots[0], last = snapshots.at(-1);
+  const elapsed = new Date(last.timestamp).getTime() - new Date(first.timestamp).getTime();
+  const delta = Number(last.value) - Number(first.value);
+  if (!Number.isFinite(elapsed) || elapsed < 30 * 60 * 1000 || !Number.isFinite(delta)) {
+    return { state:"collecting", title:"继续积累快照", detail:"快照时间跨度不足 30 分钟，暂不生成不可靠的预测。", meta:"预测尚未开始" };
+  }
+  const isQuota = metric.unit === "%";
+  const isBalance = ["CNY", "USD"].includes(metric.unit);
+  const consumption = isQuota ? delta : isBalance ? -delta : 0;
+  const target = isQuota ? 100 : 0;
+  const remaining = isQuota ? target - Number(last.value) : Number(last.value);
+  if (!isQuota && !isBalance) return { state:"unsupported", title:"此指标暂不预测", detail:"仅对百分比额度和货币余额估算耗尽时间，累计用量等指标不会被误判为可用额度。", meta:"只展示历史趋势" };
+  if (remaining <= 0) return { state:"risk", title:isQuota ? "额度已达到上限" : "余额已用尽", detail:"请查看平台的实际状态或等待下一次远端同步。", meta:"以平台远端数据为准" };
+  if (consumption <= 0) return { state:"steady", title:"近期没有持续消耗", detail:"最近快照未显示稳定的额度消耗，因此不猜测耗尽时间。", meta:"预测会随新快照更新" };
+  const untilExhausted = remaining / consumption * elapsed;
+  if (!Number.isFinite(untilExhausted) || untilExhausted > 90 * 86400000) return { state:"steady", title:"近期消耗较低", detail:"按当前快照节奏，预测跨度超过 90 天，暂不显示不可靠的远期时间。", meta:"预测会随新快照更新" };
+  const estimatedAt = new Date(new Date(last.timestamp).getTime() + untilExhausted);
+  const resetTime = resetAt ? new Date(resetAt).getTime() : NaN;
+  const beforeReset = Number.isFinite(resetTime) && estimatedAt.getTime() < resetTime;
+  const rate = consumption / (elapsed / 3600000);
+  const rateText = isQuota ? `${rate.toFixed(1)} 个百分点/小时` : `${formatMetricNumber(rate, metric.unit)}/小时`;
+  if (beforeReset) return { state:"risk", title:`预计 ${forecastDuration(untilExhausted)} 后耗尽`, detail:`按最近 ${snapshots.length} 个远端快照，平均消耗 ${rateText}；将在额度恢复前达到上限。`, meta:`平台预计 ${relativeFutureTime(resetAt)} 恢复` };
+  if (Number.isFinite(resetTime)) return { state:"healthy", title:"重置前预计不会耗尽", detail:`按最近 ${snapshots.length} 个远端快照，平均消耗 ${rateText}；预测达到上限前额度会先恢复。`, meta:`平台预计 ${relativeFutureTime(resetAt)} 恢复` };
+  return { state:"attention", title:`预计 ${forecastDuration(untilExhausted)} 后耗尽`, detail:`按最近 ${snapshots.length} 个远端快照，平均消耗 ${rateText}。这是趋势估算，不是平台承诺。`, meta:`预计 ${formatDate(estimatedAt)}` };
+}
+
+function renderTrendForecast(forecast) {
+  if (!forecast) { els.trendForecast.hidden = true; return; }
+  els.trendForecast.hidden = false;
+  els.trendForecast.dataset.state = forecast.state;
+  els.trendForecastTitle.textContent = forecast.title;
+  els.trendForecastDetail.textContent = forecast.detail;
+  els.trendForecastMeta.textContent = forecast.meta;
 }
 
 async function loadMetricHistory(account, productId, key) {
@@ -684,6 +730,7 @@ function renderMetricTrend(account, productId) {
     return;
   }
   const snapshots = selected.items.sort((a,b) => new Date(a.timestamp) - new Date(b.timestamp));
+  renderTrendForecast(estimateMetricExhaustion(snapshots, selected, productResetAt(account, productId)));
   els.trendCaption.textContent = `${snapshots.length} 个远端快照 · 最近 ${state.metricRangeDays} 天`;
   if (snapshots.length < 2) {
     clearMetricTrend("至少完成两次跨小时同步后，才会显示变化曲线。");

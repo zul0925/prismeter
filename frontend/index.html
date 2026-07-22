@@ -149,6 +149,11 @@
               <button type="button" data-trend-range="90">90 天</button>
             </div>
           </div>
+          <section id="trendForecast" class="trend-forecast" hidden aria-live="polite">
+            <span class="trend-forecast-icon" aria-hidden="true">↗</span>
+            <div><b id="trendForecastTitle">正在评估消耗节奏</b><span id="trendForecastDetail">预测仅基于 Prismeter 保存的远端快照。</span></div>
+            <small id="trendForecastMeta">需要更多数据</small>
+          </section>
           <div class="trend-chart-wrap">
             <svg class="balance-trend-chart" viewBox="0 0 600 170" role="img" aria-label="远端指标历史趋势">
               <defs><linearGradient id="balanceAreaFill" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#3972dc" stop-opacity=".30"/><stop offset="100%" stop-color="#3972dc" stop-opacity="0"/></linearGradient></defs>
