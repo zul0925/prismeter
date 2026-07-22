@@ -51,6 +51,8 @@ struct Settings {
     update_check_mode: String,
     #[serde(default)]
     skipped_update_version: String,
+    #[serde(default = "default_history_retention_days")]
+    history_retention_days: i32,
 }
 
 impl Default for Settings {
@@ -66,6 +68,7 @@ impl Default for Settings {
             launch_at_startup: false,
             update_check_mode: default_update_check_mode(),
             skipped_update_version: String::new(),
+            history_retention_days: default_history_retention_days(),
         }
     }
 }
@@ -77,6 +80,7 @@ fn default_usage_threshold() -> f64 { 80.0 }
 fn default_notifications() -> bool { true }
 fn default_close_to_tray() -> bool { true }
 fn default_update_check_mode() -> String { "startup".into() }
+fn default_history_retention_days() -> i32 { 90 }
 
 #[derive(Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -229,13 +233,17 @@ impl Store {
     fn open(data_dir: &Path) -> AppResult<Self> {
         fs::create_dir_all(data_dir).map_err(|e| format!("无法创建数据目录：{e}"))?;
         let state_path = data_dir.join("accounts.json");
-        let state = if state_path.exists() {
+        let mut state = if state_path.exists() {
             let text = fs::read_to_string(&state_path).map_err(|e| format!("无法读取账户数据：{e}"))?;
             serde_json::from_str(text.trim_start_matches('\u{feff}'))
                 .map_err(|e| format!("账户数据格式无效：{e}"))?
         } else {
             PersistedState::default()
         };
+        if !matches!(state.settings.history_retention_days, 30 | 90 | 180 | 365) {
+            state.settings.history_retention_days = default_history_retention_days();
+        }
+        let pruned_on_open = prune_history(&mut state, Utc::now());
         let backup = data_dir.join("accounts.pre-rust-0.8.1.json");
         if state_path.exists() && !backup.exists() {
             fs::copy(&state_path, &backup).map_err(|e| format!("无法备份旧账户数据：{e}"))?;
@@ -245,12 +253,17 @@ impl Store {
             .user_agent(format!("Prismeter/{VERSION}"))
             .build()
             .map_err(|e| format!("无法初始化网络客户端：{e}"))?;
-        Ok(Self {
+        let store = Self {
             state: Mutex::new(state),
             syncing_accounts: Mutex::new(HashSet::new()),
             state_path,
             http,
-        })
+        };
+        if pruned_on_open.0 > 0 || pruned_on_open.1 > 0 {
+            let state = store.state.lock().unwrap();
+            store.save_locked(&state)?;
+        }
+        Ok(store)
     }
 
     fn save_locked(&self, state: &PersistedState) -> AppResult<()> {
@@ -703,6 +716,11 @@ impl Store {
             "accounts": state.accounts.iter().map(public_account).collect::<Vec<_>>(),
             "history": history,
             "syncEvents": sync_events,
+            "historyStorage": {
+                "balanceSnapshots": state.history.len(),
+                "syncEvents": state.sync_events.len(),
+                "retentionDays": state.settings.history_retention_days
+            },
             "sync": sync_summary(&state.accounts, &syncing_account_ids),
             "capabilities": {
                 "deepseek": ["is_available", "currency", "total_balance", "granted_balance", "topped_up_balance"],
@@ -809,14 +827,30 @@ fn route_api(method: &Method, path: &str, body: &str, store: &Arc<Store>) -> App
         if input.auto_sync_minutes != 0 && !(5..=1440).contains(&input.auto_sync_minutes) {
             return Err("自动同步间隔应在 5 分钟到 24 小时之间。".into());
         }
+        if !matches!(input.history_retention_days, 30 | 90 | 180 | 365) {
+            return Err("历史记录保留时间无效。".into());
+        }
         if !(0.0..=10_000_000.0).contains(&input.low_balance_threshold) { return Err("余额提醒阈值无效。".into()); }
         if input.usage_threshold <= 0.0 { input.usage_threshold = 80.0; }
         if !(50.0..=100.0).contains(&input.usage_threshold) { return Err("额度提醒阈值应在 50% 到 100% 之间。".into()); }
         let mut state = store.state.lock().unwrap();
         state.settings = input.clone();
+        prune_history(&mut state, Utc::now());
         if !input.notifications_enabled { state.notified_alert_keys.clear(); }
         store.save_locked(&state)?;
         return Ok((200, json!({ "ok": true, "settings": input })));
+    }
+    if method == &Method::Delete && path == "/api/history" {
+        let mut state = store.state.lock().unwrap();
+        let balance_snapshots = state.history.len();
+        let sync_events = state.sync_events.len();
+        state.history.clear();
+        state.sync_events.clear();
+        store.save_locked(&state)?;
+        return Ok((200, json!({
+            "ok": true,
+            "removed": { "balanceSnapshots": balance_snapshots, "syncEvents": sync_events }
+        })));
     }
     if method == &Method::Post && path == "/api/accounts" {
         let input = serde_json::from_str(body).map_err(|_| "账户数据无效。")?;
@@ -920,6 +954,7 @@ fn add_snapshots(state: &mut PersistedState, account: &Account) {
         state.history.sort_by(|a, b| b.timestamp.cmp(&a.timestamp));
         state.history.truncate(BALANCE_HISTORY_LIMIT);
     }
+    prune_history(state, Utc::now());
 }
 
 fn add_sync_event(state: &mut PersistedState, account: &Account, success: bool, message: String) {
@@ -936,6 +971,7 @@ fn add_sync_event(state: &mut PersistedState, account: &Account, success: bool, 
         let excess = state.sync_events.len() - SYNC_EVENT_STORAGE_LIMIT;
         state.sync_events.drain(0..excess);
     }
+    prune_history(state, Utc::now());
 }
 
 fn public_account(account: &Account) -> Value {
@@ -1132,6 +1168,21 @@ fn retry_delay_minutes(consecutive_failures: u32) -> Option<i64> {
     }
 }
 
+fn prune_history(state: &mut PersistedState, current_time: DateTime<Utc>) -> (usize, usize) {
+    let cutoff = current_time - ChronoDuration::days(i64::from(state.settings.history_retention_days));
+    let balance_before = state.history.len();
+    let sync_before = state.sync_events.len();
+    state.history.retain(|item| timestamp_is_retained(&item.timestamp, cutoff));
+    state.sync_events.retain(|item| timestamp_is_retained(&item.timestamp, cutoff));
+    (balance_before - state.history.len(), sync_before - state.sync_events.len())
+}
+
+fn timestamp_is_retained(value: &str, cutoff: DateTime<Utc>) -> bool {
+    DateTime::parse_from_rfc3339(value)
+        .map(|timestamp| timestamp.with_timezone(&Utc) >= cutoff)
+        .unwrap_or(true)
+}
+
 fn next_retry_at(account: &Account) -> Option<String> {
     if account.enabled == Some(false) || account.last_error.as_deref().is_none_or(str::is_empty) {
         return None;
@@ -1246,6 +1297,51 @@ mod tests {
 
         let paused = Account { enabled: Some(false), ..account };
         assert_eq!(next_retry_at(&paused), None);
+    }
+
+    #[test]
+    fn history_retention_prunes_only_expired_valid_records() {
+        let mut state = PersistedState::default();
+        state.settings.history_retention_days = 30;
+        state.history = vec![
+            BalanceSnapshot { timestamp:"2026-06-01T00:00:00Z".into(), ..BalanceSnapshot::default() },
+            BalanceSnapshot { timestamp:"2026-07-15T00:00:00Z".into(), ..BalanceSnapshot::default() },
+            BalanceSnapshot { timestamp:"legacy-invalid-time".into(), ..BalanceSnapshot::default() },
+        ];
+        state.sync_events = vec![
+            SyncEvent { timestamp:"2026-06-20T00:00:00Z".into(), ..SyncEvent::default() },
+            SyncEvent { timestamp:"2026-07-21T00:00:00Z".into(), ..SyncEvent::default() },
+        ];
+        let removed = prune_history(&mut state, "2026-07-22T00:00:00Z".parse().unwrap());
+        assert_eq!(removed, (1, 1));
+        assert_eq!(state.history.len(), 2);
+        assert_eq!(state.sync_events.len(), 1);
+    }
+
+    #[test]
+    fn clearing_history_preserves_accounts_and_settings() {
+        let directory = std::env::temp_dir().join(format!("prismeter-test-{}", new_id()));
+        let store = Arc::new(Store::open(&directory).unwrap());
+        {
+            let mut state = store.state.lock().unwrap();
+            state.accounts.push(Account { id:"kept-account".into(), name:"保留账户".into(), ..Account::default() });
+            state.history.push(BalanceSnapshot { timestamp:now(), ..BalanceSnapshot::default() });
+            state.sync_events.push(SyncEvent { timestamp:now(), ..SyncEvent::default() });
+            state.settings.history_retention_days = 180;
+            store.save_locked(&state).unwrap();
+        }
+
+        let (_, response) = route_api(&Method::Delete, "/api/history", "", &store).unwrap();
+        assert_eq!(response["removed"]["balanceSnapshots"], 1);
+        assert_eq!(response["removed"]["syncEvents"], 1);
+        let state = store.state.lock().unwrap();
+        assert!(state.history.is_empty());
+        assert!(state.sync_events.is_empty());
+        assert_eq!(state.accounts.len(), 1);
+        assert_eq!(state.accounts[0].id, "kept-account");
+        assert_eq!(state.settings.history_retention_days, 180);
+        drop(state);
+        fs::remove_dir_all(directory).unwrap();
     }
 
     #[test]

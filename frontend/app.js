@@ -585,6 +585,7 @@ function populateSettings() {
   setComboboxValue(els.appearanceMode, settings.appearanceMode || "system", false);
   setComboboxValue(els.autoSyncMinutes, String(settings.autoSyncMinutes), false);
   setComboboxValue(els.updateCheckMode, settings.updateCheckMode || "startup", false);
+  setComboboxValue(els.historyRetentionDays, String(settings.historyRetentionDays || 90), false);
   els.lowBalanceThreshold.value = settings.lowBalanceThreshold;
   els.usageThreshold.value = settings.usageThreshold || 80;
   els.notificationsEnabled.checked = settings.notificationsEnabled;
@@ -592,6 +593,12 @@ function populateSettings() {
   els.closeToTray.checked = settings.closeToTray !== false;
   els.launchAtStartup.checked = Boolean(settings.launchAtStartup);
   els.updateCurrentVersion.textContent = state.backend.version || "—";
+  const storage = state.backend.historyStorage || {};
+  const balanceSnapshots = Number(storage.balanceSnapshots || 0);
+  const syncEvents = Number(storage.syncEvents || 0);
+  els.historyStorageSummary.textContent = `${balanceSnapshots + syncEvents} 条`;
+  els.historyStorageDetail.textContent = `${balanceSnapshots} 条余额快照 · ${syncEvents} 条同步记录`;
+  els.clearHistoryButton.disabled = balanceSnapshots + syncEvents === 0;
 }
 
 function closeComboboxes(except) {
@@ -1449,6 +1456,7 @@ els.accountProvider.addEventListener("change", updateCredentialFields);
 els.appearanceMode.addEventListener("change", () => { applyTheme(els.appearanceMode.value); queueSettingsSave(); });
 els.autoSyncMinutes.addEventListener("change", () => queueSettingsSave());
 els.updateCheckMode.addEventListener("change", () => queueSettingsSave());
+els.historyRetentionDays.addEventListener("change", () => queueSettingsSave());
 els.mimoBaseUrl.addEventListener("input", syncMimoEndpointPresets);
 els.mimoApiKey.addEventListener("input", () => {
   const key = els.mimoApiKey.value.trim();
@@ -1624,6 +1632,32 @@ els.installUpdateButton.addEventListener("click", () => {
   if (state.availableUpdate) installAvailableUpdate();
   else checkForUpdates({manual:true});
 });
+els.clearHistoryButton.addEventListener("click", () => {
+  const storage = state.backend.historyStorage || {};
+  const balanceSnapshots = Number(storage.balanceSnapshots || 0);
+  const syncEvents = Number(storage.syncEvents || 0);
+  els.clearHistoryDialogSummary.textContent = `将删除本机保存的 ${balanceSnapshots} 条余额快照和 ${syncEvents} 条同步记录。已连接账户、凭据、设置和当前远端数据不会受到影响。`;
+  els.clearHistoryDialog.showModal();
+});
+els.clearHistoryDialogClose.addEventListener("click", () => els.clearHistoryDialog.close());
+els.clearHistoryCancel.addEventListener("click", () => els.clearHistoryDialog.close());
+els.clearHistoryConfirm.addEventListener("click", async () => {
+  const button = els.clearHistoryConfirm;
+  button.disabled = true;
+  button.querySelector("span").textContent = "正在清除…";
+  try {
+    const result = await apiRequest("/api/history", { method:"DELETE" });
+    const removed = Number(result.removed?.balanceSnapshots || 0) + Number(result.removed?.syncEvents || 0);
+    await loadBackendState({quiet:true});
+    els.clearHistoryDialog.close();
+    showToast(removed ? `已清除 ${removed} 条本地历史记录` : "当前没有可清除的历史记录", removed ? "success" : "info");
+  } catch (error) {
+    showToast(errorMessage(error, "无法清除历史记录"), "error");
+  } finally {
+    button.disabled = false;
+    button.querySelector("span").textContent = "确认清除";
+  }
+});
 els.exitAppButton.addEventListener("click", async () => {
   const invoke = window.__TAURI__?.core?.invoke;
   if (!invoke) { showToast("仅桌面应用支持退出操作", "info"); return; }
@@ -1652,7 +1686,8 @@ function settingsPayload() {
     closeToTray:els.closeToTray.checked,
     launchAtStartup:els.launchAtStartup.checked,
     updateCheckMode:els.updateCheckMode.value,
-    skippedUpdateVersion:state.backend.settings?.skippedUpdateVersion || ""
+    skippedUpdateVersion:state.backend.settings?.skippedUpdateVersion || "",
+    historyRetentionDays:Number(els.historyRetentionDays.value)
   };
 }
 
@@ -1678,6 +1713,7 @@ async function flushSettingsSave() {
   setSettingsSaveStatus("正在保存…", "saving");
   const previousSettings = state.backend.settings;
   const nextSettings = settingsPayload();
+  const retentionChanged = previousSettings?.historyRetentionDays !== nextSettings.historyRetentionDays;
   const strictDesktopKeys = ["closeToTray", "launchAtStartup"].filter(key => previousSettings?.[key] !== nextSettings[key]);
   try {
     await syncDesktopPreferences(nextSettings, strictDesktopKeys);
@@ -1685,6 +1721,7 @@ async function flushSettingsSave() {
     state.backend.settings = result.settings;
     applyTheme(result.settings.appearanceMode || "system");
     els.syncText.textContent = formatSyncSetting();
+    if (retentionChanged) await loadBackendState({quiet:true});
     setSettingsSaveStatus("已自动保存", "saved");
   } catch (error) {
     strictDesktopKeys.forEach(key => { state.desktopPreferences[key] = null; });

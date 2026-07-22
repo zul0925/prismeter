@@ -341,6 +341,22 @@
             </article>
 
             <article class="glass-panel settings-section-card">
+              <div class="settings-card-heading"><span class="settings-card-icon" aria-hidden="true">⌁</span><div><h4>本地历史</h4><p>只保存远端同步结果，不保存凭据、请求正文或本地会话。</p></div></div>
+              <label class="settings-field"><span><b>保留时间</b><small>修改后会立即清理超过期限的余额快照和同步记录。</small></span><div class="glass-combobox settings-combo" data-combobox>
+                <input id="historyRetentionDays" type="hidden" value="90" />
+                <button class="combo-trigger" type="button" data-combo-trigger aria-haspopup="listbox" aria-expanded="false"><span data-combo-label>90 天</span><i></i></button>
+                <div class="combo-menu" role="listbox">
+                  <button type="button" class="combo-option" data-value="30" role="option">30 天<span>减少本地记录</span></button>
+                  <button type="button" class="combo-option selected" data-value="90" role="option">90 天<span>推荐</span></button>
+                  <button type="button" class="combo-option" data-value="180" role="option">180 天<span>长期观察</span></button>
+                  <button type="button" class="combo-option" data-value="365" role="option">1 年<span>最长保留</span></button>
+                </div>
+              </div></label>
+              <div class="settings-info-row"><span><b>当前记录</b><small id="historyStorageDetail">尚未读取本地历史</small></span><strong id="historyStorageSummary">—</strong></div>
+              <button id="clearHistoryButton" class="soft-button settings-action danger-action" type="button">清除历史记录</button>
+            </article>
+
+            <article class="glass-panel settings-section-card">
               <div class="settings-card-heading"><span class="settings-card-icon" aria-hidden="true">▣</span><div><h4>窗口与托盘</h4><p>控制主窗口关闭后的行为，以及应用是否继续在后台运行。</p></div></div>
               <label class="check-setting"><input id="closeToTray" type="checkbox" checked/><span><b>关闭时隐藏到托盘</b><small>开启后，右上角关闭按钮和 Alt+F4 会隐藏窗口，账户同步仍会继续。</small></span></label>
               <label class="check-setting"><input id="launchAtStartup" type="checkbox"/><span><b>登录 Windows 后自动启动</b><small>以后台模式启动到托盘，不会在登录后弹出主窗口。</small></span></label>
@@ -367,6 +383,17 @@
       <button type="button" class="soft-button" id="skipUpdateButton">跳过此版本</button>
       <button type="button" class="soft-button" id="laterUpdateButton">稍后</button>
       <button type="button" class="primary-button" id="installUpdateButton"><span>下载并安装</span></button>
+    </div>
+  </dialog>
+
+  <dialog id="clearHistoryDialog" class="metric-dialog glass-panel clear-history-dialog">
+    <button class="dialog-close" id="clearHistoryDialogClose" aria-label="取消清除">×</button>
+    <p class="eyebrow">本地数据管理</p>
+    <h3>清除历史记录？</h3>
+    <p id="clearHistoryDialogSummary">将删除本机保存的余额快照和同步运行记录。已连接账户、凭据、设置和当前远端数据不会受到影响。</p>
+    <div class="form-actions">
+      <button type="button" class="soft-button" id="clearHistoryCancel">取消</button>
+      <button type="button" class="primary-button danger-confirm" id="clearHistoryConfirm"><span>确认清除</span></button>
     </div>
   </dialog>
 
