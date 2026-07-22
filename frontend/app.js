@@ -788,11 +788,7 @@ function renderComparisons() {
 
 function renderAlerts() {
   const accounts = state.backend.accounts || [];
-  const staleAlerts = accounts.filter(account => account.enabled !== false && ["stale", "never"].includes(accountFreshness(account).level)).map(account => {
-    const freshness = accountFreshness(account);
-    return { accountId:account.id, accountName:account.name, provider:account.provider, kind:"freshness", title:`${account.name} · ${freshness.label}`, message:`${freshness.detail}，建议立即从平台远端刷新。` };
-  });
-  const allAlerts = [...(state.backend.alerts || []), ...staleAlerts];
+  const allAlerts = state.backend.alerts || [];
   const category = item => ["sync", "freshness", "status"].includes(item.kind) ? "sync" : item.kind;
   const counts = {
     balance:allAlerts.filter(item => category(item) === "balance").length,
@@ -809,16 +805,19 @@ function renderAlerts() {
     button.setAttribute("aria-pressed", String(active));
   });
   const visibleAlerts = state.alertFilter === "all" ? allAlerts : allAlerts.filter(item => category(item) === state.alertFilter);
-  els.alertFilterResult.textContent = `${visibleAlerts.length} 条提醒`;
+  const snoozedCount = visibleAlerts.filter(item => item.snoozedUntil && new Date(item.snoozedUntil).getTime() > Date.now()).length;
+  els.alertFilterResult.textContent = `${visibleAlerts.length} 条提醒${snoozedCount ? ` · ${snoozedCount} 条已暂缓` : ""}`;
   const symbols = { balance:"¥", quota:"%", sync:"!", freshness:"↻", status:"!" };
   const badges = { balance:"余额", quota:"额度", sync:"同步", freshness:"时效", status:"状态" };
   els.alertList.innerHTML = visibleAlerts.length ? visibleAlerts.map(item => {
     const account = (state.backend.accounts || []).find(candidate => candidate.id === item.accountId);
     const kind = category(item);
-    return `<article class="alert-item glass-panel live-alert ${kind}" data-alert-kind="${kind}">
+    const snoozed = item.snoozedUntil && new Date(item.snoozedUntil).getTime() > Date.now();
+    const snoozeButton = item.alertKey ? `<button class="mini-button" ${snoozed ? "data-resume-alert" : "data-snooze-alert"}="${escapeHtml(item.alertKey)}">${snoozed ? "恢复提醒" : "暂缓 24 小时"}</button>` : "";
+    return `<article class="alert-item glass-panel live-alert ${kind}${snoozed ? " snoozed" : ""}" data-alert-kind="${kind}">
       <div class="alert-symbol">${symbols[item.kind] || "!"}</div>
       <div class="alert-copy"><div class="alert-title-row">${platformLogo(item.provider || account?.provider, "activity-brand-logo")}<div><h4>${escapeHtml(item.title || item.accountName || "远端状态需要关注")}</h4><span>${escapeHtml(providers[item.provider || account?.provider]?.name || "已连接平台")} · ${escapeHtml(item.accountName || account?.name || "账户")}</span></div></div><p>${escapeHtml(item.message || "远端状态需要关注")}</p></div>
-      <div class="alert-side"><span class="official-alert">${badges[item.kind] || "提醒"} · 远端</span><div class="alert-actions">${account ? `<button class="mini-button" data-view-account="${escapeHtml(account.id)}" data-account-provider="${escapeHtml(account.provider)}">查看数据</button><button class="mini-button alert-sync-button" data-sync-account="${escapeHtml(account.id)}"><span>立即同步</span></button>` : ""}</div></div>
+      <div class="alert-side"><span class="official-alert${snoozed ? " snoozed" : ""}">${snoozed ? `已暂缓至 ${escapeHtml(formatDate(item.snoozedUntil))}` : `${badges[item.kind] || "提醒"} · 远端`}</span><div class="alert-actions">${snoozeButton}${account ? `<button class="mini-button" data-view-account="${escapeHtml(account.id)}" data-account-provider="${escapeHtml(account.provider)}">查看数据</button><button class="mini-button alert-sync-button" data-sync-account="${escapeHtml(account.id)}"><span>立即同步</span></button>` : ""}</div></div>
     </article>`;
   }).join("") : allAlerts.length
     ? `<article class="alert-empty glass-panel"><div class="alert-symbol">✓</div><div><h4>此分类暂无提醒</h4><p>可以切换其他分类，或前往设置调整余额和额度阈值。</p></div></article>`
@@ -1389,6 +1388,18 @@ document.addEventListener("click", async e => {
   const target = e.target.closest("[data-target-view]"); if (target) switchView(target.dataset.targetView);
   const alertFilter = e.target.closest("[data-alert-filter]");
   if (alertFilter) { state.alertFilter = alertFilter.dataset.alertFilter; renderAlerts(); }
+  const snoozeAlert = e.target.closest("[data-snooze-alert], [data-resume-alert]");
+  if (snoozeAlert) {
+    const resume = snoozeAlert.hasAttribute("data-resume-alert");
+    const alertKey = snoozeAlert.getAttribute(resume ? "data-resume-alert" : "data-snooze-alert");
+    snoozeAlert.disabled = true;
+    try {
+      await apiRequest("/api/alerts/snooze", { method:resume ? "DELETE" : "POST", body:JSON.stringify({alertKey}) });
+      await loadBackendState({quiet:true});
+      showToast(resume ? "已恢复此提醒的 Windows 通知" : "此提醒已暂缓 24 小时");
+    } catch (error) { showToast(errorMessage(error), "error"); }
+    finally { snoozeAlert.disabled = false; }
+  }
   const syncHistoryFilter = e.target.closest("[data-sync-history-filter]");
   if (syncHistoryFilter) { state.syncEventFilter = syncHistoryFilter.dataset.syncHistoryFilter; renderSyncHistory(state.backend.accounts || []); }
   const accountNav = e.target.closest("[data-account]");

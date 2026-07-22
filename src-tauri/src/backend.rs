@@ -117,6 +117,13 @@ struct SyncEvent {
 
 #[derive(Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
+struct SnoozedAlert {
+    #[serde(default)] key: String,
+    #[serde(default)] until: String,
+}
+
+#[derive(Clone, Default, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 struct Account {
     #[serde(default)] id: String,
     #[serde(default)] provider: String,
@@ -151,6 +158,7 @@ struct PersistedState {
     #[serde(default)] sync_events: Vec<SyncEvent>,
     #[serde(default)] settings: Settings,
     #[serde(default)] notified_alert_keys: Vec<String>,
+    #[serde(default)] snoozed_alerts: Vec<SnoozedAlert>,
 }
 
 impl Default for PersistedState {
@@ -162,6 +170,7 @@ impl Default for PersistedState {
             sync_events: Vec::new(),
             settings: Settings::default(),
             notified_alert_keys: Vec::new(),
+            snoozed_alerts: Vec::new(),
         }
     }
 }
@@ -195,6 +204,12 @@ struct ReorderAccountsRequest {
 #[serde(rename_all = "camelCase")]
 struct ReorderProvidersRequest {
     provider_ids: Vec<String>,
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct SnoozeAlertRequest {
+    alert_key: String,
 }
 
 #[derive(Default, Deserialize)]
@@ -682,12 +697,17 @@ impl Store {
     }
 
     fn dispatch_notifications(&self) -> Value {
-        let (enabled, current_alerts, previous_keys) = {
+        let (enabled, current_alerts, previous_keys, snoozed_keys) = {
             let state = self.state.lock().unwrap();
+            let current_time = Utc::now();
             (
                 state.settings.notifications_enabled,
                 alerts(&state),
                 state.notified_alert_keys.iter().cloned().collect::<HashSet<_>>(),
+                state.snoozed_alerts.iter()
+                    .filter(|item| snooze_is_active(item, current_time))
+                    .map(|item| item.key.clone())
+                    .collect::<HashSet<_>>(),
             )
         };
 
@@ -702,6 +722,9 @@ impl Store {
             return json!({ "ok": true, "enabled": false, "delivered": 0 });
         }
 
+        let current_alerts = current_alerts.into_iter()
+            .filter(|alert| !snoozed_keys.contains(&notification_key(alert)))
+            .collect::<Vec<_>>();
         let active_keys: HashSet<String> = current_alerts.iter().map(notification_key).collect();
         let mut acknowledged: HashSet<String> = previous_keys
             .intersection(&active_keys)
@@ -727,6 +750,8 @@ impl Store {
         }
 
         let mut state = self.state.lock().unwrap();
+        let current_time = Utc::now();
+        state.snoozed_alerts.retain(|item| snooze_is_active(item, current_time));
         state.notified_alert_keys = acknowledged.into_iter().collect();
         state.notified_alert_keys.sort();
         if let Err(error) = self.save_locked(&state) {
@@ -750,7 +775,7 @@ impl Store {
             "startupNotice": self.startup_notice,
             "settings": state.settings,
             "providerOrder": ordered_providers(&state.accounts, &state.provider_order),
-            "alerts": alerts(&state),
+            "alerts": public_alerts(&state),
             "accounts": state.accounts.iter().map(public_account).collect::<Vec<_>>(),
             "history": history,
             "syncEvents": sync_events,
@@ -892,6 +917,24 @@ fn route_api(method: &Method, path: &str, body: &str, store: &Arc<Store>) -> App
             "removed": { "balanceSnapshots": balance_snapshots, "syncEvents": sync_events }
         })));
     }
+    if path == "/api/alerts/snooze" && (method == &Method::Post || method == &Method::Delete) {
+        let input: SnoozeAlertRequest = serde_json::from_str(body)
+            .map_err(|_| "提醒暂缓数据无效。")?;
+        let mut state = store.state.lock().unwrap();
+        let alert_exists = alerts(&state).iter().any(|alert| notification_key(alert) == input.alert_key);
+        if !alert_exists { return Err("提醒不存在或已经恢复正常。".into()); }
+        state.snoozed_alerts.retain(|item| item.key != input.alert_key);
+        let snoozed_until = if method == &Method::Post {
+            let until = (Utc::now() + ChronoDuration::hours(24)).to_rfc3339();
+            state.snoozed_alerts.push(SnoozedAlert { key:input.alert_key.clone(), until:until.clone() });
+            state.notified_alert_keys.retain(|key| key != &input.alert_key);
+            Some(until)
+        } else {
+            None
+        };
+        store.save_locked(&state)?;
+        return Ok((200, json!({ "ok": true, "snoozedUntil": snoozed_until })));
+    }
     if method == &Method::Post && path == "/api/accounts" {
         let input = serde_json::from_str(body).map_err(|_| "账户数据无效。")?;
         return Ok((201, store.add_account(input)?));
@@ -965,6 +1008,9 @@ fn route_api(method: &Method, path: &str, body: &str, store: &Arc<Store>) -> App
             state.provider_order.retain(|provider| connected.contains(provider));
             state.history.retain(|h| h.account_id != id);
             state.sync_events.retain(|event| event.account_id != id);
+            let alert_prefix = format!("{id}|");
+            state.snoozed_alerts.retain(|item| !item.key.starts_with(&alert_prefix));
+            state.notified_alert_keys.retain(|key| !key.starts_with(&alert_prefix));
             store.save_locked(&state)?;
             store.refresh_backup()?;
             return Ok((200, json!({ "ok": true })));
@@ -1157,6 +1203,12 @@ fn error_status(error: &str) -> u16 {
 
 fn alerts(state: &PersistedState) -> Vec<Value> {
     let mut result = Vec::new();
+    let current_time = Utc::now();
+    let stale_minutes = if state.settings.auto_sync_minutes > 0 {
+        i64::from((state.settings.auto_sync_minutes * 3).max(60))
+    } else {
+        360
+    };
     for account in state.accounts.iter().filter(|a| a.enabled != Some(false)) {
         for balance in &account.balances {
             if balance.total.parse::<f64>().ok().is_some_and(|v| v < state.settings.low_balance_threshold) {
@@ -1189,6 +1241,23 @@ fn alerts(state: &PersistedState) -> Vec<Value> {
                     "kind": "sync", "title": format!("{} 同步失败", account.name), "message": error
                 }));
             }
+        }
+        let freshness_message = if account.last_sync.trim().is_empty() {
+            Some("此账户尚未完成首次远端同步。".to_string())
+        } else {
+            DateTime::parse_from_rfc3339(&account.last_sync).ok().and_then(|timestamp| {
+                let elapsed = current_time.signed_duration_since(timestamp.with_timezone(&Utc)).num_minutes();
+                (elapsed >= stale_minutes).then(|| format!(
+                    "最近一次成功同步已超过 {} 分钟，当前数据可能已过期。",
+                    elapsed.max(stale_minutes)
+                ))
+            })
+        };
+        if let Some(message) = freshness_message {
+            result.push(json!({
+                "accountId": account.id, "accountName": account.name, "provider": account.provider,
+                "kind": "freshness", "title": format!("{} 数据需要刷新", account.name), "message": message
+            }));
         }
     }
     result
@@ -1277,6 +1346,27 @@ fn notification_key(alert: &Value) -> String {
         string_field(alert, "productId"),
         string_field(alert, "currency")
     )
+}
+
+fn snooze_is_active(item: &SnoozedAlert, current_time: DateTime<Utc>) -> bool {
+    DateTime::parse_from_rfc3339(&item.until)
+        .map(|until| until > current_time)
+        .unwrap_or(false)
+}
+
+fn public_alerts(state: &PersistedState) -> Vec<Value> {
+    let current_time = Utc::now();
+    alerts(state).into_iter().map(|mut alert| {
+        let key = notification_key(&alert);
+        let snoozed_until = state.snoozed_alerts.iter()
+            .find(|item| item.key == key && snooze_is_active(item, current_time))
+            .map(|item| item.until.clone());
+        if let Some(object) = alert.as_object_mut() {
+            object.insert("alertKey".into(), Value::String(key));
+            object.insert("snoozedUntil".into(), snoozed_until.map(Value::String).unwrap_or(Value::Null));
+        }
+        alert
+    }).collect()
 }
 #[cfg(test)]
 mod tests {
@@ -1474,6 +1564,68 @@ mod tests {
                 "accountId": "account-1", "kind": "quota", "productId": "agent"
             }))
         );
+    }
+
+    #[test]
+    fn alert_snooze_can_be_enabled_and_resumed_without_hiding_the_alert() {
+        let directory = std::env::temp_dir().join(format!("prismeter-test-{}", new_id()));
+        let store = Arc::new(Store::open(&directory).unwrap());
+        let alert_key = {
+            let mut state = store.state.lock().unwrap();
+            state.accounts.push(Account {
+                id:"alert-account".into(),
+                provider:"deepseek".into(),
+                name:"提醒账户".into(),
+                enabled:Some(true),
+                balances:vec![BalanceInfo { currency:"CNY".into(), total:"1.00".into(), ..BalanceInfo::default() }],
+                ..Account::default()
+            });
+            let key = notification_key(&alerts(&state)[0]);
+            state.notified_alert_keys.push(key.clone());
+            store.save_locked(&state).unwrap();
+            key
+        };
+
+        let body = json!({ "alertKey": alert_key.clone() }).to_string();
+        let (_, snoozed) = route_api(&Method::Post, "/api/alerts/snooze", &body, &store).unwrap();
+        assert!(snoozed["snoozedUntil"].as_str().is_some());
+        let state = store.state.lock().unwrap();
+        assert_eq!(state.snoozed_alerts.len(), 1);
+        assert!(!state.notified_alert_keys.contains(&alert_key));
+        drop(state);
+        let visible = store.public_state();
+        let target = visible["alerts"].as_array().unwrap().iter()
+            .find(|alert| alert["alertKey"] == alert_key).unwrap();
+        assert!(target["snoozedUntil"].as_str().is_some());
+
+        let (_, resumed) = route_api(&Method::Delete, "/api/alerts/snooze", &body, &store).unwrap();
+        assert!(resumed["snoozedUntil"].is_null());
+        assert!(store.state.lock().unwrap().snoozed_alerts.is_empty());
+        let visible = store.public_state();
+        let target = visible["alerts"].as_array().unwrap().iter()
+            .find(|alert| alert["alertKey"] == alert_key).unwrap();
+        assert!(target["snoozedUntil"].is_null());
+        drop(store);
+        fs::remove_dir_all(directory).unwrap();
+    }
+
+    #[test]
+    fn stale_remote_data_is_a_backend_alert_that_can_reach_notifications() {
+        let mut state = PersistedState::default();
+        state.settings.auto_sync_minutes = 0;
+        state.accounts.push(Account {
+            id:"stale-account".into(),
+            name:"过期账户".into(),
+            provider:"deepseek".into(),
+            enabled:Some(true),
+            last_sync:(Utc::now() - ChronoDuration::hours(7)).to_rfc3339(),
+            ..Account::default()
+        });
+        let generated = alerts(&state);
+        let freshness = generated.iter().find(|alert| alert["kind"] == "freshness").unwrap();
+        assert_eq!(freshness["accountId"], "stale-account");
+        assert!(freshness["message"].as_str().unwrap().contains("数据可能已过期"));
+        assert!(notification_key(freshness).contains("|freshness|"));
     }
 
     #[test]

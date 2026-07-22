@@ -1307,6 +1307,9 @@ input[type="number"]::-webkit-inner-spin-button,input[type="number"]::-webkit-ou
 .alert-side { display:flex; flex-direction:column; align-items:flex-end; gap:11px; }
 .alert-actions { display:flex; align-items:center; justify-content:flex-end; gap:7px; }
 .alert-actions .mini-button { min-height:33px; white-space:nowrap; }
+.alert-item.snoozed { border-color:rgba(111,122,151,.12); }
+.alert-item.snoozed .alert-symbol { color:#7e879a; background:rgba(126,135,154,.08); }
+.official-alert.snoozed { color:#747f94; background:rgba(120,132,154,.09); }
 .alert-sync-button span { pointer-events:none; }
 .alert-empty { display:flex; align-items:center; justify-content:center; gap:14px; min-height:190px; padding:30px; text-align:left; }
 .alert-empty h4 { margin:0; font-size:14px; }
