@@ -165,7 +165,8 @@ function accountFreshness(account) {
   if (!account?.lastSync) return { level:"never", label:"尚未同步", detail:"等待首次远端同步" };
   const elapsedMinutes = Math.max(0, (Date.now() - new Date(account.lastSync).getTime()) / 60000);
   const configured = Number(state.backend.settings?.autoSyncMinutes || 0);
-  const explicitStaleLimit = Number(state.backend.settings?.staleAfterMinutes || 0);
+  const accountStaleLimit = account?.alertSettings?.staleAfterMinutes;
+  const explicitStaleLimit = Number(accountStaleLimit ?? state.backend.settings?.staleAfterMinutes ?? 0);
   const staleLimit = explicitStaleLimit || (configured ? Math.max(60, configured * 3) : 360);
   const expectedFreshLimit = configured ? Math.max(15, configured * 1.5) : 60;
   const freshLimit = Math.min(expectedFreshLimit, staleLimit / 2);
@@ -428,7 +429,6 @@ function renderOverview() {
   const freshness = overallFreshness(accounts);
   const activeCount = freshness.monitored;
   const pausedSuffix = freshness.counts.paused ? ` · ${freshness.counts.paused} 个已暂停` : "";
-  const freshnessOnlyCount = freshness.counts.aging + freshness.counts.stale + freshness.counts.never;
   els.globalStatusText.textContent = connectedCount
     ? activeCount === 0 ? `全部 ${connectedCount} 个账户已暂停监控` : freshness.attention ? `${freshness.healthy}/${activeCount} 个监控账户数据新鲜 · ${freshness.attention} 个需刷新${pausedSuffix}` : `${activeCount} 个监控账户数据均为最新${pausedSuffix}`
     : "尚未连接远端账户 · 当前不展示用量";
@@ -438,11 +438,13 @@ function renderOverview() {
   document.querySelector(".hero-copy > p").textContent = "远端账户监控";
   document.querySelector(".hero-value strong").textContent = String(activeCount);
   document.querySelector(".hero-value span").textContent = "个监控账户";
-  document.querySelector(".hero-delta").innerHTML = alertCount || freshnessOnlyCount ? `<b>${alertCount + freshnessOnlyCount} 项需关注</b> · 额度、余额、状态或数据时效` : "<b>状态正常</b> · 暂无远端告警";
+  document.querySelector(".hero-delta").innerHTML = alertCount || freshness.attention
+    ? `<b>${alertCount} 条提醒</b>${freshness.attention ? ` · ${freshness.attention} 个账户需刷新` : ""}`
+    : "<b>状态正常</b> · 暂无远端告警";
   const latestSync = accounts.map(account => account.lastSync).filter(Boolean).sort().at(-1);
   document.querySelector(".hero-chart-wrap").hidden = false;
   document.querySelector("#heroHealthy").textContent = String(freshness.healthy);
-  document.querySelector("#heroAttention").textContent = String(alertCount + freshnessOnlyCount);
+  document.querySelector("#heroAttention").textContent = String(freshness.attention);
   document.querySelector("#heroPaused").textContent = String(freshness.counts.paused);
   document.querySelector("#heroLatestSync").textContent = latestSync ? `最近同步 ${relativeSyncTime(latestSync)}` : "尚未同步";
   const insight = document.querySelector(".insight-card");
@@ -877,6 +879,28 @@ function renderAlerts() {
   els.alertBalanceTotal.textContent = String(counts.balance);
   els.alertQuotaTotal.textContent = String(counts.quota);
   els.alertSyncTotal.textContent = String(counts.sync);
+  const ruleAccounts = accounts.filter(account => account.provider !== "mimo");
+  const disabledRules = ruleAccounts.filter(account => account.alertSettings?.enabled === false).length;
+  const customizedRules = ruleAccounts.filter(account => {
+    const settings = account.alertSettings || {};
+    return settings.lowBalanceThreshold != null || settings.usageThreshold != null || settings.staleAfterMinutes != null;
+  }).length;
+  els.alertRuleSummary.textContent = ruleAccounts.length
+    ? `${ruleAccounts.length - disabledRules} 个启用${disabledRules ? ` · ${disabledRules} 个关闭` : ""}${customizedRules ? ` · ${customizedRules} 个自定义` : ""}`
+    : "尚未连接支持账户";
+  els.alertRuleList.innerHTML = ruleAccounts.length ? ruleAccounts.map(account => {
+    const settings = account.alertSettings || {};
+    const disabled = settings.enabled === false;
+    const overrides = [];
+    if (settings.lowBalanceThreshold != null) overrides.push(`余额 ${settings.lowBalanceThreshold}`);
+    if (settings.usageThreshold != null) overrides.push(`额度 ${settings.usageThreshold}%`);
+    if (settings.staleAfterMinutes != null) overrides.push(`时效 ${formatRuleDuration(settings.staleAfterMinutes)}`);
+    const stateLabel = disabled ? "提醒已关闭" : overrides.length ? overrides.join(" · ") : "跟随全局规则";
+    return `<article class="alert-rule-item ${disabled ? "disabled" : overrides.length ? "custom" : "inherited"}">
+      ${platformLogo(account.provider, "activity-brand-logo")}<div><b>${escapeHtml(account.name)}</b><span>${escapeHtml(stateLabel)}</span></div>
+      <button type="button" class="mini-button" data-account-alerts="${escapeHtml(account.id)}">${disabled ? "重新启用" : "调整规则"}</button>
+    </article>`;
+  }).join("") : `<div class="alert-rule-empty">连接 OpenAI/Codex、火山方舟或 DeepSeek 后，可在这里管理账户提醒规则。</div>`;
   document.querySelectorAll("[data-alert-filter]").forEach(button => {
     const active = button.dataset.alertFilter === state.alertFilter;
     button.classList.toggle("active", active);
@@ -895,13 +919,37 @@ function renderAlerts() {
     return `<article class="alert-item glass-panel live-alert ${kind}${snoozed ? " snoozed" : ""}" data-alert-kind="${kind}">
       <div class="alert-symbol">${symbols[item.kind] || "!"}</div>
       <div class="alert-copy"><div class="alert-title-row">${platformLogo(item.provider || account?.provider, "activity-brand-logo")}<div><h4>${escapeHtml(item.title || item.accountName || "远端状态需要关注")}</h4><span>${escapeHtml(providers[item.provider || account?.provider]?.name || "已连接平台")} · ${escapeHtml(item.accountName || account?.name || "账户")}</span></div></div><p>${escapeHtml(item.message || "远端状态需要关注")}</p></div>
-      <div class="alert-side"><span class="official-alert${snoozed ? " snoozed" : ""}">${snoozed ? `已暂缓至 ${escapeHtml(formatDate(item.snoozedUntil))}` : `${badges[item.kind] || "提醒"} · 远端`}</span><div class="alert-actions">${snoozeButton}${account ? `<button class="mini-button" data-view-account="${escapeHtml(account.id)}" data-account-provider="${escapeHtml(account.provider)}">查看数据</button><button class="mini-button alert-sync-button" data-sync-account="${escapeHtml(account.id)}"><span>立即同步</span></button>` : ""}</div></div>
+      <div class="alert-side"><span class="official-alert${snoozed ? " snoozed" : ""}">${snoozed ? `已暂缓至 ${escapeHtml(formatDate(item.snoozedUntil))}` : `${badges[item.kind] || "提醒"} · 远端`}</span><div class="alert-actions">${snoozeButton}${account ? `<button class="mini-button" data-account-alerts="${escapeHtml(account.id)}">调整规则</button><button class="mini-button" data-view-account="${escapeHtml(account.id)}" data-account-provider="${escapeHtml(account.provider)}">查看数据</button><button class="mini-button alert-sync-button" data-sync-account="${escapeHtml(account.id)}"><span>立即同步</span></button>` : ""}</div></div>
     </article>`;
   }).join("") : allAlerts.length
     ? `<article class="alert-empty glass-panel"><div class="alert-symbol">✓</div><div><h4>此分类暂无提醒</h4><p>可以切换其他分类，或前往设置调整余额和额度阈值。</p></div></article>`
     : accounts.length
       ? `<article class="alert-empty glass-panel good"><div class="alert-symbol">✓</div><div><h4>暂无远端提醒</h4><p>当前账户没有余额、套餐额度、同步结果或数据时效提醒。</p></div></article>`
       : `<article class="alert-empty glass-panel"><div class="alert-symbol">i</div><div><h4>尚未连接账户</h4><p>添加平台账户并完成远端同步后，这里会显示余额、额度和同步状态提醒。</p></div></article>`;
+}
+
+function formatRuleDuration(minutes) {
+  const value = Number(minutes || 0);
+  if (value >= 10080 && value % 10080 === 0) return `${value / 10080} 周`;
+  if (value >= 1440 && value % 1440 === 0) return `${value / 1440} 天`;
+  if (value >= 60 && value % 60 === 0) return `${value / 60} 小时`;
+  return `${value} 分钟`;
+}
+
+function openAccountAlertsDialog(account) {
+  if (!account || account.provider === "mimo") return;
+  const settings = account.alertSettings || {};
+  state.alertAccountId = account.id;
+  els.accountAlertsTitle.textContent = `${account.name} · 提醒规则`;
+  els.accountAlertsSummary.textContent = `未单独设置的阈值将跟随全局规则：低余额 ${state.backend.settings?.lowBalanceThreshold ?? 10}，套餐额度 ${state.backend.settings?.usageThreshold ?? 80}% 已用。`;
+  els.accountAlertsEnabled.checked = settings.enabled !== false;
+  els.accountLowBalanceThreshold.value = settings.lowBalanceThreshold ?? "";
+  els.accountUsageThreshold.value = settings.usageThreshold ?? "";
+  setComboboxValue(els.accountStaleAfterMinutes, settings.staleAfterMinutes ?? "", false);
+  els.accountBalanceRule.hidden = account.provider !== "deepseek";
+  els.accountUsageRule.hidden = account.provider === "deepseek";
+  updateAccountAlertFieldState();
+  els.accountAlertsDialog.showModal();
 }
 
 function renderAccountHealth(accounts) {
@@ -1517,19 +1565,7 @@ document.addEventListener("click", async e => {
   const accountAlerts = e.target.closest("[data-account-alerts]");
   if (accountAlerts) {
     const account = (state.backend.accounts || []).find(item => item.id === accountAlerts.dataset.accountAlerts);
-    if (!account || account.provider === "mimo") return;
-    const settings = account.alertSettings || {};
-    state.alertAccountId = account.id;
-    els.accountAlertsTitle.textContent = `${account.name} · 提醒规则`;
-    els.accountAlertsSummary.textContent = `未单独设置的阈值将跟随全局规则：低余额 ${state.backend.settings?.lowBalanceThreshold ?? 10}，套餐额度 ${state.backend.settings?.usageThreshold ?? 80}% 已用。`;
-    els.accountAlertsEnabled.checked = settings.enabled !== false;
-    els.accountLowBalanceThreshold.value = settings.lowBalanceThreshold ?? "";
-    els.accountUsageThreshold.value = settings.usageThreshold ?? "";
-    setComboboxValue(els.accountStaleAfterMinutes, settings.staleAfterMinutes ?? "", false);
-    els.accountBalanceRule.hidden = account.provider !== "deepseek";
-    els.accountUsageRule.hidden = account.provider === "deepseek";
-    updateAccountAlertFieldState();
-    els.accountAlertsDialog.showModal();
+    openAccountAlertsDialog(account);
   }
   const renameAccount = e.target.closest("[data-rename-account]");
   if (renameAccount) {

@@ -89,7 +89,7 @@
             <div class="hero-status-head"><span>远端状态摘要</span><b id="heroLatestSync">尚未同步</b></div>
             <div class="hero-status-grid">
               <article><span>数据新鲜</span><strong id="heroHealthy">0</strong><small>已成功读取远端数据</small></article>
-              <article><span>需要处理</span><strong id="heroAttention">0</strong><small>告警、失败或数据过期</small></article>
+              <article><span>需要处理</span><strong id="heroAttention">0</strong><small>同步失败或数据待刷新</small></article>
               <article><span>已暂停</span><strong id="heroPaused">0</strong><small>保留账户但不参与同步</small></article>
             </div>
             <p class="hero-source-note"><i></i>只汇总平台实际返回的数据，不使用本地估算</p>
@@ -207,12 +207,17 @@
       </div>
 
       <div class="view" id="alertsView">
-        <section class="section-heading standalone alerts-heading"><div><p class="eyebrow">提醒中心</p><h3>余额、周期额度与同步状态</h3></div><button class="soft-button" data-open-settings>调整阈值</button></section>
+        <section class="section-heading standalone alerts-heading"><div><p class="eyebrow">提醒中心</p><h3>余额、周期额度与同步状态</h3></div><button class="soft-button" data-open-settings>全局提醒设置</button></section>
         <section class="alert-overview" aria-label="提醒分类统计">
           <article class="glass-panel alert-overview-item"><span>全部提醒</span><strong id="alertTotal">0</strong><small>当前需要关注</small></article>
           <article class="glass-panel alert-overview-item balance"><span>余额提醒</span><strong id="alertBalanceTotal">0</strong><small>低于余额阈值</small></article>
           <article class="glass-panel alert-overview-item quota"><span>额度提醒</span><strong id="alertQuotaTotal">0</strong><small>接近周期上限</small></article>
           <article class="glass-panel alert-overview-item sync"><span>同步与时效</span><strong id="alertSyncTotal">0</strong><small>失败或数据过期</small></article>
+        </section>
+        <section class="glass-panel alert-rule-panel">
+          <div class="card-title-row"><div><p class="eyebrow">账户规则</p><h3>每个账户独立判断</h3></div><span id="alertRuleSummary" class="history-count">尚未连接账户</span></div>
+          <p class="alert-rule-note">账户可以跟随全局规则，也可以覆盖适用的阈值或单独关闭提醒；暂停监控仍会保留规则。</p>
+          <div id="alertRuleList" class="alert-rule-list"></div>
         </section>
         <section class="alert-toolbar">
           <div class="alert-filters" role="group" aria-label="筛选提醒">
