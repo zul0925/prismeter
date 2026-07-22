@@ -18,7 +18,7 @@
 </head>
 <body>
   <div class="window-chrome" data-tauri-drag-region>
-    <div class="window-chrome-brand" data-tauri-drag-region><span></span><b>Prismeter</b></div>
+    <div class="window-chrome-brand" data-tauri-drag-region><span aria-hidden="true"><svg viewBox="0 0 20 20"><defs><linearGradient id="prismeterChromeGradient" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#8097ff"/><stop offset=".52" stop-color="#7954d6"/><stop offset="1" stop-color="#4fd1c5"/></linearGradient></defs><rect x=".4" y=".4" width="19.2" height="19.2" rx="6.3" fill="url(#prismeterChromeGradient)"/><g fill="none" stroke="rgba(255,255,255,.72)" stroke-width=".68"><ellipse cx="10" cy="10" rx="3.6" ry="6.8"/><ellipse cx="10" cy="10" rx="3.6" ry="6.8" transform="rotate(60 10 10)"/><ellipse cx="10" cy="10" rx="3.6" ry="6.8" transform="rotate(120 10 10)"/></g></svg></span><b>Prismeter</b></div>
     <div class="window-controls">
       <button id="windowMinimize" type="button" aria-label="最小化" title="最小化"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M2 6.5h8"/></svg></button>
       <button id="windowMaximize" type="button" aria-label="最大化" title="最大化"><svg viewBox="0 0 12 12" aria-hidden="true"><rect class="maximize-glyph" x="2.5" y="2.5" width="7" height="7" rx=".5"/><g class="restore-glyph"><path d="M4 3h5v5"/><rect x="2.5" y="4.5" width="5" height="5" rx=".5"/></g></svg></button>
@@ -161,7 +161,7 @@
         <section class="section-heading standalone model-heading">
           <div><p class="eyebrow">远端模型数据</p><h3>按平台实际返回字段分析</h3></div>
           <div class="model-filter-controls">
-            <label class="model-search"><span aria-hidden="true">⌕</span><input id="modelSearchInput" type="search" autocomplete="off" placeholder="搜索模型、产品或账户" aria-label="搜索模型、产品或账户" /></label>
+            <label class="model-search"><span aria-hidden="true"><svg viewBox="0 0 20 20"><circle cx="8.6" cy="8.6" r="5.1"/><path d="m12.4 12.4 4.1 4.1"/></svg></span><input id="modelSearchInput" type="search" autocomplete="off" placeholder="搜索模型、产品或账户" aria-label="搜索模型、产品或账户" /></label>
             <div class="glass-combobox compact-combo" data-combobox>
               <input id="modelLevelSelect" type="hidden" value="all" />
               <button class="combo-trigger" type="button" data-combo-trigger aria-haspopup="listbox" aria-expanded="false"><span data-combo-label>全部层级</span><i></i></button>

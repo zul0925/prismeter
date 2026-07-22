@@ -769,7 +769,8 @@ html,body { width:100%; height:100%; min-height:0; overflow:hidden; }
 .workspace::-webkit-scrollbar-thumb:hover { background-color:rgba(92,104,136,.48); }
 .window-chrome { padding-left:16px; }
 .window-chrome-brand { height:100%; line-height:1; }
-.window-chrome-brand span { flex:0 0 20px; }
+.window-chrome-brand span { display:grid; place-items:center; flex:0 0 20px; width:20px; height:20px; overflow:hidden; border-radius:7px; background:none; box-shadow:0 3px 9px rgba(88,77,190,.20); }
+.window-chrome-brand span svg { display:block; width:20px; height:20px; pointer-events:none; }
 .window-controls { flex:0 0 auto; align-items:stretch; }
 .window-controls button {
   display:grid;
@@ -1158,6 +1159,8 @@ body,.window-chrome,.glass-panel,.platform-card,.summary-card,.comparison-card,.
 .settings-threshold-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; margin-bottom:10px; }
 .settings-threshold-grid>label { display:grid; gap:7px; color:var(--muted); font-size:11px; font-weight:650; }
 .settings-threshold-grid input { width:100%; min-height:42px; border:1px solid rgba(255,255,255,.92); border-radius:13px; background:rgba(255,255,255,.62); box-shadow:inset 0 1px 0 #fff; color:var(--ink); padding:11px 12px; outline:none; font:inherit; }
+input[type="number"] { appearance:textfield; -moz-appearance:textfield; }
+input[type="number"]::-webkit-inner-spin-button,input[type="number"]::-webkit-outer-spin-button { margin:0; -webkit-appearance:none; appearance:none; }
 .settings-section-card .check-setting { margin-top:10px; }
 .settings-action { width:100%; min-height:40px; margin-top:10px; }
 .settings-action.danger-action { color:#b94f5e; border-color:rgba(201,76,95,.16); background:rgba(211,83,102,.07); }
@@ -1200,7 +1203,10 @@ body,.window-chrome,.glass-panel,.platform-card,.summary-card,.comparison-card,.
 :root[data-theme="dark"] .settings-action.danger-action { color:#f095a3; border-color:rgba(240,119,137,.16); background:rgba(196,67,89,.11); }
 :root[data-theme="dark"] .sort-drag-ghost { box-shadow:0 24px 54px rgba(0,0,0,.48),inset 0 1px 0 rgba(255,255,255,.08) !important; }
 
-@media(max-width:900px) { .settings-page-grid { grid-template-columns:1fr; } }
+@media(max-width:1180px) {
+  .hero { min-height:0; grid-template-columns:1fr; gap:22px; }
+  .settings-page-grid { grid-template-columns:1fr; }
+}
 @media(max-width:620px) {
   .settings-heading { align-items:flex-start; }
   .settings-save-status { min-height:28px; padding:5px 8px; }
@@ -1213,11 +1219,14 @@ body,.window-chrome,.glass-panel,.platform-card,.summary-card,.comparison-card,.
 
 /* Prismeter 0.13 · usable capability-aware model analysis */
 .model-heading { align-items:end; }
-.model-filter-controls { display:grid; grid-template-columns:minmax(210px,1fr) 155px 190px; align-items:center; gap:8px; width:min(720px,68%); }
+.model-filter-controls { display:grid; grid-template-columns:minmax(200px,1fr) 174px 190px; align-items:center; gap:8px; width:min(720px,68%); }
 .model-search { display:flex; align-items:center; gap:8px; min-width:0; height:42px; padding:0 12px; border:1px solid rgba(255,255,255,.78); border-radius:13px; background:rgba(255,255,255,.48); box-shadow:inset 0 1px 0 rgba(255,255,255,.85); color:#7f899f; }
-.model-search span { flex:0 0 auto; font-size:17px; }
+.model-search span { display:grid; place-items:center; flex:0 0 18px; width:18px; height:18px; line-height:0; }
+.model-search span svg { display:block; width:16px; height:16px; fill:none; stroke:currentColor; stroke-width:1.55; stroke-linecap:round; stroke-linejoin:round; }
 .model-search input { width:100%; min-width:0; border:0; outline:0; background:transparent; color:var(--ink); font:inherit; font-size:12px; }
 .model-search input::placeholder { color:#929bae; }
+.model-filter-controls .compact-combo { width:auto; min-width:0; flex:none; }
+.model-filter-controls .combo-trigger [data-combo-label] { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 #modelsView .comparison-hero { grid-template-columns:repeat(5,minmax(0,1fr)); gap:0; padding:17px 12px; }
 #modelsView .comparison-hero>div { min-width:0; padding:5px 12px; border-right:1px solid rgba(103,115,148,.09); }
 #modelsView .comparison-hero>div:last-child { border-right:0; }

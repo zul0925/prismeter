@@ -7,7 +7,7 @@
 [![平台](https://img.shields.io/badge/platform-Windows-3578e5)](https://github.com/zul0925/prismeter)
 [![Tauri](https://img.shields.io/badge/Tauri-2-24c8db)](https://tauri.app/)
 [![Rust](https://img.shields.io/badge/backend-Rust-b7410e)](https://www.rust-lang.org/)
-[![版本](https://img.shields.io/badge/version-0.18.1-7458d6)](https://github.com/zul0925/prismeter/releases)
+[![版本](https://img.shields.io/badge/version-0.18.2-7458d6)](https://github.com/zul0925/prismeter/releases)
 [![许可证](https://img.shields.io/badge/license-Apache--2.0-3da639)](LICENSE)
 
 Prismeter（棱镜计量）将不同 AI 平台返回的数据汇聚到一个桌面应用中，再按平台、账户、套餐和模型能力分别展示。它只呈现平台实际提供的远端指标，不读取本地会话日志，也不会用模拟数据补齐平台未开放的字段。
