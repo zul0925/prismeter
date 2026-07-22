@@ -7,7 +7,7 @@
 [![Platform](https://img.shields.io/badge/platform-Windows-3578e5)](https://github.com/zul0925/prismeter)
 [![Tauri](https://img.shields.io/badge/Tauri-2-24c8db)](https://tauri.app/)
 [![Rust](https://img.shields.io/badge/backend-Rust-b7410e)](https://www.rust-lang.org/)
-[![Version](https://img.shields.io/badge/version-0.18.9-7458d6)](https://github.com/zul0925/prismeter/releases)
+[![Version](https://img.shields.io/badge/version-0.19.0-7458d6)](https://github.com/zul0925/prismeter/releases)
 [![License](https://img.shields.io/badge/license-Apache--2.0-3da639)](LICENSE)
 
 Prismeter brings usage data returned by different AI platforms into one desktop app and presents it by platform, account, plan, and model capability. It only displays metrics actually provided by remote services. It does not read local conversation logs or fill unavailable fields with simulated data.
@@ -19,6 +19,7 @@ Prismeter brings usage data returned by different AI platforms into one desktop 
 - Manual sync, scheduled sync, sync at startup, per-account retry, four-account parallel batches, and bounded 2/5/15-minute retry backoff for transient failures.
 - Sync health, failure reasons, request duration, and recent synchronization history.
 - Configurable 30/90/180/365-day local history retention, with an isolated history-clear action that preserves accounts and credentials.
+- Numeric remote metrics from OpenAI/Codex, Volcengine Ark, and DeepSeek are sampled locally for 24-hour, 7-day, 30-day, and 90-day trend views.
 - Automatic recovery from the latest valid encrypted local-state backup when the primary state file is damaged.
 - Alerts for balances, quotas, synchronization failures, and stale data, with per-alert 24-hour snooze and resume controls.
 - Configurable stale-data detection that can follow the synchronization schedule or use an explicit threshold from one hour to seven days.
@@ -46,7 +47,7 @@ Data that a platform does not provide is shown as “—” or explicitly marked
 - The recovery backup contains the same DPAPI-encrypted credentials; account removal and history deletion are immediately reflected in both copies.
 - Credentials are never returned through frontend state APIs or included in JSON exports and diagnostics.
 - Prismeter does not read conversation history, local Codex session logs, or other model-client history.
-- Balance snapshots and sync records stay on the local machine for trends, status, and troubleshooting.
+- Balance snapshots, normalized remote metric snapshots, and sync records stay on the local machine for trends, status, and troubleshooting.
 - All usage metrics come from remote APIs or official sign-in services for connected platforms.
 
 Default data directory:

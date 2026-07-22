@@ -132,18 +132,27 @@
 
         <section id="balanceTrendCard" class="glass-panel balance-trend-card" hidden>
           <div class="card-title-row">
-            <div><p class="eyebrow">本地历史</p><h3>余额趋势</h3></div>
+            <div><p class="eyebrow">远端快照</p><h3>指标趋势</h3></div>
             <div class="trend-stat"><strong id="trendChange">—</strong><span id="trendCaption">等待更多快照</span></div>
           </div>
+          <div class="trend-toolbar">
+            <div id="trendMetricTabs" class="trend-metric-tabs" aria-label="选择趋势指标"></div>
+            <div class="trend-range-tabs" role="group" aria-label="选择趋势时间范围">
+              <button type="button" data-trend-range="1">24 小时</button>
+              <button type="button" class="active" data-trend-range="7">7 天</button>
+              <button type="button" data-trend-range="30">30 天</button>
+              <button type="button" data-trend-range="90">90 天</button>
+            </div>
+          </div>
           <div class="trend-chart-wrap">
-            <svg class="balance-trend-chart" viewBox="0 0 600 170" role="img" aria-label="账户余额历史趋势">
+            <svg class="balance-trend-chart" viewBox="0 0 600 170" role="img" aria-label="远端指标历史趋势">
               <defs><linearGradient id="balanceAreaFill" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#3972dc" stop-opacity=".30"/><stop offset="100%" stop-color="#3972dc" stop-opacity="0"/></linearGradient></defs>
               <path class="grid-line" d="M20 30H580 M20 85H580 M20 140H580"/>
               <path id="trendArea" class="trend-area"></path>
               <path id="trendPath" class="trend-path"></path>
               <g id="trendPoints"></g>
             </svg>
-            <div id="trendEmpty" class="trend-empty">同步两次以上后会显示余额变化曲线。</div>
+            <div id="trendEmpty" class="trend-empty">同步两次以上后会显示远端指标变化曲线。</div>
           </div>
         </section>
 
@@ -354,7 +363,7 @@
             </article>
 
             <article class="glass-panel settings-section-card">
-              <div class="settings-card-heading"><span class="settings-card-icon" aria-hidden="true">⌁</span><div><h4>本地历史</h4><p>只保存远端同步结果，不保存凭据、请求正文或本地会话。</p></div></div>
+              <div class="settings-card-heading"><span class="settings-card-icon" aria-hidden="true">⌁</span><div><h4>本地历史</h4><p>只保存远端同步结果与数值快照，不保存凭据、请求正文或本地会话。</p></div></div>
               <label class="settings-field"><span><b>保留时间</b><small>修改后会立即清理超过期限的余额快照和同步记录。</small></span><div class="glass-combobox settings-combo" data-combobox>
                 <input id="historyRetentionDays" type="hidden" value="90" />
                 <button class="combo-trigger" type="button" data-combo-trigger aria-haspopup="listbox" aria-expanded="false"><span data-combo-label>90 天</span><i></i></button>
@@ -403,7 +412,7 @@
     <button class="dialog-close" id="clearHistoryDialogClose" aria-label="取消清除">×</button>
     <p class="eyebrow">本地数据管理</p>
     <h3>清除历史记录？</h3>
-    <p id="clearHistoryDialogSummary">将删除本机保存的余额快照和同步运行记录。已连接账户、凭据、设置和当前远端数据不会受到影响。</p>
+    <p id="clearHistoryDialogSummary">将删除本机保存的余额快照、远端指标快照和同步运行记录。已连接账户、凭据、设置和当前远端数据不会受到影响。</p>
     <div class="form-actions">
       <button type="button" class="soft-button" id="clearHistoryCancel">取消</button>
       <button type="button" class="primary-button danger-confirm" id="clearHistoryConfirm"><span>确认清除</span></button>

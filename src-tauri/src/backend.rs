@@ -22,6 +22,8 @@ const REMOTE_TIMEOUT_SECONDS: u64 = 18;
 const MAX_CONCURRENT_SYNCS: usize = 4;
 const BALANCE_HISTORY_LIMIT: usize = 1000;
 const SYNC_EVENT_STORAGE_LIMIT: usize = 500;
+const METRIC_HISTORY_LIMIT: usize = 50_000;
+const METRIC_SAMPLE_INTERVAL_MINUTES: i64 = 55;
 const PUBLIC_HISTORY_LIMIT: usize = 120;
 const INDEX_HTML: &[u8] = include_bytes!("../../frontend/index.html");
 const STYLES_CSS: &[u8] = include_bytes!("../../frontend/styles.css");
@@ -109,6 +111,19 @@ struct BalanceSnapshot {
 
 #[derive(Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
+struct MetricSnapshot {
+    #[serde(default)] account_id: String,
+    #[serde(default)] timestamp: String,
+    #[serde(default)] product_id: String,
+    #[serde(default)] product_name: String,
+    #[serde(default)] metric_id: String,
+    #[serde(default)] label: String,
+    #[serde(default)] value: f64,
+    #[serde(default)] unit: String,
+}
+
+#[derive(Clone, Default, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 struct SyncEvent {
     #[serde(default)] id: String,
     #[serde(default)] account_id: String,
@@ -159,6 +174,7 @@ struct PersistedState {
     #[serde(default)] accounts: Vec<Account>,
     #[serde(default)] provider_order: Vec<String>,
     #[serde(default)] history: Vec<BalanceSnapshot>,
+    #[serde(default)] metric_history: Vec<MetricSnapshot>,
     #[serde(default)] sync_events: Vec<SyncEvent>,
     #[serde(default)] settings: Settings,
     #[serde(default)] notified_alert_keys: Vec<String>,
@@ -171,6 +187,7 @@ impl Default for PersistedState {
             accounts: Vec::new(),
             provider_order: Vec::new(),
             history: Vec::new(),
+            metric_history: Vec::new(),
             sync_events: Vec::new(),
             settings: Settings::default(),
             notified_alert_keys: Vec::new(),
@@ -215,6 +232,17 @@ struct ReorderProvidersRequest {
 struct SnoozeAlertRequest {
     alert_key: String,
 }
+
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct MetricHistoryRequest {
+    account_id: String,
+    #[serde(default)] product_id: String,
+    #[serde(default = "default_metric_range_days")]
+    range_days: i32,
+}
+
+fn default_metric_range_days() -> i32 { 7 }
 
 #[derive(Default, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -301,7 +329,7 @@ impl Store {
             startup_notice,
             http,
         };
-        if pruned_on_open.0 > 0 || pruned_on_open.1 > 0 {
+        if pruned_on_open.0 > 0 || pruned_on_open.1 > 0 || pruned_on_open.2 > 0 {
             let state = store.state.lock().unwrap();
             store.save_locked(&state)?;
             store.refresh_backup()?;
@@ -435,6 +463,7 @@ impl Store {
             return Err("当前 Windows 用户的 OpenAI 登录账户已经连接。".to_string());
         }
         if account.provider == "deepseek" { add_snapshots(&mut state, &account); }
+        add_metric_snapshots(&mut state, &account);
         if !state.provider_order.iter().any(|provider| provider == &account.provider) {
             state.provider_order.push(account.provider.clone());
         }
@@ -485,6 +514,7 @@ impl Store {
                 updated.last_sync_duration_ms = started.elapsed().as_millis() as u64;
                 state.accounts[index] = updated.clone();
                 if updated.provider == "deepseek" { add_snapshots(&mut state, &updated); }
+                add_metric_snapshots(&mut state, &updated);
                 add_sync_event(&mut state, &updated, true, "同步成功".into());
                 self.save_locked(&state)?;
                 Ok(json!({ "ok": true, "account": public_account(&updated) }))
@@ -627,6 +657,7 @@ impl Store {
             .ok_or("账户不存在。")?;
         state.accounts[index] = updated.clone();
         if updated.provider == "deepseek" { add_snapshots(&mut state, &updated); }
+        add_metric_snapshots(&mut state, &updated);
         add_sync_event(&mut state, &updated, true, "连接设置验证成功".into());
         self.save_locked(&state)?;
         Ok(json!({ "ok": true, "account": public_account(&updated) }))
@@ -801,6 +832,7 @@ impl Store {
             "syncEvents": sync_events,
             "historyStorage": {
                 "balanceSnapshots": state.history.len(),
+                "metricSnapshots": state.metric_history.len(),
                 "syncEvents": state.sync_events.len(),
                 "retentionDays": state.settings.history_retention_days
             },
@@ -924,20 +956,45 @@ fn route_api(method: &Method, path: &str, body: &str, store: &Arc<Store>) -> App
         let pruned = prune_history(&mut state, Utc::now());
         if !input.notifications_enabled { state.notified_alert_keys.clear(); }
         store.save_locked(&state)?;
-        if pruned.0 > 0 || pruned.1 > 0 { store.refresh_backup()?; }
+        if pruned.0 > 0 || pruned.1 > 0 || pruned.2 > 0 { store.refresh_backup()?; }
         return Ok((200, json!({ "ok": true, "settings": input })));
+    }
+    if method == &Method::Post && path == "/api/metric-history" {
+        let input: MetricHistoryRequest = serde_json::from_str(body)
+            .map_err(|_| "趋势查询数据无效。")?;
+        if !matches!(input.range_days, 1 | 7 | 30 | 90 | 180 | 365) {
+            return Err("趋势查询范围无效。".into());
+        }
+        let state = store.state.lock().unwrap();
+        if !state.accounts.iter().any(|account| account.id == input.account_id) {
+            return Err("账户不存在。".into());
+        }
+        let cutoff = Utc::now() - ChronoDuration::days(i64::from(input.range_days));
+        let mut snapshots = state.metric_history.iter()
+            .filter(|item| item.account_id == input.account_id)
+            .filter(|item| input.product_id.is_empty() || item.product_id == input.product_id)
+            .filter(|item| timestamp_is_retained(&item.timestamp, cutoff))
+            .cloned()
+            .collect::<Vec<_>>();
+        snapshots.sort_by(|a, b| a.timestamp.cmp(&b.timestamp));
+        return Ok((200, json!({
+            "ok": true, "accountId": input.account_id, "productId": input.product_id,
+            "rangeDays": input.range_days, "snapshots": snapshots
+        })));
     }
     if method == &Method::Delete && path == "/api/history" {
         let mut state = store.state.lock().unwrap();
         let balance_snapshots = state.history.len();
+        let metric_snapshots = state.metric_history.len();
         let sync_events = state.sync_events.len();
         state.history.clear();
+        state.metric_history.clear();
         state.sync_events.clear();
         store.save_locked(&state)?;
         store.refresh_backup()?;
         return Ok((200, json!({
             "ok": true,
-            "removed": { "balanceSnapshots": balance_snapshots, "syncEvents": sync_events }
+            "removed": { "balanceSnapshots": balance_snapshots, "metricSnapshots": metric_snapshots, "syncEvents": sync_events }
         })));
     }
     if path == "/api/alerts/snooze" && (method == &Method::Post || method == &Method::Delete) {
@@ -1030,6 +1087,7 @@ fn route_api(method: &Method, path: &str, body: &str, store: &Arc<Store>) -> App
             let connected = state.accounts.iter().map(|account| account.provider.clone()).collect::<HashSet<_>>();
             state.provider_order.retain(|provider| connected.contains(provider));
             state.history.retain(|h| h.account_id != id);
+            state.metric_history.retain(|item| item.account_id != id);
             state.sync_events.retain(|event| event.account_id != id);
             let alert_prefix = format!("{id}|");
             state.snoozed_alerts.retain(|item| !item.key.starts_with(&alert_prefix));
@@ -1065,6 +1123,116 @@ fn add_snapshots(state: &mut PersistedState, account: &Account) {
         state.history.truncate(BALANCE_HISTORY_LIMIT);
     }
     prune_history(state, Utc::now());
+}
+
+fn add_metric_snapshots(state: &mut PersistedState, account: &Account) {
+    // MiMo is intentionally excluded from new analytics. Existing account data remains readable.
+    if account.provider == "mimo" { return; }
+    for candidate in collect_metric_snapshots(account) {
+        let previous = state.metric_history.iter().rev().find(|item| {
+            item.account_id == candidate.account_id && item.metric_id == candidate.metric_id
+        });
+        let should_record = previous.is_none_or(|item| {
+            let elapsed = DateTime::parse_from_rfc3339(&item.timestamp).ok()
+                .and_then(|timestamp| DateTime::parse_from_rfc3339(&candidate.timestamp).ok()
+                    .map(|current| current.signed_duration_since(timestamp).num_minutes()))
+                .unwrap_or(METRIC_SAMPLE_INTERVAL_MINUTES);
+            elapsed >= METRIC_SAMPLE_INTERVAL_MINUTES
+                || (candidate.unit == "%" && candidate.value + 5.0 < item.value)
+        });
+        if should_record { state.metric_history.push(candidate); }
+    }
+    if state.metric_history.len() > METRIC_HISTORY_LIMIT {
+        state.metric_history.sort_by(|a, b| a.timestamp.cmp(&b.timestamp));
+        let excess = state.metric_history.len() - METRIC_HISTORY_LIMIT;
+        state.metric_history.drain(0..excess);
+    }
+    prune_history(state, Utc::now());
+}
+
+fn collect_metric_snapshots(account: &Account) -> Vec<MetricSnapshot> {
+    if account.provider == "mimo" { return Vec::new(); }
+    let mut result = Vec::new();
+    for balance in &account.balances {
+        for (field, label, text) in [
+            ("total", "当前总余额", balance.total.as_str()),
+            ("granted", "赠送余额", balance.granted.as_str()),
+            ("topped-up", "充值余额", balance.topped_up.as_str()),
+        ] {
+            if let Some(value) = parse_plain_number(text) {
+                result.push(MetricSnapshot {
+                    account_id: account.id.clone(), timestamp: account.last_sync.clone(),
+                    product_id: "api".into(), product_name: "DeepSeek API".into(),
+                    metric_id: format!("balance:{}:{field}", balance.currency), label: label.into(),
+                    value, unit: balance.currency.clone(),
+                });
+            }
+        }
+    }
+    for product in &account.products {
+        let product_id = string_field(product, "id");
+        let product_name = string_field(product, "name");
+        let usage_label = string_field(product, "usageLabel");
+        if let Some((value, unit)) = parse_remote_number(&string_field(product, "usage"), &usage_label) {
+            result.push(MetricSnapshot {
+                account_id: account.id.clone(), timestamp: account.last_sync.clone(),
+                product_id: product_id.clone(), product_name: product_name.clone(),
+                metric_id: format!("product:{product_id}:usage"),
+                label: if usage_label.is_empty() { "主要指标".into() } else { usage_label.clone() },
+                value, unit,
+            });
+        }
+        for summary in product.get("summaries").and_then(Value::as_array).into_iter().flatten() {
+            let label = string_field(summary, "label");
+            if label.is_empty() || label == usage_label { continue; }
+            if let Some((value, unit)) = parse_remote_number(&string_field(summary, "value"), &label) {
+                result.push(MetricSnapshot {
+                    account_id: account.id.clone(), timestamp: account.last_sync.clone(),
+                    product_id: product_id.clone(), product_name: product_name.clone(),
+                    metric_id: format!("product:{product_id}:summary:{label}"),
+                    label, value, unit,
+                });
+            }
+        }
+    }
+    result
+}
+
+fn parse_plain_number(value: &str) -> Option<f64> {
+    value.trim().replace(',', "").parse::<f64>().ok().filter(|number| number.is_finite())
+}
+
+fn parse_remote_number(value: &str, label: &str) -> Option<(f64, String)> {
+    let normalized = value.trim().trim_start_matches(|character| character == '¥' || character == '$').trim().replace(',', "");
+    if normalized.is_empty() || normalized == "—" { return None; }
+    let mut end = 0;
+    let mut has_digit = false;
+    for (index, character) in normalized.char_indices() {
+        let accepted = character.is_ascii_digit() || character == '.' || ((character == '-' || character == '+') && index == 0);
+        if !accepted { break; }
+        if character.is_ascii_digit() { has_digit = true; }
+        end = index + character.len_utf8();
+    }
+    if !has_digit || end == 0 { return None; }
+    let number = normalized[..end].parse::<f64>().ok().filter(|number| number.is_finite())?;
+    let suffix = normalized[end..].trim();
+    if suffix.len() > 32 || suffix.contains('/') || suffix.contains(':') || suffix.chars().any(|character| character.is_ascii_digit()) {
+        return None;
+    }
+    let unit = if !suffix.is_empty() {
+        suffix.to_string()
+    } else if label.to_ascii_lowercase().contains("token") {
+        "Token".into()
+    } else if label.contains("请求") {
+        "次".into()
+    } else if label.contains("席位") || label.contains("模型") {
+        "个".into()
+    } else if label.contains("天") {
+        "天".into()
+    } else {
+        String::new()
+    };
+    Some((number, unit))
 }
 
 fn add_sync_event(state: &mut PersistedState, account: &Account, success: bool, message: String) {
@@ -1307,13 +1475,19 @@ fn retry_delay_minutes(consecutive_failures: u32) -> Option<i64> {
     }
 }
 
-fn prune_history(state: &mut PersistedState, current_time: DateTime<Utc>) -> (usize, usize) {
+fn prune_history(state: &mut PersistedState, current_time: DateTime<Utc>) -> (usize, usize, usize) {
     let cutoff = current_time - ChronoDuration::days(i64::from(state.settings.history_retention_days));
     let balance_before = state.history.len();
     let sync_before = state.sync_events.len();
+    let metric_before = state.metric_history.len();
     state.history.retain(|item| timestamp_is_retained(&item.timestamp, cutoff));
     state.sync_events.retain(|item| timestamp_is_retained(&item.timestamp, cutoff));
-    (balance_before - state.history.len(), sync_before - state.sync_events.len())
+    state.metric_history.retain(|item| timestamp_is_retained(&item.timestamp, cutoff));
+    (
+        balance_before - state.history.len(),
+        sync_before - state.sync_events.len(),
+        metric_before - state.metric_history.len(),
+    )
 }
 
 fn timestamp_is_retained(value: &str, cutoff: DateTime<Utc>) -> bool {
@@ -1438,6 +1612,80 @@ mod tests {
     }
 
     #[test]
+    fn remote_metric_parser_accepts_stable_numbers_and_rejects_ambiguous_text() {
+        assert_eq!(parse_remote_number("86.5%", "本周期用量"), Some((86.5, "%".into())));
+        assert_eq!(parse_remote_number("1,500,000", "累计 Token"), Some((1_500_000.0, "Token".into())));
+        assert_eq!(parse_remote_number("6 个", "模型数量"), Some((6.0, "个".into())));
+        assert_eq!(parse_remote_number("100 / 200 AFP", "已用 / 额度"), None);
+        assert_eq!(parse_remote_number("2026-07-22", "重置日期"), None);
+        assert_eq!(parse_remote_number("Running", "状态"), None);
+    }
+
+    #[test]
+    fn metric_history_is_hourly_sampled_but_records_quota_resets() {
+        let product = |usage: &str| json!({
+            "id":"coding", "name":"Coding Plan", "usage":usage, "usageLabel":"月度用量",
+            "summaries":[{"label":"累计 Token", "value":"1,500", "note":"官方"}]
+        });
+        let mut state = PersistedState::default();
+        let mut account = Account {
+            id:"metric-account".into(), provider:"volcengine".into(),
+            last_sync:"2026-07-22T00:00:00Z".into(), products:vec![product("25%")],
+            ..Account::default()
+        };
+        add_metric_snapshots(&mut state, &account);
+        assert_eq!(state.metric_history.len(), 2);
+
+        account.last_sync = "2026-07-22T00:30:00Z".into();
+        account.products = vec![product("30%")];
+        add_metric_snapshots(&mut state, &account);
+        assert_eq!(state.metric_history.len(), 2);
+
+        account.last_sync = "2026-07-22T00:31:00Z".into();
+        account.products = vec![product("10%")];
+        add_metric_snapshots(&mut state, &account);
+        assert_eq!(state.metric_history.len(), 3);
+        assert_eq!(state.metric_history.last().unwrap().value, 10.0);
+
+        let mimo = Account { provider:"mimo".into(), ..account };
+        add_metric_snapshots(&mut state, &mimo);
+        assert_eq!(state.metric_history.len(), 3);
+    }
+
+    #[test]
+    fn metric_history_api_filters_account_product_and_range() {
+        let directory = std::env::temp_dir().join(format!("prismeter-test-{}", new_id()));
+        let store = Arc::new(Store::open(&directory).unwrap());
+        {
+            let mut state = store.state.lock().unwrap();
+            state.accounts.push(Account { id:"history-account".into(), ..Account::default() });
+            state.metric_history = vec![
+                MetricSnapshot {
+                    account_id:"history-account".into(), product_id:"codex".into(),
+                    timestamp:(Utc::now() - ChronoDuration::hours(2)).to_rfc3339(), value:25.0,
+                    ..MetricSnapshot::default()
+                },
+                MetricSnapshot {
+                    account_id:"history-account".into(), product_id:"chatgpt".into(),
+                    timestamp:(Utc::now() - ChronoDuration::hours(1)).to_rfc3339(), value:1.0,
+                    ..MetricSnapshot::default()
+                },
+                MetricSnapshot {
+                    account_id:"history-account".into(), product_id:"codex".into(),
+                    timestamp:(Utc::now() - ChronoDuration::days(8)).to_rfc3339(), value:10.0,
+                    ..MetricSnapshot::default()
+                },
+            ];
+        }
+        let body = json!({ "accountId":"history-account", "productId":"codex", "rangeDays":7 }).to_string();
+        let (_, response) = route_api(&Method::Post, "/api/metric-history", &body, &store).unwrap();
+        assert_eq!(response["snapshots"].as_array().unwrap().len(), 1);
+        assert_eq!(response["snapshots"][0]["value"], 25.0);
+        drop(store);
+        fs::remove_dir_all(directory).unwrap();
+    }
+
+    #[test]
     fn failed_syncs_use_bounded_automatic_retry_schedule() {
         assert_eq!(retry_delay_minutes(0), None);
         assert_eq!(retry_delay_minutes(1), Some(2));
@@ -1473,10 +1721,15 @@ mod tests {
             SyncEvent { timestamp:"2026-06-20T00:00:00Z".into(), ..SyncEvent::default() },
             SyncEvent { timestamp:"2026-07-21T00:00:00Z".into(), ..SyncEvent::default() },
         ];
+        state.metric_history = vec![
+            MetricSnapshot { timestamp:"2026-06-01T00:00:00Z".into(), ..MetricSnapshot::default() },
+            MetricSnapshot { timestamp:"2026-07-21T00:00:00Z".into(), ..MetricSnapshot::default() },
+        ];
         let removed = prune_history(&mut state, "2026-07-22T00:00:00Z".parse().unwrap());
-        assert_eq!(removed, (1, 1));
+        assert_eq!(removed, (1, 1, 1));
         assert_eq!(state.history.len(), 2);
         assert_eq!(state.sync_events.len(), 1);
+        assert_eq!(state.metric_history.len(), 1);
     }
 
     #[test]
@@ -1487,6 +1740,7 @@ mod tests {
             let mut state = store.state.lock().unwrap();
             state.accounts.push(Account { id:"kept-account".into(), name:"保留账户".into(), ..Account::default() });
             state.history.push(BalanceSnapshot { timestamp:now(), ..BalanceSnapshot::default() });
+            state.metric_history.push(MetricSnapshot { timestamp:now(), ..MetricSnapshot::default() });
             state.sync_events.push(SyncEvent { timestamp:now(), ..SyncEvent::default() });
             state.settings.history_retention_days = 180;
             store.save_locked(&state).unwrap();
@@ -1494,9 +1748,11 @@ mod tests {
 
         let (_, response) = route_api(&Method::Delete, "/api/history", "", &store).unwrap();
         assert_eq!(response["removed"]["balanceSnapshots"], 1);
+        assert_eq!(response["removed"]["metricSnapshots"], 1);
         assert_eq!(response["removed"]["syncEvents"], 1);
         let state = store.state.lock().unwrap();
         assert!(state.history.is_empty());
+        assert!(state.metric_history.is_empty());
         assert!(state.sync_events.is_empty());
         assert_eq!(state.accounts.len(), 1);
         assert_eq!(state.accounts[0].id, "kept-account");
@@ -1504,6 +1760,7 @@ mod tests {
         drop(state);
         let backup = read_persisted_state(&directory.join("accounts.backup.json")).unwrap();
         assert!(backup.history.is_empty());
+        assert!(backup.metric_history.is_empty());
         assert!(backup.sync_events.is_empty());
         assert_eq!(backup.accounts[0].id, "kept-account");
         fs::remove_dir_all(directory).unwrap();

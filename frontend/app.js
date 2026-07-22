@@ -61,7 +61,7 @@ function platformLogo(providerId, sizeClass = "") {
 
 function resource(name, type, badge, metrics) { return { name, type, badge, metrics }; }
 
-const state = { view: "overview", provider: "volcengine", accountId: null, renameAccountId: null, connectionAccountId: null, diagnosticAccountId: null, alertFilter: "all", syncEventFilter: "all", products: {}, backend: { accounts: [], history: [], syncEvents: [] }, desktopPreferences: { closeToTray:null, launchAtStartup:null }, syncPollTimer: null, syncPollUsers: 0, updateCheckStarted: false, availableUpdate: null, storageNoticeShown: false };
+const state = { view: "overview", provider: "volcengine", accountId: null, renameAccountId: null, connectionAccountId: null, diagnosticAccountId: null, alertFilter: "all", syncEventFilter: "all", products: {}, backend: { accounts: [], history: [], syncEvents: [] }, desktopPreferences: { closeToTray:null, launchAtStartup:null }, syncPollTimer: null, syncPollUsers: 0, updateCheckStarted: false, availableUpdate: null, storageNoticeShown: false, metricRangeDays: 7, metricHistoryCache: new Map(), metricSelections: {}, metricHistoryRequestKey: "" };
 Object.entries(providers).forEach(([id, p]) => state.products[id] = p.primaryProduct);
 function remotePlaceholder(platformName, supported = false) {
   return {
@@ -517,42 +517,116 @@ function renderPlatform() {
   els.detailTitle.textContent = `${product.name} · 远端指标`;
   renderDynamicTable(product);
   els.exportProductButton.disabled = !account || !(product.rows || []).length;
-  renderBalanceTrend(id === "deepseek" ? account : null);
+  renderMetricTrend(account, productId);
 }
 
-function renderBalanceTrend(account) {
-  if (!account) {
+function metricHistoryKey(account, productId) {
+  return `${account.id}|${productId}|${state.metricRangeDays}|${account.lastSync || "never"}`;
+}
+
+function formatMetricNumber(value, unit = "") {
+  const number = Number(value);
+  const formatted = Number.isFinite(number)
+    ? new Intl.NumberFormat("zh-CN", { maximumFractionDigits:Math.abs(number) < 10 ? 2 : 1 }).format(number)
+    : "—";
+  if (unit === "CNY") return `¥ ${formatted}`;
+  if (unit === "USD") return `$ ${formatted}`;
+  return `${formatted}${unit === "%" ? "%" : unit ? ` ${unit}` : ""}`;
+}
+
+function clearMetricTrend(message) {
+  els.trendPath.setAttribute("d", "");
+  els.trendArea.setAttribute("d", "");
+  els.trendPoints.innerHTML = "";
+  els.trendChange.textContent = "等待采集";
+  els.trendChange.classList.remove("down");
+  els.trendEmpty.textContent = message;
+  els.trendEmpty.hidden = false;
+}
+
+async function loadMetricHistory(account, productId, key) {
+  if (state.metricHistoryRequestKey === key) return;
+  state.metricHistoryRequestKey = key;
+  try {
+    const payload = await apiRequest("/api/metric-history", {
+      method:"POST",
+      body:JSON.stringify({ accountId:account.id, productId, rangeDays:state.metricRangeDays })
+    });
+    state.metricHistoryCache.set(key, payload.snapshots || []);
+  } catch (error) {
+    state.metricHistoryCache.set(key, { error:errorMessage(error) });
+  } finally {
+    if (state.metricHistoryRequestKey === key) state.metricHistoryRequestKey = "";
+    const current = getSelectedAccount(state.provider);
+    if (current?.id === account.id && state.products[state.provider] === productId) renderMetricTrend(account, productId);
+  }
+}
+
+function renderMetricTrend(account, productId) {
+  if (!account || account.provider === "mimo" || productId === "remote") {
     els.balanceTrendCard.hidden = true;
     return;
   }
   els.balanceTrendCard.hidden = false;
-  const preferredCurrency = account.balances?.find(item => item.currency === "CNY")?.currency || account.balances?.[0]?.currency;
-  const history = (state.backend.history || [])
-    .filter(item => item.accountId === account.id && item.currency === preferredCurrency)
-    .sort((a,b) => new Date(a.timestamp) - new Date(b.timestamp));
-  els.trendCaption.textContent = `${history.length} 次远端余额快照（本地保存） · ${preferredCurrency || '—'}`;
-  if (history.length < 2) {
-    els.trendPath.setAttribute("d", "");
-    els.trendArea.setAttribute("d", "");
-    els.trendPoints.innerHTML = "";
-    els.trendChange.textContent = "等待采集";
-    els.trendEmpty.hidden = false;
+  document.querySelectorAll("[data-trend-range]").forEach(button => {
+    const active = Number(button.dataset.trendRange) === state.metricRangeDays;
+    button.classList.toggle("active", active);
+    button.setAttribute("aria-pressed", String(active));
+  });
+  const key = metricHistoryKey(account, productId);
+  const cached = state.metricHistoryCache.get(key);
+  if (!cached) {
+    els.trendMetricTabs.innerHTML = "";
+    els.trendCaption.textContent = `正在读取最近 ${state.metricRangeDays} 天的远端快照`;
+    clearMetricTrend("正在读取远端指标历史…");
+    loadMetricHistory(account, productId, key);
     return;
   }
-  const values = history.map(item => Number(item.total)).filter(Number.isFinite);
-  if (values.length < 2) { els.trendEmpty.hidden = false; return; }
+  if (cached.error) {
+    els.trendMetricTabs.innerHTML = "";
+    els.trendCaption.textContent = "趋势读取失败";
+    clearMetricTrend(cached.error);
+    return;
+  }
+  const groups = new Map();
+  for (const item of cached) {
+    if (!groups.has(item.metricId)) groups.set(item.metricId, []);
+    groups.get(item.metricId).push(item);
+  }
+  const metrics = [...groups.entries()].map(([id,items]) => ({ id, label:items[0].label, unit:items[0].unit, items }));
+  const selectionKey = `${account.id}|${productId}`;
+  let selectedId = state.metricSelections[selectionKey];
+  if (!metrics.some(metric => metric.id === selectedId)) selectedId = metrics[0]?.id || "";
+  state.metricSelections[selectionKey] = selectedId;
+  els.trendMetricTabs.innerHTML = metrics.map(metric => `<button type="button" class="${metric.id === selectedId ? "active" : ""}" data-trend-metric="${escapeHtml(metric.id)}" title="${escapeHtml(metric.label)}">${escapeHtml(metric.label)}</button>`).join("");
+  const selected = metrics.find(metric => metric.id === selectedId);
+  if (!selected) {
+    els.trendCaption.textContent = `最近 ${state.metricRangeDays} 天 · 尚无可绘制数值`;
+    clearMetricTrend("当前产品暂未返回可用于趋势分析的数值指标。");
+    return;
+  }
+  const snapshots = selected.items.sort((a,b) => new Date(a.timestamp) - new Date(b.timestamp));
+  els.trendCaption.textContent = `${snapshots.length} 个远端快照 · 最近 ${state.metricRangeDays} 天`;
+  if (snapshots.length < 2) {
+    clearMetricTrend("至少完成两次跨小时同步后，才会显示变化曲线。");
+    return;
+  }
+  const values = snapshots.map(item => Number(item.value));
   const min = Math.min(...values), max = Math.max(...values), range = max - min || 1;
-  const points = values.map((value,index) => {
-    const x = 20 + index * (560 / Math.max(values.length - 1, 1));
-    const y = 140 - ((value - min) / range) * 110;
-    return {x,y,value};
-  });
-  const line = points.map((point,index) => `${index ? 'L' : 'M'}${point.x.toFixed(1)},${point.y.toFixed(1)}`).join(" ");
+  const points = values.map((value,index) => ({
+    x:20 + index * (560 / Math.max(values.length - 1, 1)),
+    y:140 - ((value - min) / range) * 110,
+    value,
+    timestamp:snapshots[index].timestamp
+  }));
+  const line = points.map((point,index) => `${index ? "L" : "M"}${point.x.toFixed(1)},${point.y.toFixed(1)}`).join(" ");
   els.trendPath.setAttribute("d", line);
   els.trendArea.setAttribute("d", `${line} L580,155 L20,155 Z`);
-  els.trendPoints.innerHTML = points.map(point => `<circle cx="${point.x.toFixed(1)}" cy="${point.y.toFixed(1)}" r="4"><title>${point.value.toFixed(2)} ${escapeHtml(preferredCurrency)}</title></circle>`).join("");
-  const change = values[values.length - 1] - values[0];
-  els.trendChange.textContent = `${change > 0 ? '+' : ''}${change.toFixed(2)} ${preferredCurrency}`;
+  els.trendPoints.innerHTML = points.map(point => `<circle cx="${point.x.toFixed(1)}" cy="${point.y.toFixed(1)}" r="4"><title>${escapeHtml(formatDate(point.timestamp))} · ${escapeHtml(formatMetricNumber(point.value, selected.unit))}</title></circle>`).join("");
+  const change = values.at(-1) - values[0];
+  els.trendChange.textContent = selected.unit === "%"
+    ? `${change > 0 ? "+" : ""}${change.toFixed(1)} 个百分点`
+    : `${change > 0 ? "+" : ""}${formatMetricNumber(change, selected.unit)}`;
   els.trendChange.classList.toggle("down", change < 0);
   els.trendEmpty.hidden = true;
 }
@@ -602,10 +676,11 @@ function populateSettings() {
   els.updateCurrentVersion.textContent = state.backend.version || "—";
   const storage = state.backend.historyStorage || {};
   const balanceSnapshots = Number(storage.balanceSnapshots || 0);
+  const metricSnapshots = Number(storage.metricSnapshots || 0);
   const syncEvents = Number(storage.syncEvents || 0);
-  els.historyStorageSummary.textContent = `${balanceSnapshots + syncEvents} 条`;
-  els.historyStorageDetail.textContent = `${balanceSnapshots} 条余额快照 · ${syncEvents} 条同步记录`;
-  els.clearHistoryButton.disabled = balanceSnapshots + syncEvents === 0;
+  els.historyStorageSummary.textContent = `${balanceSnapshots + metricSnapshots + syncEvents} 条`;
+  els.historyStorageDetail.textContent = `${metricSnapshots} 条指标快照 · ${balanceSnapshots} 条余额兼容快照 · ${syncEvents} 条同步记录`;
+  els.clearHistoryButton.disabled = balanceSnapshots + metricSnapshots + syncEvents === 0;
 }
 
 function closeComboboxes(except) {
@@ -1413,6 +1488,14 @@ document.addEventListener("click", async e => {
   const openAccountDialog = e.target.closest("[data-open-account-dialog]"); if (openAccountDialog) els.accountDialog.showModal();
   const openSettings = e.target.closest("[data-open-settings]"); if (openSettings) switchView("settings");
   const product = e.target.closest("[data-product]"); if (product) { state.products[state.provider] = product.dataset.product; renderPlatform(); }
+  const trendRange = e.target.closest("[data-trend-range]");
+  if (trendRange) { state.metricRangeDays = Number(trendRange.dataset.trendRange); renderPlatform(); }
+  const trendMetric = e.target.closest("[data-trend-metric]");
+  if (trendMetric) {
+    const account = getSelectedAccount(state.provider);
+    if (account) state.metricSelections[`${account.id}|${state.products[state.provider]}`] = trendMetric.dataset.trendMetric;
+    renderMetricTrend(account, state.products[state.provider]);
+  }
   const row = e.target.closest("[data-row]"); if (row) showRowDialog(Number(row.dataset.row));
   const toggle = e.target.closest(".toggle"); if (toggle) toggle.classList.toggle("off");
   const diagnoseAccount = e.target.closest("[data-diagnose-account]");
@@ -1654,8 +1737,9 @@ els.installUpdateButton.addEventListener("click", () => {
 els.clearHistoryButton.addEventListener("click", () => {
   const storage = state.backend.historyStorage || {};
   const balanceSnapshots = Number(storage.balanceSnapshots || 0);
+  const metricSnapshots = Number(storage.metricSnapshots || 0);
   const syncEvents = Number(storage.syncEvents || 0);
-  els.clearHistoryDialogSummary.textContent = `将删除本机保存的 ${balanceSnapshots} 条余额快照和 ${syncEvents} 条同步记录。已连接账户、凭据、设置和当前远端数据不会受到影响。`;
+  els.clearHistoryDialogSummary.textContent = `将删除本机保存的 ${metricSnapshots} 条远端指标快照、${balanceSnapshots} 条余额兼容快照和 ${syncEvents} 条同步记录。已连接账户、凭据、设置和当前远端数据不会受到影响。`;
   els.clearHistoryDialog.showModal();
 });
 els.clearHistoryDialogClose.addEventListener("click", () => els.clearHistoryDialog.close());
@@ -1666,7 +1750,8 @@ els.clearHistoryConfirm.addEventListener("click", async () => {
   button.querySelector("span").textContent = "正在清除…";
   try {
     const result = await apiRequest("/api/history", { method:"DELETE" });
-    const removed = Number(result.removed?.balanceSnapshots || 0) + Number(result.removed?.syncEvents || 0);
+    const removed = Number(result.removed?.balanceSnapshots || 0) + Number(result.removed?.metricSnapshots || 0) + Number(result.removed?.syncEvents || 0);
+    state.metricHistoryCache.clear();
     await loadBackendState({quiet:true});
     els.clearHistoryDialog.close();
     showToast(removed ? `已清除 ${removed} 条本地历史记录` : "当前没有可清除的历史记录", removed ? "success" : "info");

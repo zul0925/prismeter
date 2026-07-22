@@ -369,6 +369,13 @@ button { color: inherit; }
 .trend-stat strong { font-size: 15px; color: var(--green); }
 .trend-stat strong.down { color: var(--orange); }
 .trend-stat span { margin-top: 3px; color: var(--muted); font-size: 8px; }
+.trend-toolbar { display:flex; align-items:flex-start; justify-content:space-between; gap:12px; margin-top:14px; }
+.trend-metric-tabs,.trend-range-tabs { display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
+.trend-metric-tabs { min-width:0; }
+.trend-metric-tabs button,.trend-range-tabs button { min-height:30px; padding:6px 10px; border:1px solid var(--line); border-radius:10px; background:rgba(255,255,255,.38); color:var(--muted); font:inherit; font-size:11px; font-weight:700; cursor:pointer; transition:background .18s ease,border-color .18s ease,color .18s ease,transform .18s ease; }
+.trend-metric-tabs button:hover,.trend-range-tabs button:hover { transform:translateY(-1px); color:var(--ink); }
+.trend-metric-tabs button.active,.trend-range-tabs button.active { color:#5268e7; border-color:rgba(101,121,238,.30); background:rgba(101,121,238,.11); }
+.trend-range-tabs { flex:0 0 auto; justify-content:flex-end; }
 .trend-chart-wrap { position: relative; min-height: 170px; margin-top: 8px; }
 .balance-trend-chart { display: block; width: 100%; height: 170px; overflow: visible; }
 .balance-trend-chart .grid-line { fill: none; stroke: rgba(102,111,137,.10); stroke-width: 1; }
@@ -377,6 +384,10 @@ button { color: inherit; }
 #trendPoints circle { fill: white; stroke: #3972dc; stroke-width: 2; }
 .trend-empty { position: absolute; inset: 0; display: grid; place-items: center; color: var(--muted); font-size: 9px; background: linear-gradient(90deg,transparent,rgba(247,249,253,.56),transparent); }
 .trend-empty[hidden] { display: none; }
+@media (max-width: 760px) {
+  .trend-toolbar { align-items:stretch; flex-direction:column; }
+  .trend-range-tabs { justify-content:flex-start; }
+}
 .settings-dialog { width: min(480px, calc(100vw - 32px)); }
 .settings-form { display: grid; gap: 13px; margin-top: 18px; }
 .settings-form > label:not(.check-setting) { display: grid; gap: 6px; color: #656d7d; font-size: 9px; font-weight: 650; }
@@ -990,6 +1001,7 @@ body,.window-chrome,.glass-panel,.platform-card,.summary-card,.comparison-card,.
 :root[data-theme="dark"] .hero-chart circle { fill:#1d263a; }
 :root[data-theme="dark"] .ring::before { background:rgba(21,28,43,.95); box-shadow:inset 0 1px 8px rgba(0,0,0,.25); }
 :root[data-theme="dark"] .trend-empty { background:linear-gradient(90deg,transparent,rgba(25,33,50,.72),transparent); }
+:root[data-theme="dark"] .trend-metric-tabs button,:root[data-theme="dark"] .trend-range-tabs button { background:rgba(255,255,255,.035); }
 
 :root[data-theme="dark"] .combo-trigger,
 :root[data-theme="dark"] .account-form input,
