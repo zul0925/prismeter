@@ -419,6 +419,45 @@
     </div>
   </dialog>
 
+  <dialog id="deleteAccountDialog" class="metric-dialog glass-panel delete-account-dialog">
+    <button class="dialog-close" id="deleteAccountDialogClose" aria-label="取消移除">×</button>
+    <p class="eyebrow">账户管理</p>
+    <h3 id="deleteAccountDialogTitle">移除账户？</h3>
+    <p id="deleteAccountDialogSummary">移除后，本机保存的连接凭据和该账户的历史记录会一并删除；平台侧账户与远端数据不会受到影响。</p>
+    <div class="form-actions">
+      <button type="button" class="soft-button" id="deleteAccountCancel">取消</button>
+      <button type="button" class="primary-button danger-confirm" id="deleteAccountConfirm"><span>确认移除</span></button>
+    </div>
+  </dialog>
+
+  <dialog id="accountAlertsDialog" class="account-dialog metric-dialog glass-panel account-alerts-dialog">
+    <button class="dialog-close" id="accountAlertsDialogClose" aria-label="关闭账户提醒设置">×</button>
+    <p class="eyebrow">账户提醒</p>
+    <h3 id="accountAlertsTitle">提醒规则</h3>
+    <p id="accountAlertsSummary">留空的阈值会跟随“设置”中的全局提醒规则。</p>
+    <form id="accountAlertsForm" class="account-form">
+      <label class="check-setting account-alert-master"><input id="accountAlertsEnabled" type="checkbox" checked/><span><b>此账户参与提醒</b><small>关闭后，提醒中心和 Windows 通知都不会再报告此账户。</small></span></label>
+      <div class="account-alert-fields" id="accountAlertFields">
+        <label id="accountBalanceRule"><span>低余额阈值</span><div class="input-with-unit"><input id="accountLowBalanceThreshold" type="number" min="0" step="0.01" placeholder="跟随全局设置"/><b>账户币种</b></div></label>
+        <label id="accountUsageRule"><span>套餐额度阈值</span><div class="input-with-unit"><input id="accountUsageThreshold" type="number" min="50" max="100" step="1" placeholder="跟随全局设置"/><b>% 已用</b></div></label>
+        <label class="settings-field account-stale-rule"><span><b>数据过期提醒</b><small>仅覆盖此账户；选择跟随全局可恢复统一管理。</small></span><div class="glass-combobox" data-combobox>
+          <input id="accountStaleAfterMinutes" type="hidden" value="" />
+          <button class="combo-trigger" type="button" data-combo-trigger aria-haspopup="listbox" aria-expanded="false"><span data-combo-label>跟随全局</span><i></i></button>
+          <div class="combo-menu" role="listbox">
+            <button type="button" class="combo-option selected" data-value="" role="option">跟随全局<span>使用设置页规则</span></button>
+            <button type="button" class="combo-option" data-value="60" role="option">1 小时</button>
+            <button type="button" class="combo-option" data-value="180" role="option">3 小时</button>
+            <button type="button" class="combo-option" data-value="360" role="option">6 小时</button>
+            <button type="button" class="combo-option" data-value="720" role="option">12 小时</button>
+            <button type="button" class="combo-option" data-value="1440" role="option">24 小时</button>
+            <button type="button" class="combo-option" data-value="10080" role="option">7 天</button>
+          </div>
+        </div></label>
+      </div>
+      <div class="form-actions"><button type="button" class="soft-button" id="accountAlertsCancel">取消</button><button type="submit" class="primary-button" id="accountAlertsSave"><span>应用规则</span></button></div>
+    </form>
+  </dialog>
+
   <dialog id="renameAccountDialog" class="account-dialog metric-dialog glass-panel rename-account-dialog">
     <button class="dialog-close" id="renameAccountDialogClose">×</button>
     <p class="eyebrow">账户管理</p>

@@ -39,6 +39,23 @@ if (retainedFixtures.length) {
   throw new Error(`Frontend validation failed: demo usage fixtures remain: ${retainedFixtures.join(", ")}`);
 }
 
+// Native browser dialogs expose the loopback origin (127.0.0.1) in their title
+// and bypass Prismeter's visual language. All confirmations and messages must use
+// the app's own dialog or toast components.
+const nativeDialogPatterns = [
+  ["alert", /\b(?:window\.)?alert\s*\(/],
+  ["confirm", /\b(?:window\.)?confirm\s*\(/],
+  ["prompt", /\b(?:window\.)?prompt\s*\(/]
+];
+const retainedNativeDialogs = nativeDialogPatterns
+  .filter(([, pattern]) => pattern.test(script))
+  .map(([name]) => name);
+if (retainedNativeDialogs.length) {
+  throw new Error(
+    `Frontend validation failed: browser-native dialogs remain: ${retainedNativeDialogs.join(", ")}`
+  );
+}
+
 // The UI is served by Prismeter's loopback server, so every native command
 // invoked from the frontend must be explicitly allowed for that remote origin.
 // Keep this check close to the frontend to prevent a command from compiling

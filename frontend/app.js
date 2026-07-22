@@ -61,7 +61,7 @@ function platformLogo(providerId, sizeClass = "") {
 
 function resource(name, type, badge, metrics) { return { name, type, badge, metrics }; }
 
-const state = { view: "overview", provider: "volcengine", accountId: null, renameAccountId: null, connectionAccountId: null, diagnosticAccountId: null, alertFilter: "all", syncEventFilter: "all", products: {}, backend: { accounts: [], history: [], syncEvents: [] }, desktopPreferences: { closeToTray:null, launchAtStartup:null }, syncPollTimer: null, syncPollUsers: 0, updateCheckStarted: false, availableUpdate: null, storageNoticeShown: false, metricRangeDays: 7, metricHistoryCache: new Map(), metricSelections: {}, metricHistoryRequestKey: "" };
+const state = { view: "overview", provider: "volcengine", accountId: null, renameAccountId: null, deleteAccountId: null, alertAccountId: null, connectionAccountId: null, diagnosticAccountId: null, alertFilter: "all", syncEventFilter: "all", products: {}, backend: { accounts: [], history: [], syncEvents: [] }, desktopPreferences: { closeToTray:null, launchAtStartup:null }, syncPollTimer: null, syncPollUsers: 0, updateCheckStarted: false, availableUpdate: null, storageNoticeShown: false, metricRangeDays: 7, metricHistoryCache: new Map(), metricSelections: {}, metricHistoryRequestKey: "" };
 Object.entries(providers).forEach(([id, p]) => state.products[id] = p.primaryProduct);
 function remotePlaceholder(platformName, supported = false) {
   return {
@@ -1011,7 +1011,7 @@ function renderAccounts() {
       <div class="account-directory-metrics"><div><span>连接状态</span><strong>${escapeHtml(availability)}</strong></div><div><span>${metricLabel}</span><strong>${escapeHtml(metricValue)}</strong></div><div><span>最近同步</span><strong>${escapeHtml(relativeSyncTime(account.lastSync))}</strong><small>${escapeHtml(formatDate(account.lastSync))} · 远端耗时 ${escapeHtml(formatDuration(account.lastSyncDurationMs))}</small></div></div>
       ${account.lastError ? `<p class="account-error">${escapeHtml(account.lastError)}</p>` : ""}
       ${(account.productErrors || []).length ? `<p class="account-error">${(account.productErrors || []).map(escapeHtml).join("<br>")}</p>` : ""}
-      <div class="account-actions"><button class="soft-button compact" data-view-account="${accountId}" data-account-provider="${escapeHtml(account.provider)}">查看数据</button><span><button class="mini-button" data-diagnose-account="${accountId}">连接诊断</button>${account.provider === "openai" ? "" : `<button class="mini-button" data-edit-connection="${accountId}" ${syncing ? "disabled" : ""}>连接设置</button>`}<button class="mini-button" data-rename-account="${accountId}">重命名</button><button class="mini-button" data-toggle-account="${accountId}">${account.enabled === false ? "恢复监控" : "暂停监控"}</button><button class="mini-button" data-sync-account="${accountId}" ${syncing ? "disabled" : ""}><span>${syncing ? "同步中" : "立即同步"}</span></button><button class="danger-link" data-delete-account="${accountId}" ${syncing ? "disabled" : ""}>移除</button></span></div>
+      <div class="account-actions"><button class="soft-button compact" data-view-account="${accountId}" data-account-provider="${escapeHtml(account.provider)}">查看数据</button><span><button class="mini-button" data-diagnose-account="${accountId}">连接诊断</button>${account.provider === "mimo" ? "" : `<button class="mini-button" data-account-alerts="${accountId}">${account.alertSettings?.enabled === false ? "提醒已关闭" : "提醒规则"}</button>`}${account.provider === "openai" ? "" : `<button class="mini-button" data-edit-connection="${accountId}" ${syncing ? "disabled" : ""}>连接设置</button>`}<button class="mini-button" data-rename-account="${accountId}">重命名</button><button class="mini-button" data-toggle-account="${accountId}">${account.enabled === false ? "恢复监控" : "暂停监控"}</button><button class="mini-button" data-sync-account="${accountId}" ${syncing ? "disabled" : ""}><span>${syncing ? "同步中" : "立即同步"}</span></button><button class="danger-link" data-delete-account="${accountId}" ${syncing ? "disabled" : ""}>移除</button></span></div>
     </article>`;
   }).join("");
 
@@ -1020,6 +1020,14 @@ function renderAccounts() {
     const account = accounts.find(candidate => candidate.id === item.accountId);
     return `<div class="history-row"><i></i><div><b>${escapeHtml(account?.name || "已移除账户")}</b><span>${escapeHtml(formatDate(item.timestamp))}</span></div><strong>${escapeHtml(`${moneySymbol(item.currency)} ${item.total}`)}</strong><small>${escapeHtml(item.currency)}</small></div>`;
   }).join("") : `<div class="history-empty">DeepSeek 完成远端同步后，这里会保存官方余额快照；快照不参与用量推算。</div>`;
+}
+
+function updateAccountAlertFieldState() {
+  const disabled = !els.accountAlertsEnabled.checked;
+  els.accountAlertFields.classList.toggle("disabled-fields", disabled);
+  [els.accountLowBalanceThreshold, els.accountUsageThreshold].forEach(input => { input.disabled = disabled; });
+  const trigger = els.accountStaleAfterMinutes.closest("[data-combobox]")?.querySelector("[data-combo-trigger]");
+  if (trigger) trigger.disabled = disabled;
 }
 
 function switchView(view, providerId, accountId) {
@@ -1506,6 +1514,23 @@ document.addEventListener("click", async e => {
   if (editConnection) {
     openConnectionDialog((state.backend.accounts || []).find(item => item.id === editConnection.dataset.editConnection));
   }
+  const accountAlerts = e.target.closest("[data-account-alerts]");
+  if (accountAlerts) {
+    const account = (state.backend.accounts || []).find(item => item.id === accountAlerts.dataset.accountAlerts);
+    if (!account || account.provider === "mimo") return;
+    const settings = account.alertSettings || {};
+    state.alertAccountId = account.id;
+    els.accountAlertsTitle.textContent = `${account.name} · 提醒规则`;
+    els.accountAlertsSummary.textContent = `未单独设置的阈值将跟随全局规则：低余额 ${state.backend.settings?.lowBalanceThreshold ?? 10}，套餐额度 ${state.backend.settings?.usageThreshold ?? 80}% 已用。`;
+    els.accountAlertsEnabled.checked = settings.enabled !== false;
+    els.accountLowBalanceThreshold.value = settings.lowBalanceThreshold ?? "";
+    els.accountUsageThreshold.value = settings.usageThreshold ?? "";
+    setComboboxValue(els.accountStaleAfterMinutes, settings.staleAfterMinutes ?? "", false);
+    els.accountBalanceRule.hidden = account.provider !== "deepseek";
+    els.accountUsageRule.hidden = account.provider === "deepseek";
+    updateAccountAlertFieldState();
+    els.accountAlertsDialog.showModal();
+  }
   const renameAccount = e.target.closest("[data-rename-account]");
   if (renameAccount) {
     const account = (state.backend.accounts || []).find(item => item.id === renameAccount.dataset.renameAccount);
@@ -1539,12 +1564,13 @@ document.addEventListener("click", async e => {
     finally { stopSyncPolling(); syncAccount.disabled = false; if (label) label.textContent = "立即同步"; }
   }
   const deleteAccount = e.target.closest("[data-delete-account]");
-  if (deleteAccount && confirm("从本机移除此账户及其本地数据？")) {
-    try {
-      await apiRequest(`/api/accounts/${deleteAccount.dataset.deleteAccount}`, { method:"DELETE" });
-      await loadBackendState({quiet:true});
-      showToast("账户已从本机移除");
-    } catch (error) { showToast(errorMessage(error)); }
+  if (deleteAccount) {
+    const account = (state.backend.accounts || []).find(item => item.id === deleteAccount.dataset.deleteAccount);
+    if (!account) return;
+    state.deleteAccountId = account.id;
+    els.deleteAccountDialogTitle.textContent = `移除“${account.name}”？`;
+    els.deleteAccountDialogSummary.textContent = "移除后，本机保存的连接凭据和该账户的历史记录会一并删除；平台侧账户与远端数据不会受到影响。";
+    els.deleteAccountDialog.showModal();
   }
 });
 
@@ -1670,6 +1696,11 @@ els.copyDiagnosticButton.addEventListener("click", async () => {
 });
 els.addAccountButton.addEventListener("click",()=>{ updateCredentialFields(); els.accountDialog.showModal(); });
 els.accountDialogClose.addEventListener("click",()=>els.accountDialog.close());
+els.accountAlertsDialogClose.addEventListener("click",()=>els.accountAlertsDialog.close());
+els.accountAlertsCancel.addEventListener("click",()=>els.accountAlertsDialog.close());
+els.accountAlertsEnabled.addEventListener("change",updateAccountAlertFieldState);
+els.deleteAccountDialogClose.addEventListener("click",()=>els.deleteAccountDialog.close());
+els.deleteAccountCancel.addEventListener("click",()=>els.deleteAccountDialog.close());
 els.renameAccountDialogClose.addEventListener("click",()=>els.renameAccountDialog.close());
 els.renameAccountCancel.addEventListener("click",()=>els.renameAccountDialog.close());
 els.connectionDialogClose.addEventListener("click",()=>els.connectionDialog.close());
@@ -1708,6 +1739,53 @@ els.renameAccountForm.addEventListener("submit", async event => {
     showToast("账户名称已更新");
   } catch (error) { showToast(errorMessage(error)); }
   finally { button.disabled = false; button.querySelector("span").textContent = "保存名称"; }
+});
+els.accountAlertsForm.addEventListener("submit", async event => {
+  event.preventDefault();
+  if (!state.alertAccountId) return;
+  const button = els.accountAlertsSave;
+  const optionalNumber = input => input.value.trim() === "" ? null : Number(input.value);
+  if (!els.accountLowBalanceThreshold.checkValidity() || !els.accountUsageThreshold.checkValidity()) {
+    showToast("请检查账户提醒阈值", "error");
+    return;
+  }
+  button.disabled = true;
+  button.querySelector("span").textContent = "正在应用…";
+  try {
+    await apiRequest(`/api/accounts/${state.alertAccountId}/alerts`, {
+      method:"PUT",
+      body:JSON.stringify({
+        enabled:els.accountAlertsEnabled.checked,
+        lowBalanceThreshold:optionalNumber(els.accountLowBalanceThreshold),
+        usageThreshold:optionalNumber(els.accountUsageThreshold),
+        staleAfterMinutes:els.accountStaleAfterMinutes.value === "" ? null : Number(els.accountStaleAfterMinutes.value)
+      })
+    });
+    await loadBackendState({quiet:true});
+    els.accountAlertsDialog.close();
+    showToast("账户提醒规则已更新");
+  } catch (error) { showToast(errorMessage(error, "无法更新账户提醒规则"), "error"); }
+  finally { button.disabled = false; button.querySelector("span").textContent = "应用规则"; }
+});
+els.deleteAccountConfirm.addEventListener("click", async () => {
+  const accountId = state.deleteAccountId;
+  if (!accountId) { els.deleteAccountDialog.close(); return; }
+  const button = els.deleteAccountConfirm;
+  button.disabled = true;
+  button.querySelector("span").textContent = "正在移除…";
+  try {
+    await apiRequest(`/api/accounts/${accountId}`, { method:"DELETE" });
+    state.metricHistoryCache.clear();
+    state.deleteAccountId = null;
+    await loadBackendState({quiet:true});
+    els.deleteAccountDialog.close();
+    showToast("账户及其本地数据已移除");
+  } catch (error) {
+    showToast(errorMessage(error, "无法移除账户"), "error");
+  } finally {
+    button.disabled = false;
+    button.querySelector("span").textContent = "确认移除";
+  }
 });
 els.testNotificationButton.addEventListener("click", async () => {
   const button = els.testNotificationButton;

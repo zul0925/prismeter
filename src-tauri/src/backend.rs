@@ -143,6 +143,15 @@ struct SnoozedAlert {
 
 #[derive(Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
+struct AccountAlertSettings {
+    #[serde(default)] enabled: Option<bool>,
+    #[serde(default)] low_balance_threshold: Option<f64>,
+    #[serde(default)] usage_threshold: Option<f64>,
+    #[serde(default)] stale_after_minutes: Option<i32>,
+}
+
+#[derive(Clone, Default, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 struct Account {
     #[serde(default)] id: String,
     #[serde(default)] provider: String,
@@ -157,6 +166,7 @@ struct Account {
     #[serde(default)] plan_type: String,
     #[serde(default)] created_at: String,
     #[serde(default)] enabled: Option<bool>,
+    #[serde(default)] alert_settings: AccountAlertSettings,
     #[serde(default)] last_attempt_at: String,
     #[serde(default)] last_sync_duration_ms: u64,
     #[serde(default)] consecutive_failures: u32,
@@ -214,6 +224,8 @@ struct UpdateAccountRequest {
     name: Option<String>,
     enabled: Option<bool>,
 }
+
+type UpdateAccountAlertsRequest = AccountAlertSettings;
 
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -1060,6 +1072,32 @@ fn route_api(method: &Method, path: &str, body: &str, store: &Arc<Store>) -> App
                 .map_err(|_| "连接设置数据无效。")?;
             return Ok((200, store.update_connection(id, input)?));
         }
+        if method == &Method::Put && rest.ends_with("/alerts") {
+            let id = rest.trim_end_matches("/alerts").trim_end_matches('/');
+            let input: UpdateAccountAlertsRequest = serde_json::from_str(body)
+                .map_err(|_| "账户提醒设置数据无效。")?;
+            if input.low_balance_threshold.is_some_and(|value| !(0.0..=10_000_000.0).contains(&value)) {
+                return Err("账户余额提醒阈值无效。".into());
+            }
+            if input.usage_threshold.is_some_and(|value| !(50.0..=100.0).contains(&value)) {
+                return Err("账户额度提醒阈值应在 50% 到 100% 之间。".into());
+            }
+            if input.stale_after_minutes.is_some_and(|value| !matches!(value, 60 | 180 | 360 | 720 | 1440 | 10080)) {
+                return Err("账户数据过期提醒时间无效。".into());
+            }
+            let mut state = store.state.lock().unwrap();
+            let account = state.accounts.iter_mut().find(|account| account.id == id).ok_or("账户不存在。")?;
+            if account.provider == "mimo" {
+                return Err("Xiaomi MiMo 不纳入账户提醒规则。".into());
+            }
+            account.alert_settings = input;
+            let public = public_account(account);
+            let alert_prefix = format!("{id}|");
+            state.notified_alert_keys.retain(|key| !key.starts_with(&alert_prefix));
+            state.snoozed_alerts.retain(|item| !item.key.starts_with(&alert_prefix));
+            store.save_locked(&state)?;
+            return Ok((200, json!({ "ok": true, "account": public })));
+        }
         let id = rest.trim_matches('/');
         if method == &Method::Patch {
             let input: UpdateAccountRequest = serde_json::from_str(body).map_err(|_| "账户更新数据无效。")?;
@@ -1259,6 +1297,7 @@ fn public_account(account: &Account) -> Value {
         "name": account.name, "keyHint": account.key_hint, "email": account.email,
         "planType": account.plan_type, "createdAt": account.created_at,
         "enabled": account.enabled != Some(false), "lastAttemptAt": account.last_attempt_at,
+        "alertSettings": account.alert_settings,
         "lastSyncDurationMs": account.last_sync_duration_ms,
         "consecutiveFailures": account.consecutive_failures, "nextRetryAt": next_retry_at(account), "lastSync": account.last_sync,
         "lastError": account.last_error, "isAvailable": account.is_available,
@@ -1383,6 +1422,7 @@ fn error_status(error: &str) -> u16 {
         || error.contains("之间")
         || error.contains("暂不支持")
         || error.contains("暂不可添加")
+        || error.contains("不纳入")
         || error.contains("排序")
         || error.contains("已经连接")
     {
@@ -1395,14 +1435,22 @@ fn error_status(error: &str) -> u16 {
 fn alerts(state: &PersistedState) -> Vec<Value> {
     let mut result = Vec::new();
     let current_time = Utc::now();
-    let stale_minutes = stale_after_minutes(&state.settings);
-    for account in state.accounts.iter().filter(|a| a.enabled != Some(false)) {
+    for account in state.accounts.iter().filter(|account| {
+        account.enabled != Some(false)
+            && account.provider != "mimo"
+            && account.alert_settings.enabled != Some(false)
+    }) {
+        let balance_threshold = account.alert_settings.low_balance_threshold.unwrap_or(state.settings.low_balance_threshold);
+        let usage_threshold = account.alert_settings.usage_threshold.unwrap_or(state.settings.usage_threshold);
+        let stale_minutes = account.alert_settings.stale_after_minutes
+            .map(i64::from)
+            .unwrap_or_else(|| stale_after_minutes(&state.settings));
         for balance in &account.balances {
-            if balance.total.parse::<f64>().ok().is_some_and(|v| v < state.settings.low_balance_threshold) {
+            if balance.total.parse::<f64>().ok().is_some_and(|v| v < balance_threshold) {
                 result.push(json!({
                     "accountId": account.id, "accountName": account.name, "provider": account.provider,
                     "kind": "balance", "title": format!("{} 余额偏低", account.name),
-                    "message": format!("当前 {} {}，低于阈值 {}", balance.currency, balance.total, state.settings.low_balance_threshold),
+                    "message": format!("当前 {} {}，低于阈值 {}", balance.currency, balance.total, balance_threshold),
                     "currency": balance.currency, "total": balance.total
                 }));
             }
@@ -1410,13 +1458,13 @@ fn alerts(state: &PersistedState) -> Vec<Value> {
         for product in &account.products {
             let usage = string_field(product, "usage");
             if let Some(percent) = usage_percent(&usage) {
-                if percent >= state.settings.usage_threshold {
+                if percent >= usage_threshold {
                     result.push(json!({
                         "accountId": account.id, "accountName": account.name, "provider": account.provider,
                         "productId": string_field(product, "id"), "kind": "quota",
                         "title": format!("{} · {} 额度告警", account.name, string_field(product, "name")),
-                        "message": format!("远端周期用量已达 {:.1}%，阈值为 {:.1}%", percent, state.settings.usage_threshold),
-                        "currentPercent": format!("{percent:.1}"), "threshold": format!("{:.1}", state.settings.usage_threshold)
+                        "message": format!("远端周期用量已达 {:.1}%，阈值为 {:.1}%", percent, usage_threshold),
+                        "currentPercent": format!("{percent:.1}"), "threshold": format!("{:.1}", usage_threshold)
                     }));
                 }
             }
@@ -1913,6 +1961,96 @@ mod tests {
         assert_eq!(freshness["accountId"], "stale-account");
         assert!(freshness["message"].as_str().unwrap().contains("数据可能已过期"));
         assert!(notification_key(freshness).contains("|freshness|"));
+    }
+
+    #[test]
+    fn account_alert_rules_override_global_thresholds_and_can_disable_alerts() {
+        let mut state = PersistedState::default();
+        state.settings.low_balance_threshold = 10.0;
+        state.settings.usage_threshold = 80.0;
+        state.accounts.push(Account {
+            id: "balance-account".into(),
+            name: "余额账户".into(),
+            provider: "deepseek".into(),
+            enabled: Some(true),
+            last_sync: now(),
+            balances: vec![BalanceInfo {
+                currency: "CNY".into(),
+                total: "5.00".into(),
+                ..BalanceInfo::default()
+            }],
+            alert_settings: AccountAlertSettings {
+                low_balance_threshold: Some(1.0),
+                ..AccountAlertSettings::default()
+            },
+            ..Account::default()
+        });
+        state.accounts.push(Account {
+            id: "quota-account".into(),
+            name: "额度账户".into(),
+            provider: "openai".into(),
+            enabled: Some(true),
+            last_sync: now(),
+            products: vec![json!({ "id":"codex", "name":"Codex", "usage":"92%" })],
+            alert_settings: AccountAlertSettings {
+                usage_threshold: Some(95.0),
+                ..AccountAlertSettings::default()
+            },
+            ..Account::default()
+        });
+        assert!(alerts(&state).is_empty());
+
+        state.accounts[0].alert_settings.low_balance_threshold = Some(6.0);
+        state.accounts[1].alert_settings.usage_threshold = Some(90.0);
+        assert_eq!(alerts(&state).len(), 2);
+        state.accounts[0].alert_settings.enabled = Some(false);
+        assert_eq!(alerts(&state).len(), 1);
+    }
+
+    #[test]
+    fn account_alert_settings_are_saved_and_mimo_is_excluded() {
+        let directory = std::env::temp_dir().join(format!("prismeter-test-{}", new_id()));
+        let store = Arc::new(Store::open(&directory).unwrap());
+        {
+            let mut state = store.state.lock().unwrap();
+            state.accounts.push(Account {
+                id: "deepseek-alerts".into(),
+                provider: "deepseek".into(),
+                ..Account::default()
+            });
+            state.accounts.push(Account {
+                id: "mimo-alerts".into(),
+                provider: "mimo".into(),
+                ..Account::default()
+            });
+            state.notified_alert_keys.push("deepseek-alerts|balance||CNY".into());
+            store.save_locked(&state).unwrap();
+        }
+        let body = json!({
+            "enabled": true,
+            "lowBalanceThreshold": 25.5,
+            "usageThreshold": null,
+            "staleAfterMinutes": 180
+        }).to_string();
+        let (_, response) = route_api(
+            &Method::Put,
+            "/api/accounts/deepseek-alerts/alerts",
+            &body,
+            &store,
+        ).unwrap();
+        assert_eq!(response["account"]["alertSettings"]["lowBalanceThreshold"], 25.5);
+        assert_eq!(response["account"]["alertSettings"]["staleAfterMinutes"], 180);
+        assert!(store.state.lock().unwrap().notified_alert_keys.is_empty());
+
+        let error = route_api(
+            &Method::Put,
+            "/api/accounts/mimo-alerts/alerts",
+            &body,
+            &store,
+        ).unwrap_err();
+        assert!(error.contains("不纳入"));
+        drop(store);
+        fs::remove_dir_all(directory).unwrap();
     }
 
     #[test]

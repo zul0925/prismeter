@@ -7,7 +7,7 @@
 [![平台](https://img.shields.io/badge/platform-Windows-3578e5)](https://github.com/zul0925/prismeter)
 [![Tauri](https://img.shields.io/badge/Tauri-2-24c8db)](https://tauri.app/)
 [![Rust](https://img.shields.io/badge/backend-Rust-b7410e)](https://www.rust-lang.org/)
-[![版本](https://img.shields.io/badge/version-0.19.0-7458d6)](https://github.com/zul0925/prismeter/releases)
+[![版本](https://img.shields.io/badge/version-0.20.0-7458d6)](https://github.com/zul0925/prismeter/releases)
 [![许可证](https://img.shields.io/badge/license-Apache--2.0-3da639)](LICENSE)
 
 Prismeter（棱镜计量）将不同 AI 平台返回的数据汇聚到一个桌面应用中，再按平台、账户、套餐和模型能力分别展示。它只呈现平台实际提供的远端指标，不读取本地会话日志，也不会用模拟数据补齐平台未开放的字段。
@@ -22,6 +22,7 @@ Prismeter（棱镜计量）将不同 AI 平台返回的数据汇聚到一个桌�
 - 对 OpenAI/Codex、火山方舟和 DeepSeek 的远端数值指标进行本机采样，可查看 24 小时、7 天、30 天和 90 天趋势。
 - 主状态文件损坏时，可从最近一次有效且仍保持加密的本地备份自动恢复。
 - 余额、额度、同步失败和数据过期提醒，并支持单条暂缓 24 小时或恢复通知。
+- 可为单个账户覆盖全局余额、额度和数据过期阈值，也可仅关闭该账户的提醒。
 - 数据过期判断可跟随同步计划，也可独立设置为 1 小时至 7 天。
 - 按真实远端字段进行模型与产品分析。
 - 账户和平台卡片支持拖拽排序。

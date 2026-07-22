@@ -546,7 +546,9 @@ button { color: inherit; }
 .directory-account.paused-account{background:rgba(246,248,252,.62)}.directory-account.paused-account .saved-account-head>div,.platform-nav .paused-account{opacity:.66}.platform-nav .paused-account::after{content:"暂停";margin-left:auto;font-size:10px;color:#8c95a5}
 .account-actions>span{display:flex;align-items:center;justify-content:flex-end;gap:6px;flex-wrap:wrap}
 
-.rename-account-dialog{width:min(430px,calc(100vw - 32px))}.rename-account-dialog .form-actions{margin-top:18px}.rename-account-dialog input{font-size:15px}
+.rename-account-dialog,.delete-account-dialog{width:min(430px,calc(100vw - 32px))}.rename-account-dialog .form-actions,.delete-account-dialog .form-actions{margin-top:18px}.rename-account-dialog input{font-size:15px}
+.account-alerts-dialog{width:min(540px,calc(100vw - 32px))}.account-alerts-dialog .form-actions{margin-top:18px}.account-alert-master{margin:16px 0}.account-alert-fields{display:grid;grid-template-columns:1fr 1fr;gap:14px;transition:opacity .18s ease}.account-alert-fields>.account-stale-rule{grid-column:1/-1}.account-alert-fields.disabled-fields{opacity:.46;pointer-events:none}.account-alert-fields>label>span{display:block;margin-bottom:7px;font-weight:700}.account-alert-fields .input-with-unit{width:100%}
+@media(max-width:620px){.account-alert-fields{grid-template-columns:1fr}.account-alert-fields>.account-stale-rule{grid-column:auto}}
 
 
 /* Prismeter 0.6.8 · account health and connection diagnostics */
