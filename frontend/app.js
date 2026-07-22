@@ -121,21 +121,47 @@ const englishUi = Object.freeze({
   "窗口与托盘":"Window and tray", "关闭时隐藏到托盘":"Close to tray", "登录 Windows 后自动启动":"Launch at Windows sign-in", "退出应用":"Quit app", "退出 Prismeter":"Quit Prismeter",
   "添加平台账户":"Add platform account", "平台":"Platform", "账户名称":"Account name", "连接并验证":"Connect and verify", "新建连接":"New connection",
   "安全更新":"Secure update", "发现新版本":"Update available", "稍后处理":"Later", "立即安装":"Install now", "检查更新":"Check for updates"
+  ,"用量总览":"Usage overview", "账户列表":"Account list", "远端同步历史":"Remote sync history", "运行记录":"Activity log", "同步中心":"Sync center", "远端任务状态":"Remote task status",
+  "全部同步":"Sync all", "重试失败账户":"Retry failed accounts", "立即同步":"Sync now", "同步中":"Syncing", "查看数据":"View data", "连接诊断":"Connection diagnostics", "连接设置":"Connection settings", "重命名":"Rename", "暂停监控":"Pause monitoring", "恢复监控":"Resume monitoring", "移除":"Remove",
+  "提醒规则":"Alert rules", "提醒已关闭":"Alerts off", "查看提醒":"View alerts", "调整规则":"Adjust rules", "当前无需处理":"Nothing needs attention", "没有需要立即处理的事项":"Nothing requires immediate action",
+  "数据更新":"Data updated", "已连接":"Connected", "未连接":"Not connected", "尚未同步":"Not synced", "刚刚":"Just now", "等待同步":"Waiting to sync", "数据新鲜":"Data fresh", "已暂停":"Paused", "未连接":"Not connected",
+  "指标趋势":"Metric trend", "远端快照":"Remote snapshots", "等待采集":"Collecting", "本地快照":"Local snapshots", "当前总余额":"Current balance", "可用余额":"Available balance", "赠送余额":"Promotional balance", "充值余额":"Cash balance", "代金券余额":"Voucher balance", "现金余额":"Cash balance",
+  "按量计费":"Pay as you go", "API 可调用":"API available", "余额不可用":"Balance unavailable", "官方":"Official", "连接后采集":"Collected after connection", "远端同步":"Remote sync",
+  "新建连接":"New connection", "添加平台账户":"Add platform account", "账户名称":"Account name", "连接并验证":"Connect and verify", "正在验证…":"Verifying…", "正在发现产品…":"Discovering products…", "取消":"Cancel", "验证并保存":"Verify and save",
+  "全部提醒":"All alerts", "余额提醒":"Balance alerts", "额度提醒":"Quota alerts", "同步与时效":"Sync and freshness", "需要处理":"Needs attention", "已启用":"Enabled", "关闭":"Off", "保存失败":"Save failed", "已自动保存":"Saved automatically", "正在保存…":"Saving…", "等待保存…":"Waiting to save…",
+  "清除历史记录":"Clear history", "确认清除":"Clear", "确认移除":"Remove", "发送测试通知":"Send test notification", "退出 Prismeter":"Quit Prismeter", "打开主窗口":"Open main window"
 });
+
+function localizeTextNode(node) {
+  if (!node || node.nodeType !== Node.TEXT_NODE || ["SCRIPT", "STYLE"].includes(node.parentElement?.tagName)) return;
+  const original = localizedTextNodes.get(node) || node.nodeValue;
+  if (!localizedTextNodes.has(node)) localizedTextNodes.set(node, original);
+  const translated = state.interfaceLanguage === "en" && englishUi[original] ? englishUi[original] : original;
+  if (node.nodeValue !== translated) node.nodeValue = translated;
+}
+
+function localizeSubtree(root) {
+  if (!root) return;
+  if (root.nodeType === Node.TEXT_NODE) return localizeTextNode(root);
+  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+  for (let node = walker.nextNode(); node; node = walker.nextNode()) localizeTextNode(node);
+}
 
 function applyInterfaceLanguage(language = "zh-CN") {
   const normalized = language === "en" ? "en" : "zh-CN";
   state.interfaceLanguage = normalized;
   document.documentElement.lang = normalized;
   document.title = normalized === "en" ? "Prismeter · AI usage center" : "Prismeter · AI 用量中心";
-  const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
-  for (let node = walker.nextNode(); node; node = walker.nextNode()) {
-    if (["SCRIPT", "STYLE"].includes(node.parentElement?.tagName)) continue;
-    const original = localizedTextNodes.get(node) || node.nodeValue;
-    if (!localizedTextNodes.has(node)) localizedTextNodes.set(node, original);
-    node.nodeValue = normalized === "en" && englishUi[original] ? englishUi[original] : original;
-  }
+  localizeSubtree(document.body);
 }
+
+const interfaceLanguageObserver = new MutationObserver(records => {
+  if (state.interfaceLanguage !== "en") return;
+  for (const record of records) {
+    if (record.type === "characterData") localizeTextNode(record.target);
+    record.addedNodes.forEach(localizeSubtree);
+  }
+});
 
 function applyTheme(mode = "system", persist = true) {
   const normalized = ["system", "light", "dark"].includes(mode) ? mode : "system";
@@ -2178,7 +2204,7 @@ async function flushSettingsSave() {
   input.addEventListener("change", () => { if (input.checkValidity() && input.value !== "") queueSettingsSave(); });
 });
 
-initializeRemoteOnlyProviders(); applyDeepSeekAccountData(null); applyKimiAccountData(null); applyOpenAIAccountData(null); applyVolcengineAccountData(null); updateCredentialFields(); applyInterfaceLanguage(); renderNavigation(); renderOverview(); renderAlerts(); renderComparisons(); renderAccounts(); switchView("overview");
+initializeRemoteOnlyProviders(); applyDeepSeekAccountData(null); applyKimiAccountData(null); applyOpenAIAccountData(null); applyVolcengineAccountData(null); updateCredentialFields(); applyInterfaceLanguage(); interfaceLanguageObserver.observe(document.body, { childList:true, subtree:true, characterData:true }); renderNavigation(); renderOverview(); renderAlerts(); renderComparisons(); renderAccounts(); switchView("overview");
 loadBackendState();
 setInterval(() => { if (!state.backend.accounts?.length) return; renderOverview(); renderAccounts(); renderAlerts(); if (state.view === "platforms") renderPlatform(); }, RELATIVE_TIME_REFRESH_MS);
 setInterval(() => { if (state.backend.accounts?.length) loadBackendState({quiet:true}); }, BACKGROUND_STATE_REFRESH_MS);
