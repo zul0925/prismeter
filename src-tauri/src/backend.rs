@@ -19,6 +19,7 @@ use crate::{codex, credential, mimo, notifications, volcengine};
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 const DEEPSEEK_BALANCE_URL: &str = "https://api.deepseek.com/user/balance";
 const REMOTE_TIMEOUT_SECONDS: u64 = 18;
+const MAX_CONCURRENT_SYNCS: usize = 4;
 const BALANCE_HISTORY_LIMIT: usize = 1000;
 const SYNC_EVENT_STORAGE_LIMIT: usize = 500;
 const PUBLIC_HISTORY_LIMIT: usize = 120;
@@ -674,12 +675,34 @@ impl Store {
     fn sync_all(&self) -> Value {
         let ids: Vec<String> = self.state.lock().unwrap().accounts.iter()
             .filter(|a| a.enabled != Some(false)).map(|a| a.id.clone()).collect();
-        let results: Vec<Value> = ids.into_iter().map(|id| match self.sync_account(&id) {
+        let results = self.sync_account_ids(ids);
+        json!({ "ok": results.iter().all(|v| v["ok"] == true), "results": results })
+    }
+
+    fn sync_account_result(&self, id: String) -> Value {
+        match self.sync_account(&id) {
             Ok(value) => json!({ "id": id, "ok": true, "account": value.get("account").cloned().unwrap_or(Value::Null) }),
             Err(error) if error.contains("正在同步") => json!({ "id": id, "ok": true, "skipped": true, "message": error }),
             Err(error) => json!({ "id": id, "ok": false, "error": error }),
-        }).collect();
-        json!({ "ok": results.iter().all(|v| v["ok"] == true), "results": results })
+        }
+    }
+
+    fn sync_account_ids(&self, ids: Vec<String>) -> Vec<Value> {
+        let mut results = Vec::with_capacity(ids.len());
+        for batch in ids.chunks(MAX_CONCURRENT_SYNCS) {
+            let batch_results = thread::scope(|scope| {
+                let handles = batch.iter().cloned().map(|id| {
+                    let task_id = id.clone();
+                    (id, scope.spawn(move || self.sync_account_result(task_id)))
+                }).collect::<Vec<_>>();
+                handles.into_iter().map(|(id, handle)| match handle.join() {
+                    Ok(result) => result,
+                    Err(_) => json!({ "id": id, "ok": false, "error": "同步任务异常终止。" }),
+                }).collect::<Vec<_>>()
+            });
+            results.extend(batch_results);
+        }
+        results
     }
 
     fn retry_failed_accounts(&self) -> usize {
@@ -688,15 +711,9 @@ impl Store {
             .filter(|account| auto_retry_due(account, current_time))
             .map(|account| account.id.clone())
             .collect::<Vec<_>>();
-        let mut attempted = 0;
-        for id in ids {
-            match self.sync_account(&id) {
-                Ok(_) => attempted += 1,
-                Err(error) if !error.contains("正在同步") => attempted += 1,
-                Err(_) => {}
-            }
-        }
-        attempted
+        self.sync_account_ids(ids).iter()
+            .filter(|result| result.get("skipped") != Some(&Value::Bool(true)))
+            .count()
     }
 
     fn dispatch_notifications(&self) -> Value {
@@ -1767,6 +1784,30 @@ mod tests {
         let result = store.sync_all();
         assert_eq!(result["ok"], true);
         assert_eq!(result["results"][0]["skipped"], true);
+        fs::remove_dir_all(directory).unwrap();
+    }
+
+    #[test]
+    fn concurrent_sync_batches_preserve_account_order_and_failure_history() {
+        let directory = std::env::temp_dir().join(format!("prismeter-test-{}", new_id()));
+        let store = Store::open(&directory).unwrap();
+        let ids = (0..(MAX_CONCURRENT_SYNCS + 2))
+            .map(|index| format!("parallel-account-{index}"))
+            .collect::<Vec<_>>();
+        store.state.lock().unwrap().accounts.extend(ids.iter().map(|id| Account {
+            id: id.clone(),
+            provider: "unsupported-test-provider".into(),
+            enabled: Some(true),
+            ..Account::default()
+        }));
+
+        let results = store.sync_account_ids(ids.clone());
+        assert_eq!(
+            results.iter().map(|result| result["id"].as_str().unwrap()).collect::<Vec<_>>(),
+            ids.iter().map(String::as_str).collect::<Vec<_>>()
+        );
+        assert!(results.iter().all(|result| result["ok"] == false));
+        assert_eq!(store.state.lock().unwrap().sync_events.len(), ids.len());
         fs::remove_dir_all(directory).unwrap();
     }
 
