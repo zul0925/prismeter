@@ -25,6 +25,7 @@ const SYNC_EVENT_STORAGE_LIMIT: usize = 500;
 const METRIC_HISTORY_LIMIT: usize = 50_000;
 const METRIC_SAMPLE_INTERVAL_MINUTES: i64 = 55;
 const PUBLIC_HISTORY_LIMIT: usize = 120;
+const AUTO_SYNC_CHECK_INTERVAL: Duration = Duration::from_secs(15);
 const INDEX_HTML: &[u8] = include_bytes!("../../frontend/index.html");
 const STYLES_CSS: &[u8] = include_bytes!("../../frontend/styles.css");
 const APP_JS: &[u8] = include_bytes!("../../frontend/app.js");
@@ -87,6 +88,14 @@ fn default_notifications() -> bool { true }
 fn default_close_to_tray() -> bool { true }
 fn default_update_check_mode() -> String { "startup".into() }
 fn default_history_retention_days() -> i32 { 90 }
+
+fn automatic_sync_due(last_sync: Instant, minutes: i32) -> bool {
+    minutes > 0 && last_sync.elapsed() >= Duration::from_secs(minutes as u64 * 60)
+}
+
+fn next_automatic_sync_at(minutes: i32) -> Option<String> {
+    (minutes > 0).then(|| (Utc::now() + ChronoDuration::minutes(i64::from(minutes))).to_rfc3339())
+}
 
 #[derive(Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -291,6 +300,7 @@ fn read_persisted_state(path: &Path) -> AppResult<PersistedState> {
 struct Store {
     state: Mutex<PersistedState>,
     syncing_accounts: Mutex<HashSet<String>>,
+    next_automatic_sync_at: Mutex<Option<String>>,
     state_path: PathBuf,
     backup_path: PathBuf,
     startup_notice: Option<String>,
@@ -334,6 +344,7 @@ impl Store {
             .build()
             .map_err(|e| format!("无法初始化网络客户端：{e}"))?;
         let store = Self {
+            next_automatic_sync_at: Mutex::new(next_automatic_sync_at(state.settings.auto_sync_minutes)),
             state: Mutex::new(state),
             syncing_accounts: Mutex::new(HashSet::new()),
             state_path,
@@ -836,6 +847,7 @@ impl Store {
             "ok": true,
             "version": VERSION,
             "startupNotice": self.startup_notice,
+            "nextAutomaticSyncAt": self.next_automatic_sync_at.lock().unwrap().clone(),
             "settings": state.settings,
             "providerOrder": ordered_providers(&state.accounts, &state.provider_order),
             "alerts": public_alerts(&state),
@@ -891,14 +903,25 @@ pub fn start(data_dir: PathBuf) -> AppResult<String> {
     let sync_store = Arc::clone(&store);
     thread::Builder::new().name("prismeter-sync".into()).spawn(move || {
         let mut last_sync = Instant::now();
+        let mut scheduled_minutes = sync_store.state.lock().unwrap().settings.auto_sync_minutes;
         loop {
-            thread::sleep(Duration::from_secs(60));
+            // Keep the scheduler responsive when the interval is changed in Settings.
+            // The timestamp is recorded before work begins so a slow remote provider
+            // does not silently extend every subsequent schedule.
+            thread::sleep(AUTO_SYNC_CHECK_INTERVAL);
             let minutes = sync_store.state.lock().unwrap().settings.auto_sync_minutes;
-            if minutes > 0 && last_sync.elapsed() >= Duration::from_secs(minutes as u64 * 60) {
+            if minutes != scheduled_minutes {
+                scheduled_minutes = minutes;
+                last_sync = Instant::now();
+                *sync_store.next_automatic_sync_at.lock().unwrap() = next_automatic_sync_at(minutes);
+            }
+            if automatic_sync_due(last_sync, minutes) {
+                last_sync = Instant::now();
+                *sync_store.next_automatic_sync_at.lock().unwrap() = next_automatic_sync_at(minutes);
                 sync_store.sync_all();
                 sync_store.dispatch_notifications();
-                last_sync = Instant::now();
-            } else if minutes > 0 && sync_store.retry_failed_accounts() > 0 {
+            }
+            if minutes > 0 && sync_store.retry_failed_accounts() > 0 {
                 sync_store.dispatch_notifications();
             }
         }
@@ -1622,6 +1645,20 @@ fn public_alerts(state: &PersistedState) -> Vec<Value> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn automatic_sync_due_respects_interval_and_disabled_setting() {
+        let recent = Instant::now();
+        assert!(!automatic_sync_due(recent, 30));
+        assert!(!automatic_sync_due(Instant::now() - Duration::from_secs(60 * 30), 0));
+        assert!(automatic_sync_due(Instant::now() - Duration::from_secs(60 * 30 + 1), 30));
+    }
+
+    #[test]
+    fn automatic_sync_schedule_is_only_published_when_enabled() {
+        assert!(next_automatic_sync_at(0).is_none());
+        assert!(next_automatic_sync_at(30).is_some_and(|value| DateTime::parse_from_rfc3339(&value).is_ok()));
+    }
 
     #[test]
     fn legacy_state_is_loaded_and_secrets_stay_private() {

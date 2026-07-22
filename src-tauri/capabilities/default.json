@@ -18,6 +18,7 @@
     "allow-set-close-to-tray",
     "allow-set-launch-on-startup",
     "allow-exit-app",
+    "allow-set-tray-tooltip",
     "allow-check-for-update",
     "allow-install-update"
   ]

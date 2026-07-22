@@ -157,6 +157,18 @@ fn set_launch_on_startup(value: bool) -> Result<(), String> { update_startup_reg
 #[tauri::command]
 fn exit_app(app: AppHandle) { app.exit(0); }
 
+#[tauri::command]
+fn set_tray_tooltip(app: AppHandle, tooltip: String) -> Result<(), String> {
+    let tooltip = tooltip.trim();
+    if tooltip.is_empty() || tooltip.chars().count() > 240 {
+        return Err("托盘状态文本无效。".into());
+    }
+    app.tray_by_id("prismeter")
+        .ok_or_else(|| "无法定位 Prismeter 托盘图标。".to_string())?
+        .set_tooltip(Some(tooltip))
+        .map_err(|error| format!("无法更新托盘状态：{error}"))
+}
+
 fn show_main(app: &tauri::AppHandle) {
     if let Some(window) = app.get_webview_window("main") {
         let _ = window.show();
@@ -181,6 +193,7 @@ fn main() {
             set_close_to_tray,
             set_launch_on_startup,
             exit_app,
+            set_tray_tooltip,
             app_updates::check_for_update,
             app_updates::install_update
         ])
@@ -219,7 +232,7 @@ fn main() {
             let open_item = MenuItemBuilder::with_id("open", "打开 Prismeter").build(app)?;
             let quit_item = MenuItemBuilder::with_id("quit", "退出 Prismeter").build(app)?;
             let menu = MenuBuilder::new(app).items(&[&open_item, &quit_item]).build()?;
-            let tray = TrayIconBuilder::new()
+            let tray = TrayIconBuilder::with_id("prismeter")
                 .tooltip("Prismeter · AI 用量中心")
                 .menu(&menu)
                 .on_menu_event(|app, event| match event.id().as_ref() {
