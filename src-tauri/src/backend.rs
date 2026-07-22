@@ -7,7 +7,7 @@ use std::{
     time::{Duration, Instant},
 };
 
-use chrono::Utc;
+use chrono::{DateTime, Duration as ChronoDuration, Utc};
 use reqwest::blocking::Client;
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
@@ -614,6 +614,23 @@ impl Store {
         json!({ "ok": results.iter().all(|v| v["ok"] == true), "results": results })
     }
 
+    fn retry_failed_accounts(&self) -> usize {
+        let current_time = Utc::now();
+        let ids = self.state.lock().unwrap().accounts.iter()
+            .filter(|account| auto_retry_due(account, current_time))
+            .map(|account| account.id.clone())
+            .collect::<Vec<_>>();
+        let mut attempted = 0;
+        for id in ids {
+            match self.sync_account(&id) {
+                Ok(_) => attempted += 1,
+                Err(error) if !error.contains("正在同步") => attempted += 1,
+                Err(_) => {}
+            }
+        }
+        attempted
+    }
+
     fn dispatch_notifications(&self) -> Value {
         let (enabled, current_alerts, previous_keys) = {
             let state = self.state.lock().unwrap();
@@ -736,6 +753,8 @@ pub fn start(data_dir: PathBuf) -> AppResult<String> {
                 sync_store.sync_all();
                 sync_store.dispatch_notifications();
                 last_sync = Instant::now();
+            } else if minutes > 0 && sync_store.retry_failed_accounts() > 0 {
+                sync_store.dispatch_notifications();
             }
         }
     }).map_err(|e| format!("无法启动自动同步线程：{e}"))?;
@@ -927,7 +946,7 @@ fn public_account(account: &Account) -> Value {
         "planType": account.plan_type, "createdAt": account.created_at,
         "enabled": account.enabled != Some(false), "lastAttemptAt": account.last_attempt_at,
         "lastSyncDurationMs": account.last_sync_duration_ms,
-        "consecutiveFailures": account.consecutive_failures, "lastSync": account.last_sync,
+        "consecutiveFailures": account.consecutive_failures, "nextRetryAt": next_retry_at(account), "lastSync": account.last_sync,
         "lastError": account.last_error, "isAvailable": account.is_available,
         "region": account.region, "projectName": account.project_name, "baseUrl": account.base_url,
         "balances": account.balances, "products": account.products, "productErrors": account.product_errors
@@ -1104,6 +1123,30 @@ fn usage_percent(value: &str) -> Option<f64> {
     number.trim_matches(|c: char| !(c.is_ascii_digit() || c == '.' || c == '-')).parse().ok()
 }
 
+fn retry_delay_minutes(consecutive_failures: u32) -> Option<i64> {
+    match consecutive_failures {
+        1 => Some(2),
+        2 => Some(5),
+        3 => Some(15),
+        _ => None,
+    }
+}
+
+fn next_retry_at(account: &Account) -> Option<String> {
+    if account.enabled == Some(false) || account.last_error.as_deref().is_none_or(str::is_empty) {
+        return None;
+    }
+    let delay = retry_delay_minutes(account.consecutive_failures)?;
+    let attempted_at = DateTime::parse_from_rfc3339(&account.last_attempt_at).ok()?;
+    Some((attempted_at.with_timezone(&Utc) + ChronoDuration::minutes(delay)).to_rfc3339())
+}
+
+fn auto_retry_due(account: &Account, current_time: DateTime<Utc>) -> bool {
+    next_retry_at(account)
+        .and_then(|value| DateTime::parse_from_rfc3339(&value).ok())
+        .is_some_and(|retry_at| retry_at <= current_time)
+}
+
 fn respond_json(request: Request, status: u16, value: Value) {
     let data = serde_json::to_vec(&value).unwrap_or_else(|_| b"{\"ok\":false}".to_vec());
     respond(request, status, "application/json; charset=utf-8", data);
@@ -1180,6 +1223,29 @@ mod tests {
         assert_eq!(usage_percent("本周期已用 86.5%"), Some(86.5));
         assert_eq!(usage_percent("86%"), Some(86.0));
         assert_eq!(usage_percent("无远端比例"), None);
+    }
+
+    #[test]
+    fn failed_syncs_use_bounded_automatic_retry_schedule() {
+        assert_eq!(retry_delay_minutes(0), None);
+        assert_eq!(retry_delay_minutes(1), Some(2));
+        assert_eq!(retry_delay_minutes(2), Some(5));
+        assert_eq!(retry_delay_minutes(3), Some(15));
+        assert_eq!(retry_delay_minutes(4), None);
+
+        let account = Account {
+            enabled: Some(true),
+            last_attempt_at: "2026-07-22T01:00:00Z".into(),
+            last_error: Some("temporary network failure".into()),
+            consecutive_failures: 2,
+            ..Account::default()
+        };
+        assert_eq!(next_retry_at(&account).as_deref(), Some("2026-07-22T01:05:00+00:00"));
+        assert!(!auto_retry_due(&account, "2026-07-22T01:04:59Z".parse().unwrap()));
+        assert!(auto_retry_due(&account, "2026-07-22T01:05:00Z".parse().unwrap()));
+
+        let paused = Account { enabled: Some(false), ..account };
+        assert_eq!(next_retry_at(&paused), None);
     }
 
     #[test]

@@ -150,6 +150,16 @@ function relativeSyncTime(value) {
   return `${Math.floor(hours / 24)} 天前`;
 }
 
+function relativeFutureTime(value) {
+  if (!value) return "";
+  const timestamp = new Date(value).getTime();
+  if (!Number.isFinite(timestamp)) return "";
+  const remaining = timestamp - Date.now();
+  if (remaining <= 0) return "即将自动重试";
+  const minutes = Math.max(1, Math.ceil(remaining / 60000));
+  return minutes < 60 ? `${minutes} 分钟后自动重试` : `${Math.ceil(minutes / 60)} 小时后自动重试`;
+}
+
 function accountFreshness(account) {
   if (account?.enabled === false) return { level:"paused", label:"监控已暂停", detail:"不会参与自动或全部同步" };
   if (!account?.lastSync) return { level:"never", label:"尚未同步", detail:"等待首次远端同步" };
@@ -833,8 +843,9 @@ function renderSyncCenter(accounts) {
   els.syncQueueList.innerHTML = accounts.length ? accounts.map(account => {
     const active = activeIds.has(account.id);
     const freshness = accountFreshness(account);
-    const status = active ? "正在读取远端" : account.enabled === false ? "已暂停" : account.lastError ? "等待重试" : account.lastSync ? "等待下次同步" : "等待首次同步";
-    const detail = active ? "同步结束前仍可浏览已有数据" : account.lastAttemptAt ? `最近尝试 ${relativeSyncTime(account.lastAttemptAt)}` : "尚未发起远端请求";
+    const retryLabel = Number(state.backend.settings?.autoSyncMinutes || 0) > 0 ? relativeFutureTime(account.nextRetryAt) : "";
+    const status = active ? "正在读取远端" : account.enabled === false ? "已暂停" : retryLabel ? retryLabel : account.lastError ? "等待下次同步" : account.lastSync ? "等待下次同步" : "等待首次同步";
+    const detail = active ? "同步结束前仍可浏览已有数据" : account.lastError && retryLabel ? `${account.consecutiveFailures || 1} 次连续失败 · 最近尝试 ${relativeSyncTime(account.lastAttemptAt)}` : account.lastAttemptAt ? `最近尝试 ${relativeSyncTime(account.lastAttemptAt)}` : "尚未发起远端请求";
     return `<div class="sync-queue-row ${active ? "active" : ""}">${platformLogo(account.provider, "sync-provider-logo")}<div><b>${escapeHtml(account.name)}</b><span>${escapeHtml(providers[account.provider]?.name || account.provider)} · ${escapeHtml(detail)}</span></div><span class="sync-queue-status ${active ? "active" : freshness.level}"><i></i>${escapeHtml(status)}</span></div>`;
   }).join("") : `<div class="sync-center-empty">连接账户后，这里会显示每个远端同步任务的实时状态。</div>`;
 }
@@ -967,6 +978,7 @@ function diagnosticPayload(account) {
     lastSuccessAt: account.lastSync || null,
     durationMs: Number(account.lastSyncDurationMs || 0),
     consecutiveFailures: Number(account.consecutiveFailures || 0),
+    nextRetryAt: Number(state.backend.settings?.autoSyncMinutes || 0) > 0 ? account.nextRetryAt || null : null,
     products: (account.products || []).map(product => ({ id:product.id, name:product.name, status:product.status || null })),
     productWarnings: account.productErrors || [],
     error: account.lastError || null
@@ -986,7 +998,7 @@ function showAccountDiagnostics(account) {
     ["最近尝试", relativeSyncTime(account.lastAttemptAt), formatDate(account.lastAttemptAt)],
     ["最近成功", relativeSyncTime(account.lastSync), formatDate(account.lastSync)],
     ["远端耗时", formatDuration(account.lastSyncDurationMs), "最近一次请求"],
-    ["连续失败", String(account.consecutiveFailures || 0), Number(account.consecutiveFailures || 0) ? "建议重试或检查凭据" : "连接稳定"],
+    ["连续失败", String(account.consecutiveFailures || 0), Number(state.backend.settings?.autoSyncMinutes || 0) > 0 && account.nextRetryAt ? relativeFutureTime(account.nextRetryAt) : Number(account.consecutiveFailures || 0) ? "建议检查凭据或手动重试" : "连接稳定"],
     ["发现产品", String((account.products || []).length), (account.productErrors || []).length ? `${account.productErrors.length} 条产品警告` : "无产品警告"]
   ];
   els.diagnosticMetrics.innerHTML = metrics.map(item => `<div><span>${escapeHtml(item[0])}</span><strong>${escapeHtml(item[1])}</strong><small>${escapeHtml(item[2])}</small></div>`).join("");

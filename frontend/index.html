@@ -326,7 +326,7 @@
           <div class="settings-page-column">
             <article class="glass-panel settings-section-card">
               <div class="settings-card-heading"><span class="settings-card-icon" aria-hidden="true">↻</span><div><h4>同步</h4><p>控制远端数据何时刷新，不会读取本地会话日志。</p></div></div>
-              <label class="settings-field"><span><b>自动同步</b><small>已暂停的账户不会参与自动同步。</small></span><div class="glass-combobox settings-combo" data-combobox>
+              <label class="settings-field"><span><b>自动同步</b><small>已暂停的账户不会参与；临时失败会在 2、5、15 分钟后分级重试。</small></span><div class="glass-combobox settings-combo" data-combobox>
                 <input id="autoSyncMinutes" type="hidden" value="30" />
                 <button class="combo-trigger" type="button" data-combo-trigger aria-haspopup="listbox" aria-expanded="false"><span data-combo-label>每 30 分钟</span><i></i></button>
                 <div class="combo-menu" role="listbox">
