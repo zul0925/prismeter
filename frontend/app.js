@@ -255,6 +255,33 @@ const additionalEnglishUi = Object.freeze({
   "最小化":"Minimize", "最大化":"Maximize", "还原":"Restore", "从远端刷新数据":"Refresh remote data", "选择趋势指标":"Choose trend metric", "选择趋势时间范围":"Choose trend time range", "远端指标历史趋势":"Remote metric history", "搜索模型、产品或账户":"Search models, products, or accounts", "模型数据覆盖情况":"Model data coverage", "提醒分类统计":"Alert category summary", "筛选提醒":"Filter alerts", "账户同步健康概览":"Account sync health overview", "筛选同步记录":"Filter sync activity", "取消清除":"Cancel clear", "取消移除":"Cancel removal", "关闭账户提醒设置":"Close account alert settings", "跟随全局设置":"Follow global settings", "例如：团队 DeepSeek":"For example: Team DeepSeek", "留空则继续使用当前 Key":"Leave blank to keep the current key", "留空则继续使用当前 AK":"Leave blank to keep the current AK", "留空则继续使用当前 SK":"Leave blank to keep the current SK", "MiMo 官方接入区域":"MiMo official access region", "例如：工作室主账户":"For example: Studio primary account", "仅保存在此 Windows 用户下":"Stored only for this Windows user", "sk-… 或 tp-…":"sk-… or tp-…", "以小米控制台显示为准":"Follow the value shown in Xiaomi Console"
 });
 
+// Last-resort renderer translation for legacy and provider-returned composite
+// strings. Entries are applied longest-first, so complete phrases always win
+// over individual words. This is intentionally used only in English mode.
+const englishFragments = Object.freeze({
+  "集中查看各平台远端用量":"View remote usage across all platforms", "按平台支持能力展示远端指标":"Remote metrics by supported platform capabilities",
+  "只分析平台实际返回的模型与产品字段":"Analyze only fields returned by platform models and products", "关注余额、额度与同步状态":"Watch balance, quota, and sync health",
+  "连接远端账户，凭据加密保存在本机":"Connect remote accounts; credentials are encrypted locally", "外观、同步与提醒按你的习惯运行":"Appearance, sync, and alerts tailored to you",
+  "不读取本地会话日志，也不使用模拟数据补齐。":"Local session logs and synthetic estimates are never used.", "添加账户后开始监控":"Add an account to start monitoring",
+  "打开账户中心查看原因":"Open Accounts to see why", "暂无需要处理的远端告警":"No remote alerts need attention", "已暂缓的提醒仍会保留在提醒中心，且不会影响首页或托盘状态。":"Snoozed alerts remain in Alert Center and do not affect Overview or the tray.",
+  "连接账户并完成远端同步后，这里才会显示活动。":"Activity appears here after an account completes a remote sync.", "请到账户中心添加平台账户，连接成功后才会出现在这里。":"Add a platform account in Accounts. It appears here after connecting.",
+  "本地服务异常":"Local service unavailable", "等待连接账户":"Waiting for an account connection", "尚未连接账户":"No connected account", "尚未添加账户":"No account added", "尚未添加真实账户":"No real account added",
+  "工作可用性":"Availability", "可以继续使用":"Ready to use", "需要处理":"Needs attention", "需要刷新":"Refresh needed", "请留意用量":"Watch your usage",
+  "当前无需处理":"Nothing needs attention", "没有需要立即处理的事项":"Nothing requires immediate action", "远端状态需要关注":"Remote status needs attention", "请查看提醒中心了解详情":"See Alert Center for details",
+  "本月用量":"This month's usage", "远端用量":"Remote usage", "官方用量":"Official usage", "远端指标":"Remote metrics", "远端同步":"Remote sync", "远端数据":"Remote data", "远端模型":"Remote models",
+  "同步于":"Synced", "预计":"Expected", "下次":"next", "恢复":"restores", "自动同步":"Automatic sync", "同步失败":"Sync failed", "同步完成":"Sync complete", "同步中":"Syncing", "立即同步":"Sync now",
+  "数据新鲜":"Data is fresh", "数据已过期":"Data is stale", "数据状态":"Data status", "数据来源":"Data source", "数据覆盖":"Data coverage", "当前总余额":"Current balance", "当前可用余额":"Available balance",
+  "可用余额":"Available balance", "赠送余额":"Promotional balance", "充值余额":"Cash balance", "代金券余额":"Voucher balance", "余额不可用":"Balance unavailable", "余额提醒":"Balance alerts",
+  "按量计费":"Pay as you go", "按量 API":"Pay-as-you-go API", "套餐额度":"Plan quota", "额度提醒":"Quota alerts", "额度已用":"quota used", "周期已用":"cycle used", "本地快照":"Local snapshots",
+  "官方登录态":"Official sign-in", "官方产品":"Official product", "官方接口":"Official endpoint", "官方余额查询":"Official balance lookup", "官方模型列表":"Official model list", "火山引擎方舟":"Volcengine Ark", "火山方舟":"Volcengine Ark",
+  "DeepSeek 官方":"DeepSeek", "Kimi 官方":"Kimi", "小米控制台":"Xiaomi Console", "个账户均已暂停":"accounts are paused", "个账户状态正常":"accounts are healthy", "个账户已连接":"accounts connected", "个已暂停":"paused",
+  "个需刷新":"need refresh", "个账户":"accounts", "条提醒等待处理":"alerts are waiting", "条提醒":"alerts", "条记录":"records", "项需要处理":"items need attention", "项未授权或未开通":"products are unauthorized or unavailable",
+  "天周期已用":"-day cycle used", "分钟后自动重试":"minutes until automatic retry", "小时后自动重试":"hours until automatic retry", "刚刚同步":"Synced just now", "刚刚":"Just now", "分钟前":"minutes ago", "小时前":"hours ago", "天前":"days ago",
+  "已连接":"Connected", "未连接":"Not connected", "已暂停":"Paused", "未授权":"Unauthorized", "未开通":"Unavailable", "成功":"Succeeded", "失败":"Failed", "等待连接":"Waiting for connection", "等待采集":"Collecting",
+  "全部同步":"Sync all", "查看账户":"View accounts", "查看提醒":"View alerts", "调整规则":"Adjust rules", "打开主窗口":"Open main window", "账户中心":"Account center", "提醒中心":"Alert center", "用量总览":"Usage overview", "平台中心":"Platform center", "模型分析":"Model analysis",
+  "本机账户":"Local account", "主账户":"Primary account", "主题账户":"Primary account", "账户":"Account", "平台":"Platform", "本月":"This month", "可安心继续":"Safe to continue"
+});
+
 function t(key, values = {}) {
   const source = uiMessages[state.interfaceLanguage === "en" ? "en" : "zh-CN"];
   const template = source[key] || uiMessages["zh-CN"][key] || key;
@@ -271,7 +298,11 @@ function translateStatic(value) {
   const copy = match?.[2] || text;
   const suffix = match?.[3] || "";
   const translated = englishUi[copy] || additionalEnglishUi[copy];
-  return translated ? `${prefix}${translated}${suffix}` : value;
+  if (translated) return `${prefix}${translated}${suffix}`;
+  const localized = Object.entries(englishFragments)
+    .sort(([left], [right]) => right.length - left.length)
+    .reduce((result, [chinese, english]) => result.split(chinese).join(english), copy);
+  return localized === copy ? value : `${prefix}${localized}${suffix}`;
 }
 
 function localizeRemoteCopy(value) {
