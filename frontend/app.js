@@ -71,7 +71,7 @@ function platformLogo(providerId, sizeClass = "") {
 
 function resource(name, type, badge, metrics) { return { name, type, badge, metrics }; }
 
-const state = { view: "overview", provider: "volcengine", accountId: null, renameAccountId: null, deleteAccountId: null, alertAccountId: null, connectionAccountId: null, diagnosticAccountId: null, alertFilter: "all", products: {}, syncPollTimer: null, syncPollUsers: 0, updateCheckStarted: false, availableUpdate: null, storageNoticeShown: false, metricRangeDays: 7, metricHistoryCache: new Map(), metricSelections: {}, metricHistoryRequestKey: "", trayTooltip: "", interfaceLanguage: "zh-CN", interfaceLanguagePreference:"system", languagePreferenceInitialized:false, languagePreferenceDirty:false, systemInterfaceLanguage:null };
+const state = { view: "overview", provider: "volcengine", accountId: null, renameAccountId: null, deleteAccountId: null, alertAccountId: null, connectionAccountId: null, diagnosticAccountId: null, alertFilter: "all", products: {}, backend: { accounts: [], history: [], syncEvents: [] }, syncPollTimer: null, syncPollUsers: 0, updateCheckStarted: false, availableUpdate: null, storageNoticeShown: false, metricRangeDays: 7, metricHistoryCache: new Map(), metricSelections: {}, metricHistoryRequestKey: "", trayTooltip: "", interfaceLanguage: "zh-CN", interfaceLanguagePreference:"system", languagePreferenceInitialized:false, languagePreferenceDirty:false, systemInterfaceLanguage:null };
 Object.entries(providers).forEach(([id, p]) => state.products[id] = p.primaryProduct);
 function remotePlaceholder(platformName, supported = false) {
   return {
@@ -214,6 +214,13 @@ function browserSystemInterfaceLanguage() {
   return (navigator.languages?.[0] || navigator.language || "").toLowerCase().startsWith("zh") ? "zh-CN" : "en";
 }
 
+function withTimeout(promise, timeoutMs, label) {
+  return Promise.race([
+    promise,
+    new Promise((_, reject) => setTimeout(() => reject(new Error(`${label} timed out`)), timeoutMs))
+  ]);
+}
+
 async function initializeSystemInterfaceLanguage() {
   const invoke = window.__TAURI__?.core?.invoke;
   if (!invoke) {
@@ -221,7 +228,7 @@ async function initializeSystemInterfaceLanguage() {
     return;
   }
   try {
-    const locale = String(await invoke("get_system_locale") || "").toLowerCase();
+    const locale = String(await withTimeout(invoke("get_system_locale"), 1500, "System locale lookup") || "").toLowerCase();
     state.systemInterfaceLanguage = locale.startsWith("zh") ? "zh-CN" : "en";
   } catch (error) {
     console.error("Unable to read the system interface language", error);
@@ -1023,7 +1030,7 @@ function formatSyncSetting() {
   return minutes ? t("autoSyncEvery", { minutes }) : t("autoSyncOff");
 }
 
-async function syncDesktopPreferences(settings = state.backend.settings, strictKeys = []) {
+async function syncDesktopPreferences(settings = state.backend.settings, strictKeys = [], requestedKeys = null) {
   const invoke = window.__TAURI__?.core?.invoke;
   if (!invoke) return;
   const desired = {
@@ -1034,10 +1041,11 @@ async function syncDesktopPreferences(settings = state.backend.settings, strictK
     closeToTray:"set_close_to_tray",
     launchAtStartup:"set_launch_on_startup"
   };
-  for (const key of Object.keys(commands)) {
+  const keys = requestedKeys || Object.keys(commands);
+  for (const key of keys) {
     if (state.desktopPreferences[key] === desired[key]) continue;
     try {
-      await invoke(commands[key], { value:desired[key] });
+      await withTimeout(invoke(commands[key], { value:desired[key] }), 2000, `Desktop preference ${key}`);
       state.desktopPreferences[key] = desired[key];
     } catch (error) {
       console.error(`应用桌面设置 ${key} 失败`, error);
@@ -2385,7 +2393,7 @@ async function flushSettingsSave() {
   const retentionChanged = previousSettings?.historyRetentionDays !== nextSettings.historyRetentionDays;
   const strictDesktopKeys = ["closeToTray", "launchAtStartup"].filter(key => previousSettings?.[key] !== nextSettings[key]);
   try {
-    await syncDesktopPreferences(nextSettings, strictDesktopKeys);
+    if (strictDesktopKeys.length) await syncDesktopPreferences(nextSettings, strictDesktopKeys, strictDesktopKeys);
     const result = await apiRequest("/api/settings", { method:"PUT", body:JSON.stringify(nextSettings) });
     state.backend.settings = result.settings;
     if (nextSettings.interfaceLanguage === els.interfaceLanguage.value) state.languagePreferenceDirty = false;
@@ -2395,7 +2403,7 @@ async function flushSettingsSave() {
     setSettingsSaveStatus(t("settingsSaved"), "saved");
   } catch (error) {
     strictDesktopKeys.forEach(key => { state.desktopPreferences[key] = null; });
-    await syncDesktopPreferences(previousSettings);
+    if (strictDesktopKeys.length) await syncDesktopPreferences(previousSettings, [], strictDesktopKeys);
     populateSettings();
     applyTheme(state.backend.settings?.appearanceMode || "system");
     setSettingsSaveStatus(t("settingsSaveFailed"), "error");
@@ -2413,22 +2421,27 @@ async function flushSettingsSave() {
 });
 
 async function bootstrapApplication() {
-  initializeRemoteOnlyProviders();
-  applyDeepSeekAccountData(null);
-  applyKimiAccountData(null);
-  applyOpenAIAccountData(null);
-  applyVolcengineAccountData(null);
-  updateCredentialFields();
-  await initializeSystemInterfaceLanguage();
-  applyInterfaceLanguage(state.interfaceLanguagePreference);
+  runUiStateStep("initialize remote providers", initializeRemoteOnlyProviders);
+  runUiStateStep("initialize deepseek", () => applyDeepSeekAccountData(null));
+  runUiStateStep("initialize kimi", () => applyKimiAccountData(null));
+  runUiStateStep("initialize openai", () => applyOpenAIAccountData(null));
+  runUiStateStep("initialize volcengine", () => applyVolcengineAccountData(null));
+  runUiStateStep("initialize credential fields", updateCredentialFields);
+  runUiStateStep("initial language", () => applyInterfaceLanguage(state.interfaceLanguagePreference));
   interfaceLanguageObserver.observe(document.body, { childList:true, subtree:true, characterData:true });
-  renderNavigation();
-  renderOverview();
-  renderAlerts();
-  renderComparisons();
-  renderAccounts();
-  switchView("overview");
-  await loadBackendState();
+  const backendStatePromise = loadBackendState();
+  runUiStateStep("initial navigation", renderNavigation);
+  runUiStateStep("initial overview", renderOverview);
+  runUiStateStep("initial alerts", renderAlerts);
+  runUiStateStep("initial comparisons", renderComparisons);
+  runUiStateStep("initial accounts", renderAccounts);
+  runUiStateStep("initial view", () => switchView("overview"));
+  initializeSystemInterfaceLanguage().then(() => {
+    if (state.interfaceLanguagePreference !== "system") return;
+    applyInterfaceLanguage("system");
+    rerenderForInterfaceLanguage();
+  });
+  await backendStatePromise;
 }
 
 bootstrapApplication().catch(error => console.error("Prismeter bootstrap failed", error));
