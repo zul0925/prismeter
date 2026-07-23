@@ -157,6 +157,58 @@ const uiMessages = Object.freeze({
   }
 });
 
+// Longer static copy is intentionally kept separate from status messages. This
+// makes content review possible without turning rendering code into a dictionary.
+const additionalEnglishUi = Object.freeze({
+  "Prismeter · AI 用量中心":"Prismeter · AI usage center", "棱镜计量":"Prismeter", "模型分析":"Model analysis", "主导航":"Main navigation",
+  "早上好，今天的消耗很平稳":"Good morning. Your usage is steady today.", "刚刚同步":"Synced just now", "正在读取真实连接…":"Reading connected accounts…",
+  "远端账户监控":"Remote account monitoring", "个已连接账户":"connected accounts", "等待连接":"Waiting for a connection", "· 不使用本地估算":"· no local estimates",
+  "快速判断":"At a glance", "等待读取同步计划":"Reading the sync schedule", "已成功读取远端数据":"Remote data read successfully",
+  "同步失败或数据待刷新":"Sync failed or data needs refreshing", "保留账户但不参与同步":"Account retained but excluded from sync",
+  "只汇总平台实际返回的数据，不使用本地估算":"Only platform-returned data is summarized; local estimates are never used.",
+  "行动中心":"Action center", "平台与套餐":"Platforms and plans", "你正在使用的服务":"Services you use", "查看全部":"View all",
+  "同步动态":"Sync activity", "最近同步":"Recent syncs", "当前":"Current", "Prism 洞察":"Prism insights",
+  "所有指标均来自平台远端":"Every metric comes from the platform", "添加账户后，Prismeter 才会展示平台实际支持的远端指标。":"Add an account to see the remote metrics it actually supports.",
+  "查看账户":"View accounts", "等待更多快照":"Waiting for more snapshots", "正在评估消耗节奏":"Estimating usage pace",
+  "预测仅基于 Prismeter 保存的远端快照。":"Forecasts only use remote snapshots saved by Prismeter.", "需要更多数据":"More data needed",
+  "同步两次以上后会显示远端指标变化曲线。":"A remote metric trend appears after at least two syncs.", "模型明细":"Model details", "用量分布":"Usage distribution",
+  "当前远端数据":"Current remote data", "导出 CSV":"Export CSV", "官方数据":"Official data", "未使用本地估算":"No local estimates",
+  "— 表示平台未提供":"— means the platform did not provide this value", "远端模型数据":"Remote model data", "按平台实际返回字段分析":"Analysis based on fields actually returned by each platform",
+  "全部层级":"All levels", "模型级与产品级":"Model and product", "模型级记录":"Model-level records", "平台返回明细行":"Detailed rows returned by the platform",
+  "产品级记录":"Product-level records", "套餐或服务级指标":"Plan or service metrics", "全部模型与产品":"All models and products",
+  "仅远端实际返回":"Only values actually returned remotely", "跨平台":"Cross-platform", "官方模型列表":"Official model list", "远端记录":"Remote records",
+  "等待模型或产品明细":"Waiting for model or product details", "数据覆盖":"Data coverage", "仅统计已连接平台":"Only connected platforms are included",
+  "最新同步":"Latest sync", "不会读取本地会话日志":"Local session logs are never read", "筛选结果":"Filtered results",
+  "提醒中心":"Alert center", "余额、周期额度与同步状态":"Balance, cycle quota, and sync health", "全局提醒设置":"Global alert settings",
+  "当前需要关注":"Needs attention now", "低于余额阈值":"Below balance threshold", "接近周期上限":"Near cycle limit", "失败或数据过期":"Failed or stale",
+  "账户规则":"Account rules", "每个账户独立判断":"Each account is evaluated independently", "尚未连接账户":"No account connected",
+  "账户可以跟随全局规则，也可以覆盖适用的阈值或单独关闭提醒；暂停监控仍会保留规则。":"An account can follow global rules, override thresholds, or disable alerts. Pausing monitoring keeps its rules.",
+  "本机账户中心":"Local account center", "所有平台账户":"All platform accounts", "凭据由 Windows 加密":"Credentials are encrypted by Windows",
+  "正在监控":"Monitoring", "参与自动同步":"Included in automatic sync", "状态正常":"Healthy", "远端同步正常":"Remote sync is healthy",
+  "保留已有数据":"Existing data retained", "等待任务":"Waiting for work", "数据源能力":"Data-source capabilities", "按平台实际支持展示":"Shown only when supported by the platform",
+  "不同平台返回的统计字段并不相同；“未提供”的数据不会按 0 计算，也不会用本地日志推算。":"Platforms return different fields. Unavailable values are not treated as zero or estimated from local logs.",
+  "还没有真实账户":"No real account yet", "点击“添加账户”连接平台，同一平台可以添加多个账号。":"Select Add account to connect a platform. You can add more than one account per platform.",
+  "添加第一个账户":"Add your first account", "仅保存同步时间、结果、耗时和远端产品数量；不记录 API Key，也不读取本地会话日志。":"Only sync time, result, duration, and remote product count are stored. API keys and local session logs are never recorded.",
+  "余额同步快照":"Balance sync snapshots", "主题切换会立即应用到主界面和所有页面。":"Theme changes apply immediately to every view.",
+  "可固定明暗主题，也可以跟随 Windows。":"Choose a fixed light or dark theme, or follow Windows.", "随 Windows 自动切换":"Switch automatically with Windows",
+  "明亮液态玻璃":"Bright liquid glass", "降低夜间亮度":"Reduced brightness at night", "阈值修改后立即用于下一次同步与提醒判断。":"Threshold changes apply to the next sync and alert evaluation.",
+  "账户币种":"Account currency", "% 已用":"% used", "同步后发现低余额、额度超限或连接失败时提醒。":"Alerts are raised after syncs find a low balance, quota limit, or connection failure.",
+  "自动检查只会在应用启动后进行，不会自动安装。":"Automatic checks run after launch; updates are never installed automatically.", "发现新版后由你确认安装":"You decide whether to install a new version",
+  "不会在后台请求版本信息":"No background version requests", "尚未检查更新":"Not checked yet", "控制远端数据何时刷新，不会读取本地会话日志。":"Control when remote data refreshes. Local session logs are never read.",
+  "已暂停的账户不会参与；临时失败会在 2、5、15 分钟后分级重试。":"Paused accounts are excluded. Temporary failures retry after 2, 5, and 15 minutes.",
+  "仅手动同步":"Manual sync only", "高频监控":"High-frequency monitoring", "推荐":"Recommended", "平衡":"Balanced", "低频":"Low-frequency",
+  "启动后自动拉取已启用账户的最新远端数据。":"Fetch the latest remote data for enabled accounts after launch.", "超过所选时间仍未成功同步时，在总览和提醒中心标记为过期。":"If a sync has not succeeded within the selected time, it is marked stale in Overview and Alerts.",
+  "自动判断":"Automatic", "同步间隔的 3 倍，至少 1 小时":"Three times the sync interval, at least one hour", "适合高频监控":"Good for high-frequency monitoring",
+  "较快发现数据中断":"Detect data interruptions sooner", "手动同步的默认标准":"Default standard for manual sync", "减少非必要提醒":"Reduce unnecessary alerts",
+  "每日检查":"Daily check", "仅提醒长期未更新":"Only alert on long-running staleness", "只保存远端同步结果与数值快照，不保存凭据、请求正文或本地会话。":"Only remote sync results and value snapshots are stored. Credentials, request bodies, and local sessions are not.",
+  "修改后会立即清理超过期限的余额快照和同步记录。":"Changing this immediately removes expired balance snapshots and sync records.", "减少本地记录":"Fewer local records",
+  "长期观察":"Long-term observation", "最长保留":"Maximum retention", "尚未读取本地历史":"Local history has not been read",
+  "控制主窗口关闭后的行为，以及应用是否继续在后台运行。":"Control what happens when the main window closes and whether the app continues in the background.",
+  "开启后，右上角关闭按钮和 Alt+F4 会隐藏窗口，账户同步仍会继续。":"When enabled, the Close button and Alt+F4 hide the window while account syncs continue.",
+  "以后台模式启动到托盘，不会在登录后弹出主窗口。":"Start in the tray without opening the main window after sign-in.", "托盘左键":"Tray left click",
+  "单击托盘图标即可恢复主窗口":"Click the tray icon to restore the main window", "结束后台同步、关闭托盘图标并退出 Prismeter。":"Stop background syncs, close the tray icon, and quit Prismeter."
+});
+
 function t(key, values = {}) {
   const source = uiMessages[state.interfaceLanguage === "en" ? "en" : "zh-CN"];
   const template = source[key] || uiMessages["zh-CN"][key] || key;
@@ -165,7 +217,7 @@ function t(key, values = {}) {
 
 function translateStatic(value) {
   if (state.interfaceLanguage !== "en") return value;
-  return englishUi[value] || value;
+  return englishUi[value] || additionalEnglishUi[value] || value;
 }
 
 function localizeTextNode(node) {
