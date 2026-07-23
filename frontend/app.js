@@ -216,7 +216,14 @@ function applyInterfaceLanguage(language = "zh-CN") {
   window.PrismeterI18n.apply(document.body);
   // Combobox labels are derived from option text. Refresh them after the
   // catalog has updated the option nodes, rather than retaining the old locale.
-  if (els.interfaceLanguage) setComboboxValue(els.interfaceLanguage, language === "system" ? "system" : normalized, false);
+  if (els.interfaceLanguage) {
+    const value = language === "system" ? "system" : normalized;
+    const option = [...els.interfaceLanguage.closest("[data-combobox]")?.querySelectorAll(".combo-option[data-value]") || []]
+      .find(item => item.dataset.value === value);
+    const label = option?.querySelector("span")?.textContent || option?.textContent;
+    els.interfaceLanguage.value = value;
+    if (label) els.interfaceLanguage.closest("[data-combobox]")?.querySelector("[data-combo-label]")?.replaceChildren(label.trim());
+  }
   document.title = t("appTitle");
   localizeSubtree(document.body);
 }
@@ -2364,8 +2371,12 @@ async function flushSettingsSave() {
   input.addEventListener("change", () => { if (input.checkValidity() && input.value !== "") queueSettingsSave(); });
 });
 
-initializeRemoteOnlyProviders(); applyDeepSeekAccountData(null); applyKimiAccountData(null); applyOpenAIAccountData(null); applyVolcengineAccountData(null); updateCredentialFields(); applyInterfaceLanguage(); interfaceLanguageObserver.observe(document.body, { childList:true, subtree:true, characterData:true }); renderNavigation(); renderOverview(); renderAlerts(); renderComparisons(); renderAccounts(); switchView("overview");
-loadBackendState();
+try {
+  initializeRemoteOnlyProviders(); applyDeepSeekAccountData(null); applyKimiAccountData(null); applyOpenAIAccountData(null); applyVolcengineAccountData(null); updateCredentialFields(); applyInterfaceLanguage(); interfaceLanguageObserver.observe(document.body, { childList:true, subtree:true, characterData:true }); renderNavigation(); renderOverview(); renderAlerts(); renderComparisons(); renderAccounts(); switchView("overview");
+  loadBackendState();
+} catch (error) {
+  console.error("Prismeter bootstrap failed", error);
+}
 setInterval(() => { if (!state.backend.accounts?.length) return; renderOverview(); renderAccounts(); renderAlerts(); if (state.view === "platforms") renderPlatform(); }, RELATIVE_TIME_REFRESH_MS);
 setInterval(() => { if (state.backend.accounts?.length) loadBackendState({quiet:true}); }, BACKGROUND_STATE_REFRESH_MS);
 
@@ -2390,6 +2401,8 @@ document.addEventListener("DOMContentLoaded",()=>{
   const api=window.__TAURI__?.window;
   const current=api?.getCurrentWindow?.();
   if(!current) return;
+  if(document.documentElement.dataset.windowControlsBound) return;
+  document.documentElement.dataset.windowControlsBound="true";
   const maximizeButton=document.getElementById("windowMaximize");
   let resizeStateTimer;
   const updateMaximizeState=async()=>{
@@ -2435,3 +2448,21 @@ document.addEventListener("DOMContentLoaded",()=>{
   });
   updateMaximizeState();
 });
+
+function bindWindowControlsFallback() {
+  if (document.documentElement.dataset.windowControlsBound) return;
+  const current = window.__TAURI__?.window?.getCurrentWindow?.();
+  if (!current) return;
+  document.documentElement.dataset.windowControlsBound = "true";
+  const bind = (id, action) => document.getElementById(id)?.addEventListener("click", async event => {
+    event.preventDefault(); event.stopPropagation();
+    try { await current[action](); }
+    catch (error) { console.error(`Window action ${action} failed`, error); }
+  });
+  bind("windowMinimize", "minimize");
+  bind("windowMaximize", "toggleMaximize");
+  bind("windowClose", "close");
+}
+
+if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", bindWindowControlsFallback, { once:true });
+else bindWindowControlsFallback();
