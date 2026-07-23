@@ -28,6 +28,8 @@ const PUBLIC_HISTORY_LIMIT: usize = 120;
 const AUTO_SYNC_CHECK_INTERVAL: Duration = Duration::from_secs(15);
 const INDEX_HTML: &[u8] = include_bytes!("../../frontend/index.html");
 const STYLES_CSS: &[u8] = include_bytes!("../../frontend/styles.css");
+const I18N_JS: &[u8] = include_bytes!("../../frontend/i18n.js");
+const MESSAGES_JS: &[u8] = include_bytes!("../../frontend/messages.js");
 const APP_JS: &[u8] = include_bytes!("../../frontend/app.js");
 
 type AppResult<T> = Result<T, String>;
@@ -974,6 +976,8 @@ fn handle_request(mut request: Request, store: &Arc<Store>, base_url: &str) {
         let (content_type, bytes) = match path.as_str() {
             "/" | "/index.html" => ("text/html; charset=utf-8", INDEX_HTML),
             "/styles.css" => ("text/css; charset=utf-8", STYLES_CSS),
+            "/i18n.js" => ("application/javascript; charset=utf-8", I18N_JS),
+            "/messages.js" => ("application/javascript; charset=utf-8", MESSAGES_JS),
             "/app.js" => ("application/javascript; charset=utf-8", APP_JS),
             _ => { respond_text(request, 404, "text/plain; charset=utf-8", b"Not found"); return; }
         };
