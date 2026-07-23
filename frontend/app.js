@@ -329,10 +329,17 @@ function localizeRemoteCopy(value) {
 
 function localizeTextNode(node) {
   if (!node || node.nodeType !== Node.TEXT_NODE || ["SCRIPT", "STYLE"].includes(node.parentElement?.tagName)) return;
-  const original = localizedTextNodes.get(node) || node.nodeValue;
-  if (!localizedTextNodes.has(node)) localizedTextNodes.set(node, original);
+  const previous = localizedTextNodes.get(node);
+  // A render can reuse a text node and change its contents (for example, the
+  // Overview heading after sync). Treat values other than our previous source
+  // or translation as fresh source copy instead of translating stale content.
+  const current = node.nodeValue;
+  const original = !previous || (current !== previous.original && current !== previous.rendered)
+    ? current
+    : previous.original;
   const translated = translateStatic(original);
-  if (node.nodeValue !== translated) node.nodeValue = translated;
+  localizedTextNodes.set(node, { original, rendered:translated });
+  if (current !== translated) node.nodeValue = translated;
 }
 
 function localizeSubtree(root) {
@@ -1589,14 +1596,14 @@ function showRowDialog(index) {
   const product = provider.products[state.products[state.provider]];
   const row = product.rows[index];
   els.dialogTitle.textContent = row.name;
-  els.dialogDescription.textContent = `${provider.name} · ${product.name} · ${row.type}。这里只展示当前产品和该资源实际支持的指标；不支持的字段不会按 0 处理。`;
-  els.dialogMetrics.innerHTML = product.columns.map((label,i)=>`<div><span>${escapeHtml(label)}</span><strong>${escapeHtml(row.metrics[i]?.[0] || "—")}</strong><small>${escapeHtml(row.metrics[i]?.[1] || "远端")}</small></div>`).join("");
+  els.dialogDescription.textContent = localizeRemoteCopy(`${provider.name} · ${product.name} · ${row.type}。这里只展示当前产品和该资源实际支持的指标；不支持的字段不会按 0 处理。`);
+  els.dialogMetrics.innerHTML = product.columns.map((label,i)=>`<div><span>${escapeHtml(localizeRemoteCopy(label))}</span><strong>${escapeHtml(row.metrics[i]?.[0] || "—")}</strong><small>${escapeHtml(localizeRemoteCopy(row.metrics[i]?.[1] || "远端"))}</small></div>`).join("");
   els.metricDialog.showModal();
 }
 
 let toastTimer;
 function showToast(text, requestedTone = "auto") {
-  const message = String(text || "操作未完成");
+  const message = localizeRemoteCopy(String(text || t("operationIncomplete")));
   const tone = requestedTone !== "auto" ? requestedTone
     : /同步完成.*失败|仍失败|已暂停|需要重试/.test(message) ? "warning"
     : /失败|错误|异常|无法|无效|拒绝|过期/.test(message) ? "error"
@@ -1613,7 +1620,7 @@ function showToast(text, requestedTone = "auto") {
 }
 
 function setUpdateStatus(text, tone = "") {
-  els.updateStatusText.textContent = text;
+  els.updateStatusText.textContent = localizeRemoteCopy(text);
   els.updateStatusText.className = tone ? `update-status-${tone}` : "";
 }
 
