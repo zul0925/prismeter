@@ -71,7 +71,7 @@ function platformLogo(providerId, sizeClass = "") {
 
 function resource(name, type, badge, metrics) { return { name, type, badge, metrics }; }
 
-const state = { view: "overview", provider: "volcengine", accountId: null, renameAccountId: null, deleteAccountId: null, alertAccountId: null, connectionAccountId: null, diagnosticAccountId: null, alertFilter: "all", syncPollTimer: null, syncPollUsers: 0, updateCheckStarted: false, availableUpdate: null, storageNoticeShown: false, metricRangeDays: 7, metricHistoryCache: new Map(), metricSelections: {}, metricHistoryRequestKey: "", trayTooltip: "", interfaceLanguage: "zh-CN", interfaceLanguagePreference:"zh-CN", languagePreferenceDirty:false };
+const state = { view: "overview", provider: "volcengine", accountId: null, renameAccountId: null, deleteAccountId: null, alertAccountId: null, connectionAccountId: null, diagnosticAccountId: null, alertFilter: "all", products: {}, syncPollTimer: null, syncPollUsers: 0, updateCheckStarted: false, availableUpdate: null, storageNoticeShown: false, metricRangeDays: 7, metricHistoryCache: new Map(), metricSelections: {}, metricHistoryRequestKey: "", trayTooltip: "", interfaceLanguage: "zh-CN", interfaceLanguagePreference:"zh-CN", languagePreferenceDirty:false };
 Object.entries(providers).forEach(([id, p]) => state.products[id] = p.primaryProduct);
 function remotePlaceholder(platformName, supported = false) {
   return {
