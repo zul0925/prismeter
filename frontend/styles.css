@@ -618,11 +618,12 @@ body { font-size:14px; line-height:1.45; }
 .overview-platform-empty b { display:block; font-size:14px; }
 .overview-platform-empty p { margin:4px 0 0; color:var(--muted); font-size:11px; }
 
-/* Stable combobox typography: marker, label and description occupy fixed columns. */
+/* Stable combobox typography: preserve each option's primary label and description. */
 .combo-trigger { min-height:46px; font-size:12px; line-height:1.3; }
-.combo-option { min-height:46px; display:grid; grid-template-columns:8px minmax(0,1fr) auto; align-items:center; column-gap:10px; padding:9px 11px; font-size:12px; line-height:1.3; }
-.combo-option::before { grid-column:1; margin:0; }
-.combo-option span { grid-column:3; align-self:center; font-size:10px; line-height:1.3; text-align:right; white-space:nowrap; }
+.combo-option { min-height:46px; display:flex; align-items:center; gap:10px; padding:9px 11px; font-size:12px; line-height:1.3; }
+.combo-option::before { margin:0; }
+.combo-option span:first-of-type { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.combo-option span + span { margin-left:auto; max-width:58%; overflow:hidden; color:#7e8798; font-size:10px; line-height:1.3; text-align:right; text-overflow:ellipsis; white-space:nowrap; }
 
 /* Minimum readable sizes: 12px body/supporting copy, 10–11px metadata. */
 .side-label,.eyebrow,.privacy-note,.sync-status,.live-pill,.platform-card .product-name,.usage-row span,.platform-card-foot,.text-button,.soft-button,.mini-button,.connected-badge,.header-stat span,.segmented-control button,.summary-card span,.summary-card small,.data-row.header,.resource-badge,.resource-cell span,.metric-cell span,.legend,.comparison-hero p,.comparison-hero span,.comparison-card-top span,.comparison-card dt,.alert-copy p,.secure-pill,.connect-intro,.account-form label,.capability-note b,.capability-note span,.accounts-empty p,.saved-account-head span,.saved-balance span,.saved-balance small,.account-directory-metrics span,.account-error,.danger-link,.history-count,.history-row span,.history-row small,.history-empty,.toast p,.metric-dialog>p:not(.eyebrow),.dialog-metrics span,.trend-stat span,.trend-empty,.settings-form>label:not(.check-setting),.input-with-unit b,.check-setting small,.official-alert,.health-overview-item span,.health-overview-item small,.diagnostic-title-row p,.diagnostic-metrics span,.diagnostic-metrics small,.diagnostic-error b,.diagnostic-error p,.diagnostic-privacy,.activity-main span,.activity-value span,.brand-logo b { font-size:11px !important; }
@@ -691,7 +692,7 @@ button:disabled { cursor:not-allowed; }
 .dynamic-table,.segmented-control { scrollbar-width:thin; scrollbar-color:rgba(112,124,154,.32) transparent; }
 .dynamic-table::-webkit-scrollbar,.segmented-control::-webkit-scrollbar { height:8px; }
 .dynamic-table::-webkit-scrollbar-thumb,.segmented-control::-webkit-scrollbar-thumb { border:2px solid transparent; border-radius:999px; background:rgba(112,124,154,.32); background-clip:padding-box; }
-.combo-menu { border-radius:18px; overflow:hidden; }
+.combo-menu { border-radius:18px; overflow:visible; }
 .toast { border:1px solid rgba(255,255,255,.14); border-radius:var(--radius-control); }
 
 @media(max-width:620px) {
@@ -1156,6 +1157,21 @@ body,.window-chrome,.glass-panel,.platform-card,.summary-card,.comparison-card,.
 .pointer-sorting,.pointer-sorting * { cursor:grabbing !important; }
 .combo-option.disabled-option { cursor:not-allowed; opacity:.52; background:rgba(132,142,163,.06); }
 .combo-option.disabled-option span { white-space:normal; line-height:1.35; }
+
+/* Menus must sit above every card/dialog and remain readable in light mode. */
+.glass-combobox.open { z-index:10001; }
+.combo-menu { z-index:10002; background:#f8faff; border-color:rgba(117,132,174,.28); box-shadow:0 22px 48px rgba(35,44,68,.24),inset 0 1px 0 #fff; }
+.settings-page-grid,.settings-page-column,.settings-section-card,.settings-field,.account-dialog,.metric-dialog,.settings-dialog { overflow:visible; }
+:root[data-theme="light"] .combo-trigger { background:linear-gradient(135deg,#ffffff,#eef3fb); border-color:rgba(117,132,174,.26); }
+:root[data-theme="light"] .combo-menu { background:#f8faff; }
+:root[data-theme="light"] .combo-option:hover { background:#edf2ff; }
+:root[data-theme="light"] .combo-option.selected { background:#e6edff; color:#435dcc; }
+
+/* Account labels are deliberately stacked so long account names never collide with providers. */
+.platform-nav button { display:grid; grid-template-columns:28px minmax(0,1fr) auto; align-items:center; gap:10px; }
+.platform-nav button > span:last-child { min-width:0; display:flex; flex-direction:column; align-items:flex-start; gap:3px; }
+.platform-nav button b,.platform-nav button small { display:block; max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.platform-nav button small { color:#7f8aa0; }
 
 @media (max-height:720px) and (min-width:621px) {
   .sidebar { padding-top:14px; padding-bottom:12px; }

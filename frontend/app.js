@@ -71,7 +71,7 @@ function platformLogo(providerId, sizeClass = "") {
 
 function resource(name, type, badge, metrics) { return { name, type, badge, metrics }; }
 
-const state = { view: "overview", provider: "volcengine", accountId: null, renameAccountId: null, deleteAccountId: null, alertAccountId: null, connectionAccountId: null, diagnosticAccountId: null, alertFilter: "all", syncEventFilter: "all", products: {}, backend: { accounts: [], history: [], syncEvents: [] }, desktopPreferences: { closeToTray:null, launchAtStartup:null }, syncPollTimer: null, syncPollUsers: 0, updateCheckStarted: false, availableUpdate: null, storageNoticeShown: false, metricRangeDays: 7, metricHistoryCache: new Map(), metricSelections: {}, metricHistoryRequestKey: "", trayTooltip: "", interfaceLanguage: "zh-CN" };
+const state = { view: "overview", provider: "volcengine", accountId: null, renameAccountId: null, deleteAccountId: null, alertAccountId: null, connectionAccountId: null, diagnosticAccountId: null, alertFilter: "all", syncPollTimer: null, syncPollUsers: 0, updateCheckStarted: false, availableUpdate: null, storageNoticeShown: false, metricRangeDays: 7, metricHistoryCache: new Map(), metricSelections: {}, metricHistoryRequestKey: "", trayTooltip: "", interfaceLanguage: "zh-CN", interfaceLanguagePreference:"zh-CN", languagePreferenceDirty:false };
 Object.entries(providers).forEach(([id, p]) => state.products[id] = p.primaryProduct);
 function remotePlaceholder(platformName, supported = false) {
   return {
@@ -142,6 +142,15 @@ function translateStatic(value) {
 function localizeRemoteCopy(value) {
   const original = String(value ?? "");
   if (state.interfaceLanguage !== "en") return original;
+  const remoteKeys = {
+    "Codex 用量":"codex.product.kind",
+    "当前周期":"codex.summary.currentWindow",
+    "次级周期":"codex.summary.secondaryWindow",
+    "累计 Token":"codex.summary.lifetimeTokens",
+    "连续使用":"codex.summary.activeStreak",
+    "每日远端统计":"codex.row.dailyUsage"
+  };
+  if (remoteKeys[original]) return t(remoteKeys[original]);
   let translated = translateStatic(original);
   if (translated !== original) return translated;
   return original
@@ -198,11 +207,16 @@ function localizeSubtree(root) {
 }
 
 function applyInterfaceLanguage(language = "zh-CN") {
-  const normalized = language === "en" ? "en" : "zh-CN";
+  const normalized = language === "system"
+    ? ((navigator.languages?.[0] || navigator.language || "").toLowerCase().startsWith("zh") ? "zh-CN" : "en")
+    : language === "en" ? "en" : "zh-CN";
   state.interfaceLanguage = normalized;
   window.PrismeterI18n.setLanguage(normalized);
   localizeBootstrapProviders();
   window.PrismeterI18n.apply(document.body);
+  // Combobox labels are derived from option text. Refresh them after the
+  // catalog has updated the option nodes, rather than retaining the old locale.
+  if (els.interfaceLanguage) setComboboxValue(els.interfaceLanguage, language === "system" ? "system" : normalized, false);
   document.title = t("appTitle");
   localizeSubtree(document.body);
 }
@@ -453,6 +467,21 @@ function i18nField(value, key, params) {
   return key && window.PrismeterI18n.has(key) ? t(key, params) : localizeRemoteCopy(value);
 }
 
+function localizeMetricHistoryLabel(label) {
+  const original = String(label || "");
+  if (state.interfaceLanguage !== "en") return original;
+  const windowMatch = original.match(/^(\d+)\s*分钟周期已用$/);
+  if (windowMatch) return t("codex.usage.windowUsed", { minutes:windowMatch[1] });
+  const keys = {
+    "当前周期":"codex.summary.currentWindow",
+    "次级周期":"codex.summary.secondaryWindow",
+    "累计 Token":"codex.summary.lifetimeTokens",
+    "连续使用":"codex.summary.activeStreak",
+    "主要指标":"detailCurrentRemote"
+  };
+  return keys[original] ? t(keys[original]) : localizeRemoteCopy(original);
+}
+
 function accountDisplayName(account) {
   return i18nField(account?.name || "", account?.nameKey);
 }
@@ -485,7 +514,7 @@ function applyOpenAIAccountData(account = getSelectedAccount("openai")) {
     const percent = String(item.usage || "").match(/(-?\d+(?:\.\d+)?)\s*%/);
     products[item.id] = {
       name: item.name || item.id,
-      kind: item.kind || t("providerChatGptSubscription"),
+      kind: i18nField(item.kind, item.kindKey || item.i18n?.kindKey) || t("providerChatGptSubscription"),
       usage: item.usage || "—",
       usageLabel: i18nField(item.usageLabel, item.usageLabelKey, item.usageLabelParams) || t("remoteUsage"),
       progress: percent ? Math.max(0, Math.min(100, Number(percent[1]))) : 0,
@@ -517,7 +546,7 @@ function applyVolcengineAccountData(account = getSelectedAccount("volcengine")) 
     const percent = String(item.usage || "").match(/(-?\d+(?:\.\d+)?)\s*%/);
     products[item.id] = {
       name: item.name || item.id,
-      kind: item.kind || t("providerOfficialProduct"),
+      kind: i18nField(item.kind, item.kindKey || item.i18n?.kindKey) || t("providerOfficialProduct"),
       usage: item.usage || "—",
       usageLabel: i18nField(item.usageLabel, item.usageLabelKey, item.usageLabelParams) || t("officialProduct"),
       progress: percent ? Math.max(0, Math.min(100, Number(percent[1]))) : 0,
@@ -546,7 +575,7 @@ function applyMimoAccountData(account = getSelectedAccount("mimo")) {
   for (const item of account.products || []) {
     products[item.id] = {
       name: item.name || item.id,
-      kind: item.kind || t("providerApiKeyCapability"),
+      kind: i18nField(item.kind, item.kindKey || item.i18n?.kindKey) || t("providerApiKeyCapability"),
       usage: item.usage || "—",
       usageLabel: i18nField(item.usageLabel, item.usageLabelKey, item.usageLabelParams) || t("providerRemoteModels"),
       progress: 0,
@@ -567,7 +596,10 @@ async function loadBackendState({quiet = false} = {}) {
     const payload = await apiRequest("/api/state");
     state.backend = payload;
     updateTrayTooltip(payload);
-    applyInterfaceLanguage(payload.settings?.interfaceLanguage || "zh-CN");
+    const incomingLanguage = payload.settings?.interfaceLanguage || "system";
+    const language = state.languagePreferenceDirty ? state.interfaceLanguagePreference : incomingLanguage;
+    if (state.languagePreferenceDirty) payload.settings.interfaceLanguage = state.interfaceLanguagePreference;
+    applyInterfaceLanguage(language);
     applyTheme(payload.settings?.appearanceMode || "system");
     await syncDesktopPreferences(payload.settings);
     if (state.accountId && !payload.accounts.some(account => account.id === state.accountId)) state.accountId = null;
@@ -902,7 +934,10 @@ function renderMetricTrend(account, productId) {
   let selectedId = state.metricSelections[selectionKey];
   if (!metrics.some(metric => metric.id === selectedId)) selectedId = metrics[0]?.id || "";
   state.metricSelections[selectionKey] = selectedId;
-  els.trendMetricTabs.innerHTML = metrics.map(metric => `<button type="button" class="${metric.id === selectedId ? "active" : ""}" data-trend-metric="${escapeHtml(metric.id)}" title="${escapeHtml(metric.label)}">${escapeHtml(metric.label)}</button>`).join("");
+  els.trendMetricTabs.innerHTML = metrics.map(metric => {
+    const label = localizeMetricHistoryLabel(metric.label);
+    return `<button type="button" class="${metric.id === selectedId ? "active" : ""}" data-trend-metric="${escapeHtml(metric.id)}" title="${escapeHtml(label)}">${escapeHtml(label)}</button>`;
+  }).join("");
   const selected = metrics.find(metric => metric.id === selectedId);
   if (!selected) {
     els.trendCaption.textContent = t("trendNoValues", { days:state.metricRangeDays });
@@ -1969,7 +2004,15 @@ els.modelFamilySelect.addEventListener("change", renderComparisons);
 els.modelLevelSelect.addEventListener("change", renderComparisons);
 els.modelSearchInput.addEventListener("input", renderComparisons);
 els.accountProvider.addEventListener("change", updateCredentialFields);
-els.interfaceLanguage.addEventListener("change", () => { applyInterfaceLanguage(els.interfaceLanguage.value); rerenderForInterfaceLanguage(); queueSettingsSave(); });
+els.interfaceLanguage.addEventListener("change", () => {
+  const language = ["system", "en"].includes(els.interfaceLanguage.value) ? els.interfaceLanguage.value : "zh-CN";
+  state.languagePreferenceDirty = true;
+  state.interfaceLanguagePreference = language;
+  if (state.backend.settings) state.backend.settings.interfaceLanguage = language;
+  applyInterfaceLanguage(language);
+  rerenderForInterfaceLanguage();
+  queueSettingsSave("immediate");
+});
 els.appearanceMode.addEventListener("change", () => { applyTheme(els.appearanceMode.value); queueSettingsSave(); });
 els.autoSyncMinutes.addEventListener("change", () => queueSettingsSave());
 els.staleAfterMinutes.addEventListener("change", () => queueSettingsSave());
@@ -2274,6 +2317,10 @@ function queueSettingsSave(delay = 0) {
   if (!state.backend.settings) return;
   clearTimeout(settingsSaveTimer);
   setSettingsSaveStatus(t("settingsPending"), "pending");
+  if (delay === "immediate") {
+    settingsSaveQueued = true;
+    return flushSettingsSave();
+  }
   settingsSaveTimer = setTimeout(() => {
     settingsSaveQueued = true;
     flushSettingsSave();
@@ -2293,6 +2340,7 @@ async function flushSettingsSave() {
     await syncDesktopPreferences(nextSettings, strictDesktopKeys);
     const result = await apiRequest("/api/settings", { method:"PUT", body:JSON.stringify(nextSettings) });
     state.backend.settings = result.settings;
+    if (nextSettings.interfaceLanguage === els.interfaceLanguage.value) state.languagePreferenceDirty = false;
     applyTheme(result.settings.appearanceMode || "system");
     els.syncText.textContent = formatSyncSetting();
     if (retentionChanged) await loadBackendState({quiet:true});

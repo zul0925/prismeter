@@ -150,7 +150,7 @@
             </div>
           </div>
           <section id="trendForecast" class="trend-forecast" hidden aria-live="polite">
-            <span class="trend-forecast-icon" aria-hidden="true">↗</span>
+            <span class="trend-forecast-icon" aria-hidden="true">&#8599;</span>
             <div><b id="trendForecastTitle" data-i18n="detailForecasting">正在评估消耗节奏</b><span id="trendForecastDetail" data-i18n="detailForecastSource">预测仅基于 Prismeter 保存的远端快照。</span></div>
             <small id="trendForecastMeta" data-i18n="detailMoreData">需要更多数据</small>
           </section>
@@ -315,7 +315,8 @@
               <input id="interfaceLanguage" type="hidden" value="zh-CN" />
                <button class="combo-trigger" type="button" data-combo-trigger aria-haspopup="listbox" aria-expanded="false"><span data-combo-label data-i18n="settingsChinese">简体中文</span><i></i></button>
               <div class="combo-menu" role="listbox">
-                <button type="button" class="combo-option selected" data-value="zh-CN" role="option"><span data-i18n="settingsChinese">简体中文</span><span data-i18n="settingsDefault">默认语言</span></button>
+                <button type="button" class="combo-option selected" data-value="system" role="option"><span data-i18n="settingsLanguageSystem">跟随系统</span><span data-i18n="settingsLanguageSystemNote">首次启动自动选择</span></button>
+                <button type="button" class="combo-option" data-value="zh-CN" role="option"><span data-i18n="settingsChinese">简体中文</span><span data-i18n="settingsDefault">默认语言</span></button>
                 <button type="button" class="combo-option" data-value="en" role="option">English<span>Core interface translation</span></button>
               </div>
             </div></label>

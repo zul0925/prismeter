@@ -214,6 +214,7 @@ fn build_codex_product(plan: &str, limits_result: &Value, usage_result: &Value) 
         "resetAt": unix_seconds_iso(reset_timestamp),
         "status": first_non_empty(&[text(limits, "rateLimitReachedType"), "Running".into()]),
         "i18n": {
+            "kindKey": "codex.product.kind",
             "summaryKeys": [
                 { "labelKey":"codex.summary.currentWindow", "noteKey":"codex.note.windowReset", "noteParams": { "minutes": duration, "reset": reset } },
                 { "labelKey":"codex.summary.secondaryWindow", "noteKey":"codex.note.resetAt", "noteParams": { "reset": unix_seconds(integer(secondary, "resetsAt")) } },
