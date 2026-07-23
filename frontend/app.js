@@ -237,7 +237,15 @@ function t(key, values = {}) {
 
 function translateStatic(value) {
   if (state.interfaceLanguage !== "en") return value;
-  return englishUi[value] || additionalEnglishUi[value] || value;
+  // Text nodes in index.html often contain indentation and newlines. Look up
+  // the meaningful copy while retaining its original whitespace for layout.
+  const text = String(value ?? "");
+  const match = text.match(/^(\s*)([\s\S]*?)(\s*)$/);
+  const prefix = match?.[1] || "";
+  const copy = match?.[2] || text;
+  const suffix = match?.[3] || "";
+  const translated = englishUi[copy] || additionalEnglishUi[copy];
+  return translated ? `${prefix}${translated}${suffix}` : value;
 }
 
 function localizeTextNode(node) {

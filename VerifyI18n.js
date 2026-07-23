@@ -45,4 +45,11 @@ const untranslatedStatic = [...new Set([...visibleText, ...accessibleAttributes]
 if (untranslatedStatic.length) {
   throw new Error(`Static interface copy is missing English translations: ${untranslatedStatic.join(" | ")}`);
 }
-console.log(`i18n check passed (${chineseKeys.length} keyed messages and all audited static interface copy translated).`);
+const whitespaceWrapped = visibleText.map(value => `\n    ${value}\n  `);
+const untranslatedRenderedCopy = whitespaceWrapped
+  .map(value => value.match(/^(\s*)([\s\S]*?)(\s*)$/)?.[2] || value)
+  .filter(value => !decorativeText.has(value) && !staticChinese[value] && !staticEnglish[value]);
+if (untranslatedRenderedCopy.length) {
+  throw new Error(`Whitespace-wrapped static copy does not resolve to English: ${[...new Set(untranslatedRenderedCopy)].join(" | ")}`);
+}
+console.log(`i18n check passed (${chineseKeys.length} keyed messages and all audited static interface copy translated in its rendered form).`);
