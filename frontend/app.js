@@ -143,7 +143,20 @@ const uiMessages = Object.freeze({
     pausedDetail:"不会参与自动或全部同步", firstSync:"等待首次远端同步", repeatedFailure:"持续失败", syncFailed:"同步失败",
     lastSuccess:"上次成功：{time}", dataFresh:"数据新鲜", refreshRecommended:"建议刷新", dataStale:"数据已过期",
     updatedAt:"更新于 {time}", noDuration:"尚无耗时记录", autoSyncOff:"自动同步已关闭", autoSyncEvery:"每 {minutes} 分钟自动同步",
-    desktopPreferenceFailed:"Windows 拒绝应用此设置", percentagePoints:"{sign}{value} 个百分点"
+    desktopPreferenceFailed:"Windows 拒绝应用此设置", percentagePoints:"{sign}{value} 个百分点",
+    waitingForAccounts:"等待连接账户", localServiceUnavailable:"本地服务异常", noAccounts:"尚未连接账户", addAccountInApp:"打开 Prismeter 添加账户",
+    allAccountsPaused:"{count} 个账户均已暂停", needsAttention:"需要处理", syncFailedFor:"{name} 同步失败", refreshNeeded:"需要刷新", usageNeedsAttention:"请留意用量",
+    alertsWaiting:"{count} 条提醒等待处理", readyToUse:"可以继续使用", healthyAccounts:"{count} 个账户状态正常", restoreAfter:"{time} 恢复",
+    automaticSyncOff:"自动同步已关闭", automaticSyncEvery:"每 {minutes} 分钟自动同步", nextSync:"每 {minutes} 分钟 · 下次 {time}",
+    dragToSort:"按住拖拽排序", dragPlatformToSort:"按住拖拽调整平台顺序", addAccount:"添加账户", showHereAfterConnection:"连接后显示在这里",
+    pausedAccounts:"{count} 个已暂停", availability:"工作可用性", monitoredAccounts:"个监控账户", continueSafely:"可安心继续", noRemoteAlerts:"暂无需要处理的远端告警",
+    startMonitoring:"添加账户后开始监控", openAccountsForReason:"打开账户中心查看原因", monitoredSummary:"当前监控 {count} 个账户；不读取本地会话日志，也不使用模拟数据补齐。",
+    refreshAccounts:"{count} 个需刷新", noRemoteData:"无远端数据", notConnected:"未连接", syncAfterConnection:"连接账户后同步", noConnectedPlatform:"尚未连接平台",
+    addPlatformInstruction:"请到账户中心添加平台账户，连接成功后才会出现在这里。", goToAccounts:"前往账户中心", remoteSync:"远端同步", activityAfterSync:"连接账户并完成远端同步后，这里才会显示活动。",
+    actionItems:"{count} 项需要处理", alertDetail:"请查看提醒中心了解详情", predictedRestore:"预计 {time} 恢复", remoteStatusAttention:"远端状态需要关注", snoozedAlertNote:"已暂缓的提醒仍会保留在提醒中心，且不会影响首页或托盘状态。",
+    unauthorizedProducts:"{count} 项未授权或未开通", independentAccountData:"独立账户数据", remoteMetrics:"远端指标", collecting:"等待采集",
+    minutes:"{count} 分钟", hours:"{count} 小时", days:"{count} 天"
+    ,overviewEyebrow:"用量总览", overviewTitle:"集中查看各平台远端用量", platformsEyebrow:"平台中心", platformsTitle:"按平台支持能力展示远端指标", modelsEyebrow:"模型分析", modelsTitle:"只分析平台实际返回的模型与产品字段", alertsEyebrow:"提醒中心", alertsTitle:"关注余额、额度与同步状态", accountsEyebrow:"账户中心", accountsTitle:"连接远端账户，凭据加密保存在本机", settingsTitle:"外观、同步与提醒按你的习惯运行"
   },
   en: {
     operationIncomplete:"The operation did not finish. Please try again.", localServiceError:"The local service returned an invalid response.", operationFailed:"Operation failed",
@@ -153,7 +166,20 @@ const uiMessages = Object.freeze({
     pausedDetail:"This account is excluded from automatic and manual syncs", firstSync:"Waiting for the first remote sync", repeatedFailure:"Repeated failures", syncFailed:"Sync failed",
     lastSuccess:"Last successful sync: {time}", dataFresh:"Data is fresh", refreshRecommended:"Refresh recommended", dataStale:"Data is stale",
     updatedAt:"Updated {time}", noDuration:"No duration recorded", autoSyncOff:"Automatic sync is off", autoSyncEvery:"Sync automatically every {minutes} minutes",
-    desktopPreferenceFailed:"Windows rejected this setting", percentagePoints:"{sign}{value} percentage points"
+    desktopPreferenceFailed:"Windows rejected this setting", percentagePoints:"{sign}{value} percentage points",
+    waitingForAccounts:"Waiting for an account connection", localServiceUnavailable:"Local service unavailable", noAccounts:"No connected account", addAccountInApp:"Add an account in Prismeter",
+    allAccountsPaused:"All {count} accounts are paused", needsAttention:"Needs attention", syncFailedFor:"{name} failed to sync", refreshNeeded:"Refresh needed", usageNeedsAttention:"Watch your usage",
+    alertsWaiting:"{count} alerts are waiting", readyToUse:"Ready to use", healthyAccounts:"{count} accounts are healthy", restoreAfter:"Restores {time}",
+    automaticSyncOff:"Automatic sync is off", automaticSyncEvery:"Sync automatically every {minutes} minutes", nextSync:"Every {minutes} minutes · next {time}",
+    dragToSort:"Drag to reorder", dragPlatformToSort:"Drag to reorder platforms", addAccount:"Add account", showHereAfterConnection:"Connected accounts appear here",
+    pausedAccounts:"{count} paused", availability:"Availability", monitoredAccounts:"monitored accounts", continueSafely:"Safe to continue", noRemoteAlerts:"No remote alerts need attention",
+    startMonitoring:"Add an account to start monitoring", openAccountsForReason:"Open Accounts to see why", monitoredSummary:"Monitoring <strong>{count}</strong> accounts. Local session logs and synthetic estimates are never used.",
+    refreshAccounts:"{count} need refresh", noRemoteData:"No remote data", notConnected:"Not connected", syncAfterConnection:"Sync after connecting an account", noConnectedPlatform:"No platform connected",
+    addPlatformInstruction:"Add a platform account in Accounts. It appears here after connecting.", goToAccounts:"Go to Accounts", remoteSync:"Remote sync", activityAfterSync:"Activity appears here after an account completes a remote sync.",
+    actionItems:"{count} items need attention", alertDetail:"See Alert Center for details", predictedRestore:"Expected to restore {time}", remoteStatusAttention:"Remote status needs attention", snoozedAlertNote:"Snoozed alerts remain in Alert Center and do not affect Overview or the tray.",
+    unauthorizedProducts:"{count} products are unauthorized or unavailable", independentAccountData:"Independent account data", remoteMetrics:"Remote metrics", collecting:"Collecting",
+    minutes:"{count} minutes", hours:"{count} hours", days:"{count} days"
+    ,overviewEyebrow:"Usage overview", overviewTitle:"View remote usage across all platforms", platformsEyebrow:"Platform center", platformsTitle:"Remote metrics by each platform's supported capabilities", modelsEyebrow:"Model analysis", modelsTitle:"Analyze only fields returned by platform models and products", alertsEyebrow:"Alert center", alertsTitle:"Watch balance, quota, and sync health", accountsEyebrow:"Account center", accountsTitle:"Connect remote accounts; credentials are encrypted locally", settingsTitle:"Appearance, sync, and alerts tailored to you"
   }
 });
 
@@ -248,6 +274,28 @@ function translateStatic(value) {
   return translated ? `${prefix}${translated}${suffix}` : value;
 }
 
+function localizeRemoteCopy(value) {
+  const original = String(value ?? "");
+  if (state.interfaceLanguage !== "en") return original;
+  let translated = translateStatic(original);
+  if (translated !== original) return translated;
+  return original
+    .replace(/本月用量/g, "This month's usage")
+    .replace(/(\d+)\s*天周期已用/g, "$1-day cycle used")
+    .replace(/同步于\s*/g, "Synced ")
+    .replace(/额度\s*(.+)\s*恢复/g, "Quota resets $1")
+    .replace(/(\d+)\s*个账户/g, "$1 accounts")
+    .replace(/(\d+)\s*条提醒/g, "$1 alerts")
+    .replace(/按量 API/g, "Pay-as-you-go API")
+    .replace(/远端同步/g, "Remote sync")
+    .replace(/远端用量/g, "Remote usage")
+    .replace(/官方用量/g, "Official usage")
+    .replace(/当前总余额/g, "Current balance")
+    .replace(/当前可用余额/g, "Available balance")
+    .replace(/未连接/g, "Not connected")
+    .replace(/已暂停/g, "Paused");
+}
+
 function localizeTextNode(node) {
   if (!node || node.nodeType !== Node.TEXT_NODE || ["SCRIPT", "STYLE"].includes(node.parentElement?.tagName)) return;
   const original = localizedTextNodes.get(node) || node.nodeValue;
@@ -280,6 +328,15 @@ function applyInterfaceLanguage(language = "zh-CN") {
   document.documentElement.lang = normalized;
   document.title = normalized === "en" ? "Prismeter · AI usage center" : "Prismeter · AI 用量中心";
   localizeSubtree(document.body);
+}
+
+function rerenderForInterfaceLanguage() {
+  renderNavigation();
+  renderOverview();
+  renderAccounts();
+  renderAlerts();
+  renderComparisons();
+  switchView(state.view);
 }
 
 const interfaceLanguageObserver = new MutationObserver(records => {
@@ -621,13 +678,14 @@ async function loadBackendState({quiet = false} = {}) {
     maybeCheckForUpdates();
     if (state.view === "platforms") renderPlatform();
     if (state.view === "models") renderComparisons();
-    if (!quiet) els.syncText.textContent = state.backend.accounts.length ? formatSyncSetting() : "等待连接账户";
+    switchView(state.view);
+    if (!quiet) els.syncText.textContent = state.backend.accounts.length ? formatSyncSetting() : t("waitingForAccounts");
     if (payload.startupNotice && !state.storageNoticeShown) {
       state.storageNoticeShown = true;
       showToast(payload.startupNotice, "warning");
     }
   } catch (error) {
-    els.syncText.textContent = "本地服务异常";
+    els.syncText.textContent = t("localServiceUnavailable");
     if (!quiet) showToast(errorMessage(error));
   }
 }
@@ -635,21 +693,21 @@ async function loadBackendState({quiet = false} = {}) {
 function monitoringSummary(payload = state.backend) {
   const accounts = payload.accounts || [];
   const monitored = accounts.filter(account => account.enabled !== false);
-  if (!accounts.length) return { level:"empty", title:"尚未连接账户", detail:"打开 Prismeter 添加账户" };
-  if (!monitored.length) return { level:"paused", title:"监控已暂停", detail:`${accounts.length} 个账户均已暂停` };
+  if (!accounts.length) return { level:"empty", title:t("noAccounts"), detail:t("addAccountInApp") };
+  if (!monitored.length) return { level:"paused", title:t("monitoringPaused"), detail:t("allAccountsPaused", { count:accounts.length }) };
   const failed = monitored.find(account => account.lastError);
-  if (failed) return { level:"attention", title:"需要处理", detail:`${failed.name} 同步失败` };
+  if (failed) return { level:"attention", title:t("needsAttention"), detail:t("syncFailedFor", { name:failed.name }) };
   const stale = monitored.find(account => accountFreshness(account).level === "stale" || accountFreshness(account).level === "never");
-  if (stale) return { level:"attention", title:"需要刷新", detail:`${stale.name} ${accountFreshness(stale).label}` };
+  if (stale) return { level:"attention", title:t("refreshNeeded"), detail:`${stale.name} ${accountFreshness(stale).label}` };
   const alerts = actionableAlerts(payload);
   if (alerts.length) {
     const alert = alerts[0];
     const account = monitored.find(item => item.id === alert.accountId);
     const resetAt = alert.kind === "quota" ? productResetAt(account, alert.productId) : null;
-    const recovery = resetAt ? ` · ${relativeFutureTime(resetAt)} 恢复` : "";
-    return { level:"attention", title:"请留意用量", detail:`${alert.title || `${alerts.length} 条提醒等待处理`}${recovery}` };
+    const recovery = resetAt ? ` · ${t("restoreAfter", { time:relativeFutureTime(resetAt) })}` : "";
+    return { level:"attention", title:t("usageNeedsAttention"), detail:`${alert.title || t("alertsWaiting", { count:alerts.length })}${recovery}` };
   }
-  return { level:"healthy", title:"可以继续使用", detail:`${monitored.length} 个账户状态正常` };
+  return { level:"healthy", title:t("readyToUse"), detail:t("healthyAccounts", { count:monitored.length }) };
 }
 
 function productResetAt(account, productId = "") {
@@ -668,9 +726,9 @@ function actionableAlerts(payload = state.backend) {
 
 function automaticSyncLabel(settings = state.backend.settings) {
   const minutes = Number(settings?.autoSyncMinutes || 0);
-  if (!minutes) return "自动同步已关闭";
+  if (!minutes) return t("automaticSyncOff");
   const next = state.backend.nextAutomaticSyncAt;
-  return next ? `每 ${minutes} 分钟 · 下次 ${relativeFutureTime(next)}` : `每 ${minutes} 分钟自动同步`;
+  return next ? t("nextSync", { minutes, time:relativeFutureTime(next) }) : t("automaticSyncEvery", { minutes });
 }
 
 async function updateTrayTooltip(payload = state.backend) {
@@ -692,8 +750,8 @@ function renderNavigation() {
   els.platformNav.innerHTML = accounts.length ? accounts.map(account => {
     const provider = providers[account.provider];
     const accountId = escapeHtml(account.id);
-    return `<button class="${account.id === state.accountId ? 'active' : ''} ${account.enabled === false ? 'paused-account' : ''}" data-account="${accountId}" data-sort-account="${accountId}" data-account-provider="${escapeHtml(account.provider)}">${platformLogo(account.provider, "nav-brand-logo")}<span><b>${escapeHtml(account.name)}</b><small>${escapeHtml(provider?.name || account.provider)}</small></span><i class="drag-handle nav-drag-handle" data-drag-account="${accountId}" title="按住拖拽排序" aria-label="拖拽排序">⋮⋮</i></button>`;
-  }).join("") : `<button class="nav-empty-account" data-view="accounts"><span class="nav-add-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></span><span><b>添加账户</b><small>连接后显示在这里</small></span></button>`;
+    return `<button class="${account.id === state.accountId ? 'active' : ''} ${account.enabled === false ? 'paused-account' : ''}" data-account="${accountId}" data-sort-account="${accountId}" data-account-provider="${escapeHtml(account.provider)}">${platformLogo(account.provider, "nav-brand-logo")}<span><b>${escapeHtml(account.name)}</b><small>${escapeHtml(provider?.name || account.provider)}</small></span><i class="drag-handle nav-drag-handle" data-drag-account="${accountId}" title="${t("dragToSort")}" aria-label="${t("dragToSort")}">⋮⋮</i></button>`;
+  }).join("") : `<button class="nav-empty-account" data-view="accounts"><span class="nav-add-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></span><span><b>${t("addAccount")}</b><small>${t("showHereAfterConnection")}</small></span></button>`;
 }
 
 function renderOverview() {
@@ -703,18 +761,18 @@ function renderOverview() {
   const freshness = overallFreshness(accounts);
   const activeCount = freshness.monitored;
   const monitoring = monitoringSummary();
-  const pausedSuffix = freshness.counts.paused ? ` · ${freshness.counts.paused} 个已暂停` : "";
+  const pausedSuffix = freshness.counts.paused ? ` · ${t("pausedAccounts", { count:freshness.counts.paused })}` : "";
   els.globalStatusText.textContent = `${monitoring.title} · ${monitoring.detail}${pausedSuffix}`;
   const livePill = document.querySelector(".live-pill");
   livePill.classList.toggle("attention", connectedCount > 0 && freshness.attention > 0);
   livePill.classList.toggle("empty", connectedCount === 0);
-  document.querySelector(".hero-copy > p").textContent = "工作可用性";
+  document.querySelector(".hero-copy > p").textContent = t("availability");
   document.querySelector(".hero-value strong").textContent = String(activeCount);
-  document.querySelector(".hero-value span").textContent = "个监控账户";
+  document.querySelector(".hero-value span").textContent = t("monitoredAccounts");
   document.querySelector(".hero-delta").innerHTML = monitoring.level === "healthy"
-    ? "<b>可安心继续</b> · 暂无需要处理的远端告警"
-    : monitoring.level === "empty" ? "<b>等待连接</b> · 添加账户后开始监控"
-    : `<b>${escapeHtml(monitoring.detail)}</b> · 打开账户中心查看原因`;
+    ? `<b>${t("continueSafely")}</b> · ${t("noRemoteAlerts")}`
+    : monitoring.level === "empty" ? `<b>${t("waitingForAccounts")}</b> · ${t("startMonitoring")}`
+    : `<b>${escapeHtml(monitoring.detail)}</b> · ${t("openAccountsForReason")}`;
   document.querySelector(".hero-chart-wrap").hidden = false;
   document.querySelector("#heroHealthy").textContent = String(freshness.healthy);
   document.querySelector("#heroAttention").textContent = String(freshness.attention);
@@ -724,9 +782,9 @@ function renderOverview() {
   const insight = document.querySelector(".insight-card");
   insight.querySelector("h3").textContent = "所有指标均来自平台远端";
   insight.querySelector("p:not(.eyebrow)").innerHTML = connectedCount
-    ? `当前监控 <strong>${connectedCount}</strong> 个账户；不读取本地会话日志，也不使用模拟数据补齐。`
-    : "添加账户后，Prismeter 才会展示对应平台实际支持的远端指标。";
-  insight.querySelector("button").textContent = "查看账户";
+    ? t("monitoredSummary", { count:connectedCount })
+    : translateStatic("添加账户后，Prismeter 才会展示对应平台实际支持的远端指标。");
+  insight.querySelector("button").textContent = translateStatic("查看账户");
   insight.querySelector("button").dataset.targetView = "accounts";
   const platformOrder = orderedProviderIds(accounts);
   els.platformCards.innerHTML = platformOrder.map(id => [id, providers[id]]).filter(([,provider]) => provider).map(([id,p]) => {
@@ -735,18 +793,18 @@ function renderOverview() {
     const isRemote = connectedAccounts.length > 0;
     const platformFreshness = overallFreshness(connectedAccounts);
     const freshnessClass = !isRemote ? "none" : platformFreshness.monitored === 0 ? "paused" : platformFreshness.attention ? "attention" : "fresh";
-    const freshnessLabel = !isRemote ? "—" : platformFreshness.monitored === 0 ? "已暂停" : platformFreshness.attention ? `${platformFreshness.attention} 个需刷新` : "数据新鲜";
-    const productLabel = isRemote ? `${connectedAccounts.length} 个账户 · ${product.name}` : "无远端数据";
+    const freshnessLabel = !isRemote ? "—" : platformFreshness.monitored === 0 ? translateStatic("已暂停") : platformFreshness.attention ? t("refreshAccounts", { count:platformFreshness.attention }) : t("dataFresh");
+    const productLabel = isRemote ? `${connectedAccounts.length} ${t("monitoredAccounts")} · ${product.name}` : t("noRemoteData");
     return `<article class="platform-card ${isRemote ? 'real-data' : 'remote-empty'}" data-provider="${escapeHtml(id)}" data-sort-provider="${escapeHtml(id)}" style="${providerStyle(id)}">
-      <div class="platform-card-top">${platformLogo(id, "card-brand-logo")}<span><i class="status-dot ${freshnessClass}" title="${escapeHtml(freshnessLabel)}"></i><i class="drag-handle" data-drag-provider="${escapeHtml(id)}" title="按住拖拽调整平台顺序" aria-label="拖拽调整平台顺序">⋮⋮</i></span></div>
-      <h4>${escapeHtml(p.name)}</h4><div class="product-name">${escapeHtml(productLabel)}</div>
-      <div class="usage-row"><strong>${escapeHtml(isRemote ? product.usage : "—")}</strong><span>${escapeHtml(isRemote ? product.usageLabel : "未连接")}</span></div>
+      <div class="platform-card-top">${platformLogo(id, "card-brand-logo")}<span><i class="status-dot ${freshnessClass}" title="${escapeHtml(freshnessLabel)}"></i><i class="drag-handle" data-drag-provider="${escapeHtml(id)}" title="${t("dragPlatformToSort")}" aria-label="${t("dragPlatformToSort")}">⋮⋮</i></span></div>
+      <h4>${escapeHtml(localizeRemoteCopy(p.name))}</h4><div class="product-name">${escapeHtml(localizeRemoteCopy(productLabel))}</div>
+      <div class="usage-row"><strong>${escapeHtml(isRemote ? product.usage : "—")}</strong><span>${escapeHtml(isRemote ? localizeRemoteCopy(product.usageLabel) : t("notConnected"))}</span></div>
       <div class="progress"><i style="--progress:${isRemote ? product.progress : 0}%"></i></div>
-      <div class="platform-card-foot"><span>${escapeHtml(isRemote ? product.reset : "连接账户后同步")}</span><span class="freshness-text ${freshnessClass}">${escapeHtml(freshnessLabel)}</span></div>
+      <div class="platform-card-foot"><span>${escapeHtml(isRemote ? localizeRemoteCopy(product.reset) : t("syncAfterConnection"))}</span><span class="freshness-text ${freshnessClass}">${escapeHtml(freshnessLabel)}</span></div>
     </article>`;
   }).join("");
   if (!els.platformCards.children.length) {
-    els.platformCards.innerHTML = '<article class="overview-platform-empty glass-panel"><span>＋</span><div><b>尚未连接平台</b><p>请到账户中心添加平台账户，连接成功后才会出现在这里。</p></div><button class="soft-button" data-target-view="accounts">前往账户中心</button></article>';
+    els.platformCards.innerHTML = `<article class="overview-platform-empty glass-panel"><span>＋</span><div><b>${t("noConnectedPlatform")}</b><p>${t("addPlatformInstruction")}</p></div><button class="soft-button" data-target-view="accounts">${t("goToAccounts")}</button></article>`;
   }
   els.activityList.innerHTML = accounts.length ? accounts.map(account => {
     const provider = providers[account.provider];
@@ -756,8 +814,8 @@ function renderOverview() {
     const value = ["deepseek", "kimi"].includes(account.provider)
       ? (primary ? escapeHtml(`${moneySymbol(primary.currency)} ${primary.total}`) : "—")
       : escapeHtml(primary?.usage || "—");
-    const freshness = accountFreshness(account); return `<div class="activity-item">${platformLogo(account.provider, "activity-brand-logo")}<div class="activity-main"><b>${escapeHtml(account.name)}</b><span>${escapeHtml(provider?.name || account.provider)} · 远端同步</span></div><div class="activity-value"><b>${value}</b><span class="freshness-text ${freshness.level}">${escapeHtml(freshness.label)} · ${escapeHtml(relativeSyncTime(account.lastSync))}</span></div></div>`;
-  }).join("") : `<div class="history-empty">连接账户并完成远端同步后，这里才会显示活动。</div>`;
+    const freshness = accountFreshness(account); return `<div class="activity-item">${platformLogo(account.provider, "activity-brand-logo")}<div class="activity-main"><b>${escapeHtml(account.name)}</b><span>${escapeHtml(provider?.name || account.provider)} · ${t("remoteSync")}</span></div><div class="activity-value"><b>${value}</b><span class="freshness-text ${freshness.level}">${escapeHtml(freshness.label)} · ${escapeHtml(relativeSyncTime(account.lastSync))}</span></div></div>`;
+  }).join("") : `<div class="history-empty">${t("activityAfterSync")}</div>`;
 }
 
 function renderActionCenter() {
@@ -765,7 +823,7 @@ function renderActionCenter() {
   const priority = { sync:0, freshness:1, status:1, balance:2, quota:2 };
   const symbols = { sync:"!", freshness:"↻", status:"!", balance:"¥", quota:"%" };
   const items = alerts.slice().sort((left, right) => (priority[left.kind] ?? 3) - (priority[right.kind] ?? 3)).slice(0, 3);
-  els.actionCenterTitle.textContent = items.length ? `${items.length} 项需要处理` : "当前无需处理";
+  els.actionCenterTitle.textContent = items.length ? t("actionItems", { count:items.length }) : translateStatic("当前无需处理");
   els.actionList.innerHTML = items.length ? items.map(item => {
     const account = (state.backend.accounts || []).find(candidate => candidate.id === item.accountId);
     const canSync = account && ["sync", "freshness", "status"].includes(item.kind);
@@ -773,9 +831,9 @@ function renderActionCenter() {
       ? `<button class="mini-button" data-sync-account="${escapeHtml(account.id)}"><span>立即同步</span></button><button class="mini-button" data-view-account="${escapeHtml(account.id)}" data-account-provider="${escapeHtml(account.provider)}">查看账户</button>`
       : `<button class="mini-button" data-target-view="alerts">查看提醒</button>${account ? `<button class="mini-button" data-account-alerts="${escapeHtml(account.id)}">调整规则</button>` : ""}`;
     const resetAt = item.kind === "quota" ? productResetAt(account, item.productId) : null;
-    const detail = `${item.message || "请查看提醒中心了解详情"}${resetAt ? ` · 预计 ${relativeFutureTime(resetAt)} 恢复` : ""}`;
-    return `<article class="action-item"><span class="action-symbol ${["sync", "freshness", "status"].includes(item.kind) ? "sync" : ""}">${symbols[item.kind] || "!"}</span><div class="action-copy"><b>${escapeHtml(item.title || "远端状态需要关注")}</b><span>${escapeHtml(detail)}</span></div><div class="action-actions">${actions}</div></article>`;
-  }).join("") : `<article class="action-item"><span class="action-symbol good">✓</span><div class="action-copy"><b>没有需要立即处理的事项</b><span>已暂缓的提醒仍会保留在提醒中心，且不会影响首页或托盘状态。</span></div></article>`;
+    const detail = `${item.message || t("alertDetail")}${resetAt ? ` · ${t("predictedRestore", { time:relativeFutureTime(resetAt) })}` : ""}`;
+    return `<article class="action-item"><span class="action-symbol ${["sync", "freshness", "status"].includes(item.kind) ? "sync" : ""}">${symbols[item.kind] || "!"}</span><div class="action-copy"><b>${escapeHtml(item.title || t("remoteStatusAttention"))}</b><span>${escapeHtml(detail)}</span></div><div class="action-actions">${actions}</div></article>`;
+  }).join("") : `<article class="action-item"><span class="action-symbol good">✓</span><div class="action-copy"><b>${translateStatic("没有需要立即处理的事项")}</b><span>${t("snoozedAlertNote")}</span></div></article>`;
 }
 
 function renderPlatform() {
@@ -1437,10 +1495,10 @@ function switchView(view, providerId, accountId) {
     else button.removeAttribute("aria-current");
   });
   const headings = {
-    overview:["用量总览","集中查看各平台远端用量"], platforms:["平台中心","按平台支持能力展示远端指标"],
-    models:["模型分析","只分析平台实际返回的模型与产品字段"], alerts:["提醒中心","关注余额、额度与同步状态"],
-    accounts:["账户中心","连接远端账户，凭据加密保存在本机"],
-    settings:["设置","外观、同步与提醒按你的习惯运行"]
+    overview:[t("overviewEyebrow"),t("overviewTitle")], platforms:[t("platformsEyebrow"),t("platformsTitle")],
+    models:[t("modelsEyebrow"),t("modelsTitle")], alerts:[t("alertsEyebrow"),t("alertsTitle")],
+    accounts:[t("accountsEyebrow"),t("accountsTitle")],
+    settings:[translateStatic("设置"),t("settingsTitle")]
   }[state.view];
   els.eyebrow.textContent = headings[0]; els.pageTitle.textContent = headings[1];
   if (state.view === "platforms") renderPlatform();
@@ -1985,7 +2043,7 @@ els.modelFamilySelect.addEventListener("change", renderComparisons);
 els.modelLevelSelect.addEventListener("change", renderComparisons);
 els.modelSearchInput.addEventListener("input", renderComparisons);
 els.accountProvider.addEventListener("change", updateCredentialFields);
-els.interfaceLanguage.addEventListener("change", () => { applyInterfaceLanguage(els.interfaceLanguage.value); queueSettingsSave(); });
+els.interfaceLanguage.addEventListener("change", () => { applyInterfaceLanguage(els.interfaceLanguage.value); rerenderForInterfaceLanguage(); queueSettingsSave(); });
 els.appearanceMode.addEventListener("change", () => { applyTheme(els.appearanceMode.value); queueSettingsSave(); });
 els.autoSyncMinutes.addEventListener("change", () => queueSettingsSave());
 els.staleAfterMinutes.addEventListener("change", () => queueSettingsSave());
