@@ -1,11 +1,11 @@
 {
   "name": "prismeter-tauri",
   "private": true,
-  "version": "0.22.8",
+  "version": "0.22.12",
   "license": "Apache-2.0",
   "scripts": {
     "tauri": "tauri",
-    "check:frontend": "node --check frontend/i18n.js && node --check frontend/messages.js && node --check frontend/app.js && node VerifyI18n.js && node VerifyStartupIsolation.js && node BuildFrontend.js && node VerifyVolcengineSignature.js",
+    "check:frontend": "node --check frontend/i18n.js && node --check frontend/messages.js && node --check frontend/app.js && node VerifyI18n.js && node VerifyStartupIsolation.js && node VerifyComboboxes.js && node BuildFrontend.js && node VerifyVolcengineSignature.js",
     "audit:i18n": "node AuditI18n.js",
     "check:backend": "cargo check --all-targets --manifest-path src-tauri/Cargo.toml",
     "check": "npm run check:frontend && npm run check:backend",

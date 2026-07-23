@@ -148,7 +148,23 @@ function localizeRemoteCopy(value) {
     "次级周期":"codex.summary.secondaryWindow",
     "累计 Token":"codex.summary.lifetimeTokens",
     "连续使用":"codex.summary.activeStreak",
-    "每日远端统计":"codex.row.dailyUsage"
+    "每日远端统计":"codex.row.dailyUsage",
+    "编程套餐":"ark.coding.product.kind",
+    "在线推理":"ark.payg.product.kind",
+    "按量 API":"ark.payg.product.name",
+    "本月用量":"ark.coding.product.usageLabel",
+    "本月总 Token":"ark.payg.product.usageLabel",
+    "动态周期":"ark.note.dynamicCycle",
+    "到期后重置":"ark.note.resetsAtExpiry",
+    "输入 Token":"ark.payg.summary.inputTokens",
+    "缓存命中":"ark.payg.summary.cacheHits",
+    "输出 Token":"ark.payg.summary.outputTokens",
+    "请求次数":"ark.payg.summary.requests"
+    ,"账户订阅":"codex.subscription.kind"
+    ,"时":"badge.hour"
+    ,"周":"badge.week"
+    ,"月":"badge.month"
+    ,"日":"badge.day"
   };
   if (remoteKeys[original]) return t(remoteKeys[original]);
   let translated = translateStatic(original);
@@ -515,7 +531,15 @@ function localizeMetricHistoryLabel(label) {
     "次级周期":"codex.summary.secondaryWindow",
     "累计 Token":"codex.summary.lifetimeTokens",
     "连续使用":"codex.summary.activeStreak",
-    "主要指标":"detailCurrentRemote"
+    "主要指标":"detailCurrentRemote",
+    "当前周期用量":"ark.coding.quota.primary",
+    "本周用量":"ark.coding.quota.secondary",
+    "本月用量":"ark.coding.quota.additional",
+    "本月总 Token":"ark.payg.product.usageLabel",
+    "输入 Token":"ark.payg.summary.inputTokens",
+    "缓存命中":"ark.payg.summary.cacheHits",
+    "输出 Token":"ark.payg.summary.outputTokens",
+    "请求次数":"ark.payg.summary.requests"
   };
   return keys[original] ? t(keys[original]) : localizeRemoteCopy(original);
 }
@@ -551,7 +575,7 @@ function applyOpenAIAccountData(account = getSelectedAccount("openai")) {
   for (const item of account.products || []) {
     const percent = String(item.usage || "").match(/(-?\d+(?:\.\d+)?)\s*%/);
     products[item.id] = {
-      name: item.name || item.id,
+      name: i18nField(item.name || item.id, item.nameKey || item.i18n?.nameKey),
       kind: i18nField(item.kind, item.kindKey || item.i18n?.kindKey) || t("providerChatGptSubscription"),
       usage: item.usage || "—",
       usageLabel: i18nField(item.usageLabel, item.usageLabelKey, item.usageLabelParams) || t("remoteUsage"),
@@ -560,7 +584,7 @@ function applyOpenAIAccountData(account = getSelectedAccount("openai")) {
       reset: item.resetAt ? t("providerQuotaRestore", { time: relativeFutureTime(item.resetAt) }) : t("providerSyncedAt", { time: formatDate(account.lastSync) }),
       summaries: (item.summaries || []).map((metric, index) => { const keys = item.i18n?.summaryKeys?.[index] || metric; return [i18nField(metric.label, keys.labelKey), i18nField(metric.value, keys.valueKey, keys.valueParams), i18nField(metric.note, keys.noteKey, keys.noteParams)]; }),
       columns: (item.columns || []).map((column, index) => i18nField(column, item.i18n?.columnKeys?.[index])),
-      rows: (item.rows || []).map(row => resource(i18nField(row.name, row.nameKey || row.i18n?.nameKey), i18nField(row.type, row.typeKey || row.i18n?.typeKey), row.badge, (row.metrics || []).map((metric, index) => [metric.value, i18nField(metric.unit, row.i18n?.metricUnitKeys?.[index])])) )
+      rows: (item.rows || []).map(row => resource(i18nField(row.name, row.nameKey || row.i18n?.nameKey), i18nField(row.type, row.typeKey || row.i18n?.typeKey), i18nField(row.badge, row.badgeKey || row.i18n?.badgeKey), (row.metrics || []).map((metric, index) => [metric.value, i18nField(metric.unit, row.i18n?.metricUnitKeys?.[index])])) )
     };
   }
   provider.products = products;
@@ -583,7 +607,7 @@ function applyVolcengineAccountData(account = getSelectedAccount("volcengine")) 
   for (const item of account.products || []) {
     const percent = String(item.usage || "").match(/(-?\d+(?:\.\d+)?)\s*%/);
     products[item.id] = {
-      name: item.name || item.id,
+      name: i18nField(item.name || item.id, item.nameKey || item.i18n?.nameKey),
       kind: i18nField(item.kind, item.kindKey || item.i18n?.kindKey) || t("providerOfficialProduct"),
       usage: item.usage || "—",
       usageLabel: i18nField(item.usageLabel, item.usageLabelKey, item.usageLabelParams) || t("officialProduct"),
@@ -591,7 +615,7 @@ function applyVolcengineAccountData(account = getSelectedAccount("volcengine")) 
       reset: t("providerSyncedAt", { time: formatDate(account.lastSync) }),
       summaries: (item.summaries || []).map((metric, index) => { const keys = item.i18n?.summaryKeys?.[index] || metric; return [i18nField(metric.label, keys.labelKey), i18nField(metric.value, keys.valueKey, keys.valueParams), i18nField(metric.note, keys.noteKey, keys.noteParams)]; }),
       columns: (item.columns || []).map((column, index) => i18nField(column, item.i18n?.columnKeys?.[index])),
-      rows: (item.rows || []).map(row => resource(i18nField(row.name, row.nameKey || row.i18n?.nameKey), i18nField(row.type, row.typeKey || row.i18n?.typeKey), row.badge, (row.metrics || []).map((metric, index) => [metric.value, i18nField(metric.unit, row.i18n?.metricUnitKeys?.[index])])) )
+      rows: (item.rows || []).map(row => resource(i18nField(row.name, row.nameKey || row.i18n?.nameKey), i18nField(row.type, row.typeKey || row.i18n?.typeKey), i18nField(row.badge, row.badgeKey || row.i18n?.badgeKey), (row.metrics || []).map((metric, index) => [metric.value, i18nField(metric.unit, row.i18n?.metricUnitKeys?.[index])])) )
     };
   }
   provider.products = products;
@@ -612,7 +636,7 @@ function applyMimoAccountData(account = getSelectedAccount("mimo")) {
   const products = {};
   for (const item of account.products || []) {
     products[item.id] = {
-      name: item.name || item.id,
+      name: i18nField(item.name || item.id, item.nameKey || item.i18n?.nameKey),
       kind: i18nField(item.kind, item.kindKey || item.i18n?.kindKey) || t("providerApiKeyCapability"),
       usage: item.usage || "—",
       usageLabel: i18nField(item.usageLabel, item.usageLabelKey, item.usageLabelParams) || t("providerRemoteModels"),
@@ -620,7 +644,7 @@ function applyMimoAccountData(account = getSelectedAccount("mimo")) {
       reset: t("providerSyncedAt", { time: formatDate(account.lastSync) }),
       summaries: (item.summaries || []).map((metric, index) => { const keys = item.i18n?.summaryKeys?.[index] || metric; return [i18nField(metric.label, keys.labelKey), i18nField(metric.value, keys.valueKey, keys.valueParams), i18nField(metric.note, keys.noteKey, keys.noteParams)]; }),
       columns: (item.columns || []).map((column, index) => i18nField(column, item.i18n?.columnKeys?.[index])),
-      rows: (item.rows || []).map(row => resource(i18nField(row.name, row.nameKey || row.i18n?.nameKey), i18nField(row.type, row.typeKey || row.i18n?.typeKey), row.badge, (row.metrics || []).map((metric, index) => [metric.value, i18nField(metric.unit, row.i18n?.metricUnitKeys?.[index])])) )
+      rows: (item.rows || []).map(row => resource(i18nField(row.name, row.nameKey || row.i18n?.nameKey), i18nField(row.type, row.typeKey || row.i18n?.typeKey), i18nField(row.badge, row.badgeKey || row.i18n?.badgeKey), (row.metrics || []).map((metric, index) => [metric.value, i18nField(metric.unit, row.i18n?.metricUnitKeys?.[index])])) )
     };
   }
   provider.products = products;
@@ -696,7 +720,7 @@ function monitoringSummary(payload = state.backend) {
     const account = monitored.find(item => item.id === alert.accountId);
     const resetAt = alert.kind === "quota" ? productResetAt(account, alert.productId) : null;
     const recovery = resetAt ? ` · ${t("restoreAfter", { time:relativeFutureTime(resetAt) })}` : "";
-    return { level:"attention", title:t("usageNeedsAttention"), detail:`${alert.title || t("alertsWaiting", { count:alerts.length })}${recovery}` };
+    return { level:"attention", title:t("usageNeedsAttention"), detail:`${localizedAlertTitle(alert) || t("alertsWaiting", { count:alerts.length })}${recovery}` };
   }
   return { level:"healthy", title:t("readyToUse"), detail:t("healthyAccounts", { count:monitored.length }) };
 }
@@ -713,6 +737,21 @@ function isAlertSnoozed(alert) {
 
 function actionableAlerts(payload = state.backend) {
   return (payload.alerts || []).filter(alert => !isAlertSnoozed(alert));
+}
+
+function localizedAlertTitle(alert) {
+  const account = (state.backend.accounts || []).find(item => item.id === alert?.accountId);
+  const product = account?.products?.find(item => item.id === alert?.productId);
+  const params = {
+    ...(alert?.titleParams || {}),
+    account:account ? accountDisplayName(account) : alert?.titleParams?.account,
+    product:product ? i18nField(product.name, product.nameKey || product.i18n?.nameKey) : alert?.titleParams?.product
+  };
+  return i18nField(alert?.title || t("remoteStatusAttention"), alert?.titleKey, params);
+}
+
+function localizedAlertMessage(alert) {
+  return i18nField(alert?.message || t("alertDetail"), alert?.messageKey, alert?.messageParams);
 }
 
 function automaticSyncLabel(settings = state.backend.settings) {
@@ -822,8 +861,8 @@ function renderActionCenter() {
       ? `<button class="mini-button" data-sync-account="${escapeHtml(account.id)}"><span>${t("actionSyncNow")}</span></button><button class="mini-button" data-view-account="${escapeHtml(account.id)}" data-account-provider="${escapeHtml(account.provider)}">${t("actionViewAccount")}</button>`
       : `<button class="mini-button" data-target-view="alerts">${t("overviewViewAlerts")}</button>${account ? `<button class="mini-button" data-account-alerts="${escapeHtml(account.id)}">${t("actionAdjustRules")}</button>` : ""}`;
     const resetAt = item.kind === "quota" ? productResetAt(account, item.productId) : null;
-    const detail = `${item.message || t("alertDetail")}${resetAt ? ` · ${t("predictedRestore", { time:relativeFutureTime(resetAt) })}` : ""}`;
-    return `<article class="action-item"><span class="action-symbol ${["sync", "freshness", "status"].includes(item.kind) ? "sync" : ""}">${symbols[item.kind] || "!"}</span><div class="action-copy"><b>${escapeHtml(item.title || t("remoteStatusAttention"))}</b><span>${escapeHtml(detail)}</span></div><div class="action-actions">${actions}</div></article>`;
+    const detail = `${localizedAlertMessage(item)}${resetAt ? ` · ${t("predictedRestore", { time:relativeFutureTime(resetAt) })}` : ""}`;
+    return `<article class="action-item"><span class="action-symbol ${["sync", "freshness", "status"].includes(item.kind) ? "sync" : ""}">${symbols[item.kind] || "!"}</span><div class="action-copy"><b>${escapeHtml(localizedAlertTitle(item))}</b><span>${escapeHtml(detail)}</span></div><div class="action-actions">${actions}</div></article>`;
   }).join("") : `<article class="action-item"><span class="action-symbol good">✓</span><div class="action-copy"><b>${t("actionNothingImmediate")}</b><span>${t("snoozedAlertNote")}</span></div></article>`;
 }
 
@@ -925,10 +964,23 @@ function estimateMetricExhaustion(snapshots, metric, resetAt) {
   return { state:"attention", title:t("forecastExhaustsIn", { duration:forecastDuration(untilExhausted) }), detail:t("forecastEstimate", { count:snapshots.length, rate:rateText }), meta:t("forecastAt", { time:formatDate(estimatedAt) }) };
 }
 
+function trendForecastIconSvg(state) {
+  const paths = {
+    collecting:'<circle cx="12" cy="12" r="7.5"/><path d="M12 8v4.5l3 1.8"/>',
+    unsupported:'<circle cx="12" cy="12" r="7.5"/><path d="M12 11v5"/><path d="M12 8h.01"/>',
+    steady:'<path d="M5 12h14"/><circle cx="5" cy="12" r="1"/><circle cx="19" cy="12" r="1"/>',
+    healthy:'<circle cx="12" cy="12" r="7.5"/><path d="m8.5 12 2.2 2.2 4.8-5"/>',
+    attention:'<path d="M4 17l5-5 4 3 7-8"/><path d="M15 7h5v5"/>',
+    risk:'<path d="M12 4.5 20 19H4L12 4.5Z"/><path d="M12 9v4.5"/><path d="M12 16.5h.01"/>'
+  };
+  return `<svg viewBox="0 0 24 24">${paths[state] || paths.collecting}</svg>`;
+}
+
 function renderTrendForecast(forecast) {
   if (!forecast) { els.trendForecast.hidden = true; return; }
   els.trendForecast.hidden = false;
   els.trendForecast.dataset.state = forecast.state;
+  els.trendForecastIcon.innerHTML = trendForecastIconSvg(forecast.state);
   els.trendForecastTitle.textContent = forecast.title;
   els.trendForecastDetail.textContent = forecast.detail;
   els.trendForecastMeta.textContent = forecast.meta;
@@ -1084,6 +1136,54 @@ function closeComboboxes(except) {
     if (combo === except) return;
     combo.classList.remove("open");
     combo.querySelector("[data-combo-trigger]")?.setAttribute("aria-expanded", "false");
+    const menu = combo.querySelector(".combo-menu");
+    menu?.classList.remove("combo-menu-floating");
+    if (menu) menu.removeAttribute("style");
+  });
+}
+
+function positionComboboxMenu(combo) {
+  const trigger = combo?.querySelector("[data-combo-trigger]");
+  const menu = combo?.querySelector(".combo-menu");
+  if (!trigger || !menu || !combo.classList.contains("open")) return;
+  const viewportPadding = 12;
+  const gap = 8;
+  const triggerRect = trigger.getBoundingClientRect();
+  const width = Math.min(Math.max(triggerRect.width, 400), window.innerWidth - viewportPadding * 2);
+  const left = Math.min(Math.max(viewportPadding, triggerRect.left), window.innerWidth - viewportPadding - width);
+  const options = [...menu.querySelectorAll(".combo-option")];
+  const needsScrolling = options.length > 5;
+  menu.classList.add("combo-menu-floating");
+  menu.classList.toggle("combo-menu-scrollable", needsScrolling);
+  menu.style.setProperty("--combo-menu-width", `${width}px`);
+  menu.style.left = `${left}px`;
+  menu.style.visibility = "hidden";
+  menu.style.maxHeight = "none";
+  requestAnimationFrame(() => {
+    if (!combo.classList.contains("open")) return;
+    const menuStyle = getComputedStyle(menu);
+    const rowGap = Number.parseFloat(menuStyle.rowGap) || 0;
+    const chromeHeight = (Number.parseFloat(menuStyle.paddingTop) || 0)
+      + (Number.parseFloat(menuStyle.paddingBottom) || 0)
+      + (Number.parseFloat(menuStyle.borderTopWidth) || 0)
+      + (Number.parseFloat(menuStyle.borderBottomWidth) || 0);
+    const visibleOptions = needsScrolling ? options.slice(0, 5) : options;
+    const fiveRowHeight = visibleOptions.reduce((height, option) => height + option.getBoundingClientRect().height, 0)
+      + Math.max(0, visibleOptions.length - 1) * rowGap
+      + chromeHeight;
+    const desiredHeight = needsScrolling ? Math.min(menu.scrollHeight, fiveRowHeight) : menu.scrollHeight;
+    const below = window.innerHeight - triggerRect.bottom - gap - viewportPadding;
+    const above = triggerRect.top - gap - viewportPadding;
+    const openAbove = below < Math.min(desiredHeight, 180) && above > below;
+    const available = Math.max(120, openAbove ? above : below);
+    const maxHeight = Math.min(desiredHeight, available);
+    const top = openAbove
+      ? Math.max(viewportPadding, triggerRect.top - gap - maxHeight)
+      : Math.min(window.innerHeight - viewportPadding - maxHeight, triggerRect.bottom + gap);
+    menu.style.top = `${top}px`;
+    menu.style.setProperty("--combo-menu-max-height", `${maxHeight}px`);
+    menu.style.maxHeight = `${maxHeight}px`;
+    menu.style.visibility = "visible";
   });
 }
 
@@ -1335,7 +1435,7 @@ function renderAlerts() {
     const snoozeButton = item.alertKey ? `<button class="mini-button" ${snoozed ? "data-resume-alert" : "data-snooze-alert"}="${escapeHtml(item.alertKey)}">${snoozed ? t("alertResume") : t("alertSnooze")}</button>` : "";
     return `<article class="alert-item glass-panel live-alert ${kind}${snoozed ? " snoozed" : ""}" data-alert-kind="${kind}">
       <div class="alert-symbol">${symbols[item.kind] || "!"}</div>
-      <div class="alert-copy"><div class="alert-title-row">${platformLogo(item.provider || account?.provider, "activity-brand-logo")}<div><h4>${escapeHtml(i18nField(item.title || item.accountName || t("remoteStatusAttention"), item.titleKey, item.titleParams))}</h4><span>${escapeHtml(providers[item.provider || account?.provider]?.name || t("platformConnected"))} · ${escapeHtml(account ? accountDisplayName(account) : item.accountName || t("accountName"))}</span></div></div><p>${escapeHtml(i18nField(item.message || t("remoteStatusAttention"), item.messageKey, item.messageParams))}</p></div>
+      <div class="alert-copy"><div class="alert-title-row">${platformLogo(item.provider || account?.provider, "activity-brand-logo")}<div><h4>${escapeHtml(localizedAlertTitle(item))}</h4><span>${escapeHtml(providers[item.provider || account?.provider]?.name || t("platformConnected"))} · ${escapeHtml(account ? accountDisplayName(account) : item.accountName || t("accountName"))}</span></div></div><p>${escapeHtml(localizedAlertMessage(item))}</p></div>
       <div class="alert-side"><span class="official-alert${snoozed ? " snoozed" : ""}">${snoozed ? t("alertSnoozedUntil", { time:formatDate(item.snoozedUntil) }) : t("alertBadgeRemote", { kind:badges[item.kind] || t("alertsCenter") })}</span><div class="alert-actions">${snoozeButton}${account ? `<button class="mini-button" data-account-alerts="${escapeHtml(account.id)}">${t("actionAdjustRules")}</button><button class="mini-button" data-view-account="${escapeHtml(account.id)}" data-account-provider="${escapeHtml(account.provider)}">${t("viewAccountData")}</button><button class="mini-button alert-sync-button" data-sync-account="${escapeHtml(account.id)}"><span>${t("actionSyncNow")}</span></button>` : ""}</div></div>
     </article>`;
   }).join("") : allAlerts.length
@@ -1958,6 +2058,7 @@ document.addEventListener("click", async e => {
     closeComboboxes(combo);
     combo.classList.toggle("open", willOpen);
     comboTrigger.setAttribute("aria-expanded", String(willOpen));
+    if (willOpen) positionComboboxMenu(combo);
   } else if (!e.target.closest("[data-combobox]")) {
     closeComboboxes();
   }
@@ -2054,6 +2155,8 @@ document.addEventListener("click", async e => {
 });
 
 document.addEventListener("keydown", event => { if (event.key === "Escape") closeComboboxes(); });
+window.addEventListener("resize", () => document.querySelectorAll("[data-combobox].open").forEach(positionComboboxMenu));
+document.addEventListener("scroll", () => document.querySelectorAll("[data-combobox].open").forEach(positionComboboxMenu), true);
 document.querySelectorAll(".nav-item").forEach(b => b.addEventListener("click",()=>switchView(b.dataset.view)));
 els.modelFamilySelect.addEventListener("change", renderComparisons);
 els.modelLevelSelect.addEventListener("change", renderComparisons);

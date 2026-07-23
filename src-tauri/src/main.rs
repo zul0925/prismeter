@@ -235,7 +235,7 @@ fn main() {
             .title("Prismeter")
             .decorations(false)
             .visible(!start_in_background)
-            .maximized(!start_in_background)
+            .inner_size(1180.0, 760.0)
             .min_inner_size(980.0, 680.0)
             .build()?;
 

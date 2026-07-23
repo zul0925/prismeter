@@ -150,7 +150,7 @@
             </div>
           </div>
           <section id="trendForecast" class="trend-forecast" hidden aria-live="polite">
-            <span class="trend-forecast-icon" aria-hidden="true">&#8599;</span>
+            <span id="trendForecastIcon" class="trend-forecast-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="7.5"/><path d="M12 8v4.5l3 1.8"/></svg></span>
             <div><b id="trendForecastTitle" data-i18n="detailForecasting">正在评估消耗节奏</b><span id="trendForecastDetail" data-i18n="detailForecastSource">预测仅基于 Prismeter 保存的远端快照。</span></div>
             <small id="trendForecastMeta" data-i18n="detailMoreData">需要更多数据</small>
           </section>
@@ -185,7 +185,7 @@
               <input id="modelLevelSelect" type="hidden" value="all" />
               <button class="combo-trigger" type="button" data-combo-trigger aria-haspopup="listbox" aria-expanded="false"><span data-combo-label data-i18n="modelsAllLevels">全部层级</span><i></i></button>
               <div class="combo-menu" role="listbox">
-                <button type="button" class="combo-option selected" data-value="all" role="option">全部层级<span data-i18n="modelsLevelAndProduct">模型级与产品级</span></button>
+                <button type="button" class="combo-option selected" data-value="all" role="option"><span data-i18n="modelsAllLevels">全部层级</span><span data-i18n="modelsLevelAndProduct">模型级与产品级</span></button>
                 <button type="button" class="combo-option" data-value="row" role="option"><span data-i18n="modelsRowRecords">模型级记录</span><span data-i18n="modelsDetailedRows">平台返回明细行</span></button>
                 <button type="button" class="combo-option" data-value="product" role="option"><span data-i18n="modelsProductRecords">产品级记录</span><span data-i18n="modelsServiceMetrics">套餐或服务级指标</span></button>
               </div>
@@ -195,11 +195,11 @@
               <button class="combo-trigger" type="button" data-combo-trigger aria-haspopup="listbox" aria-expanded="false"><span data-combo-label data-i18n="modelsAllModels">全部模型与产品</span><i></i></button>
               <div class="combo-menu" role="listbox">
                 <button type="button" class="combo-option selected" data-value="all" role="option"><span data-i18n="modelsAllModels">全部模型与产品</span><span data-i18n="modelsRemoteOnly">仅远端实际返回</span></button>
-                <button type="button" class="combo-option" data-value="deepseek" role="option">DeepSeek<span data-i18n="modelsCrossPlatform">跨平台</span></button>
-                <button type="button" class="combo-option" data-value="glm" role="option">GLM<span data-i18n="modelsCrossPlatform">跨平台</span></button>
-                <button type="button" class="combo-option" data-value="doubao" role="option">Doubao<span data-i18n="modelsArk">火山方舟</span></button>
-                <button type="button" class="combo-option" data-value="mimo" role="option">Xiaomi MiMo<span data-i18n="modelsOfficialList">官方模型列表</span></button>
-                <button type="button" class="combo-option" data-value="gpt" role="option">GPT / Codex<span>OpenAI</span></button>
+                <button type="button" class="combo-option" data-value="deepseek" role="option"><span>DeepSeek</span><span data-i18n="modelsCrossPlatform">跨平台</span></button>
+                <button type="button" class="combo-option" data-value="glm" role="option"><span>GLM</span><span data-i18n="modelsCrossPlatform">跨平台</span></button>
+                <button type="button" class="combo-option" data-value="doubao" role="option"><span>Doubao</span><span data-i18n="modelsArk">火山方舟</span></button>
+                <button type="button" class="combo-option" data-value="mimo" role="option"><span>Xiaomi MiMo</span><span data-i18n="modelsOfficialList">官方模型列表</span></button>
+                <button type="button" class="combo-option" data-value="gpt" role="option"><span>GPT / Codex</span><span>OpenAI</span></button>
               </div>
             </div>
           </div>
@@ -310,20 +310,20 @@
         <div id="settingsForm" class="settings-page-grid">
           <div class="settings-page-column">
             <article class="glass-panel settings-section-card">
-             <div class="settings-card-heading"><span class="settings-card-icon" aria-hidden="true">文</span><div><h4 data-i18n="settingsLanguage">语言 / Language</h4><p data-i18n="settingsLanguageNote">界面语言立即切换；平台返回的模型名与远端数据保持原样。</p></div></div>
+             <div class="settings-card-heading"><span class="settings-card-icon" aria-hidden="true">Aa</span><div><h4 data-i18n="settingsLanguage">语言 / Language</h4><p data-i18n="settingsLanguageNote">界面语言立即切换；平台返回的模型名与远端数据保持原样。</p></div></div>
              <label class="settings-field"><span><b data-i18n="settingsInterfaceLanguage">界面语言</b><small data-i18n="settingsLanguagesAvailable">当前提供简体中文和 English。</small></span><div class="glass-combobox settings-combo" data-combobox>
               <input id="interfaceLanguage" type="hidden" value="zh-CN" />
                <button class="combo-trigger" type="button" data-combo-trigger aria-haspopup="listbox" aria-expanded="false"><span data-combo-label data-i18n="settingsChinese">简体中文</span><i></i></button>
               <div class="combo-menu" role="listbox">
                 <button type="button" class="combo-option selected" data-value="system" role="option"><span data-i18n="settingsLanguageSystem">跟随系统</span><span data-i18n="settingsLanguageSystemNote">首次启动自动选择</span></button>
                 <button type="button" class="combo-option" data-value="zh-CN" role="option"><span data-i18n="settingsChinese">简体中文</span><span data-i18n="settingsDefault">默认语言</span></button>
-                <button type="button" class="combo-option" data-value="en" role="option">English<span>Core interface translation</span></button>
+                <button type="button" class="combo-option" data-value="en" role="option"><span>English</span><span>Core interface translation</span></button>
               </div>
             </div></label>
             </article>
 
             <article class="glass-panel settings-section-card">
-             <div class="settings-card-heading"><span class="settings-card-icon" aria-hidden="true">◐</span><div><h4 data-i18n="settingsAppearance">外观</h4><p data-i18n="settingsAppearanceNote">主题切换会立即应用到主界面和所有页面。</p></div></div>
+             <div class="settings-card-heading"><span class="settings-card-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="7.5"/><path d="M12 4.5v15a7.5 7.5 0 0 0 0-15Z" class="icon-fill"/></svg></span><div><h4 data-i18n="settingsAppearance">外观</h4><p data-i18n="settingsAppearanceNote">主题切换会立即应用到主界面和所有页面。</p></div></div>
              <label class="settings-field"><span><b data-i18n="settingsAppearanceMode">外观模式</b><small data-i18n="settingsFollowWindows">可固定明暗主题，也可以跟随 Windows。</small></span><div class="glass-combobox settings-combo" data-combobox>
               <input id="appearanceMode" type="hidden" value="system" />
               <button class="combo-trigger" type="button" data-combo-trigger aria-haspopup="listbox" aria-expanded="false"><span data-combo-label data-i18n="settingsSystem">跟随系统</span><i></i></button>
@@ -336,7 +336,7 @@
             </article>
 
             <article class="glass-panel settings-section-card">
-             <div class="settings-card-heading"><span class="settings-card-icon" aria-hidden="true">!</span><div><h4 data-i18n="settingsAlerts">提醒</h4><p data-i18n="settingsAlertsNote">阈值修改后立即用于下一次同步与提醒判断。</p></div></div>
+             <div class="settings-card-heading"><span class="settings-card-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M6.5 16.5h11l-1.5-2V10a4 4 0 0 0-8 0v4.5l-1.5 2Z"/><path d="M10 19h4"/></svg></span><div><h4 data-i18n="settingsAlerts">提醒</h4><p data-i18n="settingsAlertsNote">阈值修改后立即用于下一次同步与提醒判断。</p></div></div>
             <div class="settings-threshold-grid">
                <label><span data-i18n="settingsLowBalance">低余额提醒阈值</span><div class="input-with-unit"><input id="lowBalanceThreshold" type="number" min="0" step="0.01" value="10"/><b data-i18n="settingsCurrency">账户币种</b></div></label>
                <label><span data-i18n="settingsQuotaAlert">套餐额度提醒阈值</span><div class="input-with-unit"><input id="usageThreshold" type="number" min="50" max="100" step="1" value="80"/><b data-i18n="settingsQuotaUsed">% 已用</b></div></label>
@@ -346,7 +346,7 @@
             </article>
 
             <article class="glass-panel settings-section-card">
-             <div class="settings-card-heading"><span class="settings-card-icon" aria-hidden="true">↑</span><div><h4 data-i18n="updateTitle">应用更新</h4><p data-i18n="updateSigned">更新包由 Prismeter 的独立更新密钥签名并在安装前校验。</p></div></div>
+             <div class="settings-card-heading"><span class="settings-card-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 16V5"/><path d="m8 9 4-4 4 4"/><path d="M5 15v4h14v-4"/></svg></span><div><h4 data-i18n="updateTitle">应用更新</h4><p data-i18n="updateSigned">更新包由 Prismeter 的独立更新密钥签名并在安装前校验。</p></div></div>
              <label class="settings-field"><span><b data-i18n="updateCheck">检查更新</b><small data-i18n="updateAutomatic">自动检查只会在应用启动后进行，不会自动安装。</small></span><div class="glass-combobox settings-combo" data-combobox>
               <input id="updateCheckMode" type="hidden" value="startup" />
               <button class="combo-trigger" type="button" data-combo-trigger aria-haspopup="listbox" aria-expanded="false"><span data-combo-label data-i18n="updateOnStartup">启动时自动检查</span><i></i></button>
@@ -362,7 +362,7 @@
 
           <div class="settings-page-column">
             <article class="glass-panel settings-section-card">
-               <div class="settings-card-heading"><span class="settings-card-icon" aria-hidden="true">↻</span><div><h4 data-i18n="syncSettings">同步</h4><p data-i18n="syncSettingsNote">控制远端数据何时刷新，不会读取本地会话日志。</p></div></div>
+               <div class="settings-card-heading"><span class="settings-card-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M18.5 9A7 7 0 0 0 6.3 6.8L5 9"/><path d="M5 5v4h4"/><path d="M5.5 15A7 7 0 0 0 17.7 17.2L19 15"/><path d="M19 19v-4h-4"/></svg></span><div><h4 data-i18n="syncSettings">同步</h4><p data-i18n="syncSettingsNote">控制远端数据何时刷新，不会读取本地会话日志。</p></div></div>
                <label class="settings-field"><span><b data-i18n="syncAutomatic">自动同步</b><small data-i18n="syncRetryNote">已暂停的账户不会参与；临时失败会在 2、5、15 分钟后分级重试。</small></span><div class="glass-combobox settings-combo" data-combobox>
                 <input id="autoSyncMinutes" type="hidden" value="30" />
                 <button class="combo-trigger" type="button" data-combo-trigger aria-haspopup="listbox" aria-expanded="false"><span data-combo-label data-i18n="syncEvery30Minutes">每 30 分钟</span><i></i></button>
@@ -391,7 +391,7 @@
             </article>
 
             <article class="glass-panel settings-section-card">
-               <div class="settings-card-heading"><span class="settings-card-icon" aria-hidden="true">⌁</span><div><h4 data-i18n="historyLocal">本地历史</h4><p data-i18n="historyLocalNote">只保存远端同步结果与数值快照，不保存凭据、请求正文或本地会话。</p></div></div>
+               <div class="settings-card-heading"><span class="settings-card-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5.2 8A7.5 7.5 0 1 1 4.5 12"/><path d="M5.2 4.5V8H8.7"/><path d="M12 8v4.2l2.8 1.6"/></svg></span><div><h4 data-i18n="historyLocal">本地历史</h4><p data-i18n="historyLocalNote">只保存远端同步结果与数值快照，不保存凭据、请求正文或本地会话。</p></div></div>
                <label class="settings-field"><span><b data-i18n="historyRetention">保留时间</b><small data-i18n="historyRetentionNote">修改后会立即清理超过期限的余额快照和同步记录。</small></span><div class="glass-combobox settings-combo" data-combobox>
                 <input id="historyRetentionDays" type="hidden" value="90" />
                 <button class="combo-trigger" type="button" data-combo-trigger aria-haspopup="listbox" aria-expanded="false"><span data-combo-label data-i18n="retention90Days">90 天</span><i></i></button>
@@ -407,7 +407,7 @@
             </article>
 
             <article class="glass-panel settings-section-card">
-               <div class="settings-card-heading"><span class="settings-card-icon" aria-hidden="true">▣</span><div><h4 data-i18n="trayTitle">窗口与托盘</h4><p data-i18n="trayNote">控制主窗口关闭后的行为，以及应用是否继续在后台运行。</p></div></div>
+               <div class="settings-card-heading"><span class="settings-card-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="4.5" y="5" width="15" height="11" rx="2"/><path d="M8 19h8M12 16v3"/></svg></span><div><h4 data-i18n="trayTitle">窗口与托盘</h4><p data-i18n="trayNote">控制主窗口关闭后的行为，以及应用是否继续在后台运行。</p></div></div>
                <label class="check-setting"><input id="closeToTray" type="checkbox" checked/><span><b data-i18n="trayClose">关闭时隐藏到托盘</b><small data-i18n="trayCloseNote">开启后，右上角关闭按钮和 Alt+F4 会隐藏窗口，账户同步仍会继续。</small></span></label>
                <label class="check-setting"><input id="launchAtStartup" type="checkbox"/><span><b data-i18n="trayStartup">登录 Windows 后自动启动</b><small data-i18n="trayStartupNote">以后台模式启动到托盘，不会在登录后弹出主窗口。</small></span></label>
                <div class="settings-info-row"><span><b data-i18n="trayLeftClick">托盘左键</b><small data-i18n="trayRestore">单击托盘图标即可恢复主窗口</small></span><strong data-i18n="trayOpen">打开主窗口</strong></div>
@@ -558,10 +558,10 @@
           <button class="combo-trigger" type="button" data-combo-trigger aria-haspopup="listbox" aria-expanded="false"><span data-combo-label data-i18n="providerDeepSeek">DeepSeek 官方 API</span><i></i></button>
           <div class="combo-menu" role="listbox">
             <button type="button" class="combo-option selected" data-value="deepseek" role="option"><span data-i18n="providerDeepSeek">DeepSeek 官方 API</span><span data-i18n="providerBalanceEndpoint">余额接口</span></button>
-            <button type="button" class="combo-option" data-value="kimi" role="option">Kimi API<span data-i18n="providerKimiBalance">官方余额接口</span></button>
+                  <button type="button" class="combo-option" data-value="kimi" role="option"><span>Kimi API</span><span data-i18n="providerKimiBalance">官方余额接口</span></button>
             <button type="button" class="combo-option" data-value="volcengine" role="option"><span data-i18n="providerArk">火山方舟</span><span data-i18n="providerAgentCodingApi">Agent / Coding / API</span></button>
-            <button type="button" class="combo-option disabled-option" data-value="mimo" role="option" disabled aria-disabled="true">Xiaomi MiMo<span data-i18n="providerMimoUnavailable">暂不可添加 · 官方未开放第三方用量统计接口</span></button>
-            <button type="button" class="combo-option" data-value="openai" role="option">OpenAI<span data-i18n="providerOpenAiUsage">ChatGPT 订阅 / Codex 用量</span></button>
+                  <button type="button" class="combo-option disabled-option" data-value="mimo" role="option" disabled aria-disabled="true"><span>Xiaomi MiMo</span><span data-i18n="providerMimoUnavailable">暂不可添加 · 官方未开放第三方用量统计接口</span></button>
+                  <button type="button" class="combo-option" data-value="openai" role="option"><span>OpenAI</span><span data-i18n="providerOpenAiUsage">ChatGPT 订阅 / Codex 用量</span></button>
           </div>
         </div></label>
       <label><span data-i18n="accountName">账户名称</span><input id="accountName" name="name" autocomplete="off" data-i18n="accountNamePlaceholder" data-i18n-content="false" data-i18n-attrs="placeholder" placeholder="例如：工作室主账户" /></label>

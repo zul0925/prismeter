@@ -384,6 +384,14 @@ const englishFragments = Object.freeze({
       "account.default.openai":"OpenAI local account", "account.default.volcengine":"Volcengine Ark primary account", "account.default.deepseek":"DeepSeek primary account", "account.default.kimi":"Kimi primary account"
     })
   });
+  const remotePresentationMessages = Object.freeze({
+    "zh-CN": Object.freeze({
+      "ark.coding.product.kind":"编程套餐", "ark.coding.product.usageLabel":"本月用量", "ark.payg.product.name":"按量 API", "ark.payg.product.kind":"在线推理", "ark.payg.product.usageLabel":"本月总 Token", "ark.note.dynamicCycle":"动态周期", "ark.note.resetsAtExpiry":"到期后重置", "codex.subscription.kind":"账户订阅", "badge.hour":"时", "badge.week":"周", "badge.month":"月", "badge.day":"日"
+    }),
+    en: Object.freeze({
+      "ark.coding.product.kind":"Coding plan", "ark.coding.product.usageLabel":"This month's usage", "ark.payg.product.name":"Pay-as-you-go API", "ark.payg.product.kind":"Online inference", "ark.payg.product.usageLabel":"This month's total tokens", "ark.note.dynamicCycle":"Dynamic window", "ark.note.resetsAtExpiry":"Resets at expiry", "codex.subscription.kind":"Account subscription", "badge.hour":"H", "badge.week":"W", "badge.month":"M", "badge.day":"D"
+    })
+  });
   const completionMessages = Object.freeze({
     "zh-CN": Object.freeze({
       historyNoCategory:"此分类暂无同步记录。", historyAfterSync:"完成一次账户同步后，这里会显示任务结果和耗时。", dragAccountOrder:"拖拽调整账户顺序", orderSaved:"顺序已保存", accountOrderSaved:"账户顺序已保存", platformOrderSaved:"平台顺序已保存", syncingEllipsis:"同步中…", removeAccountTitle:"移除“{name}”？", clearHistorySummary:"将删除本机保存的 {metrics} 条远端指标快照、{balances} 条余额兼容快照和 {syncs} 条同步记录。已连接账户、凭据、设置和当前远端数据不会受到影响。", workingDiscover:"正在发现产品…", workingReadCodex:"正在读取 Codex…", workingVerify:"正在验证…", workingRetry:"正在重试 {current}/{total}", workingSave:"保存中…", workingApply:"正在应用…", workingRemove:"正在移除…", workingClear:"正在清除…", workingExit:"正在退出…", confirmRemove:"确认移除", confirmClear:"确认清除"
@@ -393,8 +401,8 @@ const englishFragments = Object.freeze({
     })
   });
   const completeMessages = Object.freeze({
-    "zh-CN": Object.freeze({ ...messages["zh-CN"], ...extensionMessages["zh-CN"], ...runtimeMessages["zh-CN"], ...interactionMessages["zh-CN"], ...updateMessages["zh-CN"], ...diagnosticMessages["zh-CN"], ...completionMessages["zh-CN"], ...bootstrapMessages["zh-CN"], ...backendErrorMessages["zh-CN"], ...capabilityMessages["zh-CN"], ...productMessages["zh-CN"] }),
-    en: Object.freeze({ ...messages.en, ...extensionMessages.en, ...runtimeMessages.en, ...interactionMessages.en, ...updateMessages.en, ...diagnosticMessages.en, ...completionMessages.en, ...bootstrapMessages.en, ...backendErrorMessages.en, ...capabilityMessages.en, ...productMessages.en })
+    "zh-CN": Object.freeze({ ...messages["zh-CN"], ...extensionMessages["zh-CN"], ...runtimeMessages["zh-CN"], ...interactionMessages["zh-CN"], ...updateMessages["zh-CN"], ...diagnosticMessages["zh-CN"], ...completionMessages["zh-CN"], ...bootstrapMessages["zh-CN"], ...backendErrorMessages["zh-CN"], ...capabilityMessages["zh-CN"], ...productMessages["zh-CN"], ...remotePresentationMessages["zh-CN"] }),
+    en: Object.freeze({ ...messages.en, ...extensionMessages.en, ...runtimeMessages.en, ...interactionMessages.en, ...updateMessages.en, ...diagnosticMessages.en, ...completionMessages.en, ...bootstrapMessages.en, ...backendErrorMessages.en, ...capabilityMessages.en, ...productMessages.en, ...remotePresentationMessages.en })
   });
 
   window.PrismeterMessages = completeMessages;
