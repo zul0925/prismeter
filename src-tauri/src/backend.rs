@@ -1569,6 +1569,8 @@ fn alerts(state: &PersistedState) -> Vec<Value> {
                     "accountId": account.id, "accountName": account.name, "provider": account.provider,
                     "kind": "balance", "title": format!("{} 余额偏低", account.name),
                     "message": format!("当前 {} {}，低于阈值 {}", balance.currency, balance.total, balance_threshold),
+                    "titleKey": "alert.balance.title", "titleParams": { "account": account.name },
+                    "messageKey": "alert.balance.message", "messageParams": { "currency": balance.currency, "total": balance.total, "threshold": balance_threshold },
                     "currency": balance.currency, "total": balance.total
                 }));
             }
@@ -1582,6 +1584,8 @@ fn alerts(state: &PersistedState) -> Vec<Value> {
                         "productId": string_field(product, "id"), "kind": "quota",
                         "title": format!("{} · {} 额度告警", account.name, string_field(product, "name")),
                         "message": format!("远端周期用量已达 {:.1}%，阈值为 {:.1}%", percent, usage_threshold),
+                        "titleKey": "alert.quota.title", "titleParams": { "account": account.name, "product": string_field(product, "name") },
+                        "messageKey": "alert.quota.message", "messageParams": { "percent": format!("{percent:.1}"), "threshold": format!("{usage_threshold:.1}") },
                         "currentPercent": format!("{percent:.1}"), "threshold": format!("{:.1}", usage_threshold)
                     }));
                 }
@@ -1591,7 +1595,8 @@ fn alerts(state: &PersistedState) -> Vec<Value> {
             if !error.trim().is_empty() {
                 result.push(json!({
                     "accountId": account.id, "accountName": account.name, "provider": account.provider,
-                    "kind": "sync", "title": format!("{} 同步失败", account.name), "message": error
+                    "kind": "sync", "title": format!("{} 同步失败", account.name), "message": error,
+                    "titleKey": "alert.sync.title", "titleParams": { "account": account.name }
                 }));
             }
         }
@@ -1609,7 +1614,10 @@ fn alerts(state: &PersistedState) -> Vec<Value> {
         if let Some(message) = freshness_message {
             result.push(json!({
                 "accountId": account.id, "accountName": account.name, "provider": account.provider,
-                "kind": "freshness", "title": format!("{} 数据需要刷新", account.name), "message": message
+                "kind": "freshness", "title": format!("{} 数据需要刷新", account.name), "message": message,
+                "titleKey": "alert.freshness.title", "titleParams": { "account": account.name },
+                "messageKey": if account.last_sync.trim().is_empty() { "alert.freshness.firstSync" } else { "alert.freshness.stale" },
+                "messageParams": { "minutes": if account.last_sync.trim().is_empty() { 0 } else { DateTime::parse_from_rfc3339(&account.last_sync).ok().map(|timestamp| current_time.signed_duration_since(timestamp.with_timezone(&Utc)).num_minutes().max(stale_minutes)).unwrap_or(stale_minutes) } }
             }));
         }
     }

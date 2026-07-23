@@ -191,7 +191,7 @@ fn build_codex_product(plan: &str, limits_result: &Value, usage_result: &Value) 
         let peak_ratio = if peak > 0 { format!("{:.1}%", tokens as f64 * 100.0 / peak as f64) } else { "—".into() };
         json!({
             "name": date, "type": "每日远端统计", "badge": "日",
-            "i18n": { "metricUnitKeys": ["codex.column.date", "codex.column.tokens", "codex.column.peakRatio", "codex.note.openaiRemote"] },
+            "i18n": { "typeKey":"codex.row.dailyUsage", "metricUnitKeys": ["codex.column.date", "codex.column.tokens", "codex.column.peakRatio", "codex.note.openaiRemote"] },
             "metrics": [
                 platform_value(&date, "日期"),
                 platform_value(&token_value, "Token"),
@@ -215,10 +215,10 @@ fn build_codex_product(plan: &str, limits_result: &Value, usage_result: &Value) 
         "status": first_non_empty(&[text(limits, "rateLimitReachedType"), "Running".into()]),
         "i18n": {
             "summaryKeys": [
-                { "labelKey":"codex.summary.currentWindow" },
-                { "labelKey":"codex.summary.secondaryWindow" },
+                { "labelKey":"codex.summary.currentWindow", "noteKey":"codex.note.windowReset", "noteParams": { "minutes": duration, "reset": reset } },
+                { "labelKey":"codex.summary.secondaryWindow", "noteKey":"codex.note.resetAt", "noteParams": { "reset": unix_seconds(integer(secondary, "resetsAt")) } },
                 { "labelKey":"codex.summary.lifetimeTokens", "noteKey":"codex.note.openaiRemote" },
-                { "labelKey":"codex.summary.activeStreak" }
+                { "labelKey":"codex.summary.activeStreak", "valueKey":"codex.value.streakDays", "valueParams": { "count": streak }, "noteKey": if reset_credits > 0 { "codex.note.resetCredits" } else { "codex.note.openaiRemote" }, "noteParams": { "count": reset_credits } }
             ],
             "columnKeys": ["codex.column.date", "codex.column.tokens", "codex.column.peakRatio", "codex.column.source"]
         },

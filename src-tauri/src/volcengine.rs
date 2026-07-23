@@ -88,6 +88,7 @@ pub fn discover(
                         "metricUnitKeys":["ark.note.official", "ark.note.official", "ark.note.official", "ark.agent.metric.localTime"]
                     }),
                     "coding" => json!({
+                        "nameKey": match index { 0 => "ark.coding.quota.current", 1 => "ark.coding.quota.week", _ => "ark.coding.quota.month" },
                         "typeKey":"ark.coding.quota.row.type",
                         "metricUnitKeys":["ark.coding.quota.column.used", "ark.coding.quota.column.remaining", "ark.agent.metric.localTime", "ark.coding.quota.column.status"]
                     }),

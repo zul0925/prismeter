@@ -163,6 +163,9 @@ function localizeRemoteCopy(value) {
 
 function localizeTextNode(node) {
   if (!node || node.nodeType !== Node.TEXT_NODE || ["SCRIPT", "STYLE"].includes(node.parentElement?.tagName)) return;
+  // `PrismeterI18n.apply` owns these nodes.  Translating them a second time is
+  // especially harmful for combobox labels, whose text is replaced in-place.
+  if (node.parentElement?.closest("[data-i18n]")) return;
   const previous = localizedTextNodes.get(node);
   // A render can reuse a text node and change its contents (for example, the
   // Overview heading after sync). Treat values other than our previous source
@@ -488,7 +491,7 @@ function applyOpenAIAccountData(account = getSelectedAccount("openai")) {
       progress: percent ? Math.max(0, Math.min(100, Number(percent[1]))) : 0,
       resetAt: item.resetAt || null,
       reset: item.resetAt ? t("providerQuotaRestore", { time: relativeFutureTime(item.resetAt) }) : t("providerSyncedAt", { time: formatDate(account.lastSync) }),
-      summaries: (item.summaries || []).map((metric, index) => { const keys = item.i18n?.summaryKeys?.[index] || metric; return [i18nField(metric.label, keys.labelKey), i18nField(metric.value, keys.valueKey, keys.valueParams), i18nField(metric.note, keys.noteKey)]; }),
+      summaries: (item.summaries || []).map((metric, index) => { const keys = item.i18n?.summaryKeys?.[index] || metric; return [i18nField(metric.label, keys.labelKey), i18nField(metric.value, keys.valueKey, keys.valueParams), i18nField(metric.note, keys.noteKey, keys.noteParams)]; }),
       columns: (item.columns || []).map((column, index) => i18nField(column, item.i18n?.columnKeys?.[index])),
       rows: (item.rows || []).map(row => resource(i18nField(row.name, row.nameKey || row.i18n?.nameKey), i18nField(row.type, row.typeKey || row.i18n?.typeKey), row.badge, (row.metrics || []).map((metric, index) => [metric.value, i18nField(metric.unit, row.i18n?.metricUnitKeys?.[index])])) )
     };
@@ -519,7 +522,7 @@ function applyVolcengineAccountData(account = getSelectedAccount("volcengine")) 
       usageLabel: i18nField(item.usageLabel, item.usageLabelKey, item.usageLabelParams) || t("officialProduct"),
       progress: percent ? Math.max(0, Math.min(100, Number(percent[1]))) : 0,
       reset: t("providerSyncedAt", { time: formatDate(account.lastSync) }),
-      summaries: (item.summaries || []).map((metric, index) => { const keys = item.i18n?.summaryKeys?.[index] || metric; return [i18nField(metric.label, keys.labelKey), i18nField(metric.value, keys.valueKey, keys.valueParams), i18nField(metric.note, keys.noteKey)]; }),
+      summaries: (item.summaries || []).map((metric, index) => { const keys = item.i18n?.summaryKeys?.[index] || metric; return [i18nField(metric.label, keys.labelKey), i18nField(metric.value, keys.valueKey, keys.valueParams), i18nField(metric.note, keys.noteKey, keys.noteParams)]; }),
       columns: (item.columns || []).map((column, index) => i18nField(column, item.i18n?.columnKeys?.[index])),
       rows: (item.rows || []).map(row => resource(i18nField(row.name, row.nameKey || row.i18n?.nameKey), i18nField(row.type, row.typeKey || row.i18n?.typeKey), row.badge, (row.metrics || []).map((metric, index) => [metric.value, i18nField(metric.unit, row.i18n?.metricUnitKeys?.[index])])) )
     };
@@ -548,7 +551,7 @@ function applyMimoAccountData(account = getSelectedAccount("mimo")) {
       usageLabel: i18nField(item.usageLabel, item.usageLabelKey, item.usageLabelParams) || t("providerRemoteModels"),
       progress: 0,
       reset: t("providerSyncedAt", { time: formatDate(account.lastSync) }),
-      summaries: (item.summaries || []).map((metric, index) => { const keys = item.i18n?.summaryKeys?.[index] || metric; return [i18nField(metric.label, keys.labelKey), i18nField(metric.value, keys.valueKey, keys.valueParams), i18nField(metric.note, keys.noteKey)]; }),
+      summaries: (item.summaries || []).map((metric, index) => { const keys = item.i18n?.summaryKeys?.[index] || metric; return [i18nField(metric.label, keys.labelKey), i18nField(metric.value, keys.valueKey, keys.valueParams), i18nField(metric.note, keys.noteKey, keys.noteParams)]; }),
       columns: (item.columns || []).map((column, index) => i18nField(column, item.i18n?.columnKeys?.[index])),
       rows: (item.rows || []).map(row => resource(i18nField(row.name, row.nameKey || row.i18n?.nameKey), i18nField(row.type, row.typeKey || row.i18n?.typeKey), row.badge, (row.metrics || []).map((metric, index) => [metric.value, i18nField(metric.unit, row.i18n?.metricUnitKeys?.[index])])) )
     };
@@ -1149,16 +1152,33 @@ function renderComparisons() {
 
   const cards = records.map(record => {
     const provider = providers[record.account.provider];
+    const productI18n = record.product.i18n || {};
+    const rowI18n = record.row?.i18n || {};
+    const productName = i18nField(record.product.name, record.product.nameKey || productI18n.nameKey);
+    const rowName = record.row && i18nField(record.row.name, record.row.nameKey || rowI18n.nameKey);
+    const productKind = i18nField(record.product.kind, record.product.kindKey || productI18n.kindKey);
+    const usageLabel = i18nField(record.product.usageLabel, record.product.usageLabelKey || productI18n.usageLabelKey, record.product.usageLabelParams || productI18n.usageLabelParams);
     const metricItems = record.row
-      ? (record.row.metrics || []).slice(0, 4).map((metric,index) => ({ label:(record.product.columns || [])[index] || t("metricFallback", { count:index + 1 }), value:metric.value || "—", unit:metric.unit || t("remote") }))
-      : (record.product.summaries || []).slice(0, 4).map(metric => ({ label:metric.label || t("remoteMetrics"), value:metric.value || "—", unit:metric.note || t("platformReturned") }));
+      ? (record.row.metrics || []).slice(0, 4).map((metric,index) => ({
+        label:i18nField((record.product.columns || [])[index] || t("metricFallback", { count:index + 1 }), productI18n.columnKeys?.[index]),
+        value:i18nField(metric.value, rowI18n.metricValueKeys?.[index], rowI18n.metricValueParams?.[index]) || "—",
+        unit:i18nField(metric.unit || t("remote"), rowI18n.metricUnitKeys?.[index])
+      }))
+      : (record.product.summaries || []).slice(0, 4).map((metric, index) => {
+        const keys = productI18n.summaryKeys?.[index] || metric;
+        return {
+          label:i18nField(metric.label || t("remoteMetrics"), keys.labelKey),
+          value:i18nField(metric.value || "—", keys.valueKey, keys.valueParams),
+          unit:i18nField(metric.note || t("platformReturned"), keys.noteKey, keys.noteParams)
+        };
+      });
     if (!metricItems.length) metricItems.push(
-      { label:record.product.usageLabel || t("remoteUsage"), value:record.product.usage || "—", unit:record.product.kind || t("officialProduct") },
+      { label:usageLabel || t("remoteUsage"), value:record.product.usage || "—", unit:productKind || t("officialProduct") },
       { label:t("productStatus"), value:record.product.status || t("normal"), unit:t("platformReturned") }
     );
     const freshness = accountFreshness(record.account);
     return '<article class="comparison-card remote-model-card">' +
-      '<div class="model-source-head">' + platformLogo(record.account.provider, "activity-brand-logo") + '<div><h4>' + escapeHtml(record.row?.name || record.product.name || definition.label) + '</h4><span>' + escapeHtml(provider?.name || record.account.provider) + ' · ' + escapeHtml(accountDisplayName(record.account)) + ' · ' + escapeHtml(record.product.name || t("remoteProduct")) + '</span></div><span class="model-level-badge ' + record.level + '">' + (record.level === "row" ? t("modelRowRecords") : t("modelProductRecords")) + '</span></div>' +
+      '<div class="model-source-head">' + platformLogo(record.account.provider, "activity-brand-logo") + '<div><h4>' + escapeHtml(rowName || productName || definition.label) + '</h4><span>' + escapeHtml(provider?.name || record.account.provider) + ' · ' + escapeHtml(accountDisplayName(record.account)) + ' · ' + escapeHtml(productName || t("remoteProduct")) + '</span></div><span class="model-level-badge ' + record.level + '">' + (record.level === "row" ? t("modelRowRecords") : t("modelProductRecords")) + '</span></div>' +
       '<div class="model-metrics">' + metricItems.map(metric => '<div><span>' + escapeHtml(metric.label) + '</span><strong>' + escapeHtml(metric.value) + '</strong><small>' + escapeHtml(metric.unit) + '</small></div>').join("") + '</div>' +
       '<div class="model-record-foot"><span class="freshness-text ' + freshness.level + '">' + escapeHtml(freshness.label) + ' · ' + escapeHtml(relativeSyncTime(record.account.lastSync)) + '</span><button class="text-button" data-view-account="' + escapeHtml(record.account.id) + '" data-account-provider="' + escapeHtml(record.account.provider) + '">' + t("viewAccountData") + '</button></div>' +
     '</article>';
@@ -1225,7 +1245,7 @@ function renderAlerts() {
     const snoozeButton = item.alertKey ? `<button class="mini-button" ${snoozed ? "data-resume-alert" : "data-snooze-alert"}="${escapeHtml(item.alertKey)}">${snoozed ? t("alertResume") : t("alertSnooze")}</button>` : "";
     return `<article class="alert-item glass-panel live-alert ${kind}${snoozed ? " snoozed" : ""}" data-alert-kind="${kind}">
       <div class="alert-symbol">${symbols[item.kind] || "!"}</div>
-      <div class="alert-copy"><div class="alert-title-row">${platformLogo(item.provider || account?.provider, "activity-brand-logo")}<div><h4>${escapeHtml(item.title || item.accountName || t("remoteStatusAttention"))}</h4><span>${escapeHtml(providers[item.provider || account?.provider]?.name || t("platformConnected"))} · ${escapeHtml(account ? accountDisplayName(account) : item.accountName || t("accountName"))}</span></div></div><p>${escapeHtml(item.message || t("remoteStatusAttention"))}</p></div>
+      <div class="alert-copy"><div class="alert-title-row">${platformLogo(item.provider || account?.provider, "activity-brand-logo")}<div><h4>${escapeHtml(i18nField(item.title || item.accountName || t("remoteStatusAttention"), item.titleKey, item.titleParams))}</h4><span>${escapeHtml(providers[item.provider || account?.provider]?.name || t("platformConnected"))} · ${escapeHtml(account ? accountDisplayName(account) : item.accountName || t("accountName"))}</span></div></div><p>${escapeHtml(i18nField(item.message || t("remoteStatusAttention"), item.messageKey, item.messageParams))}</p></div>
       <div class="alert-side"><span class="official-alert${snoozed ? " snoozed" : ""}">${snoozed ? t("alertSnoozedUntil", { time:formatDate(item.snoozedUntil) }) : t("alertBadgeRemote", { kind:badges[item.kind] || t("alertsCenter") })}</span><div class="alert-actions">${snoozeButton}${account ? `<button class="mini-button" data-account-alerts="${escapeHtml(account.id)}">${t("actionAdjustRules")}</button><button class="mini-button" data-view-account="${escapeHtml(account.id)}" data-account-provider="${escapeHtml(account.provider)}">${t("viewAccountData")}</button><button class="mini-button alert-sync-button" data-sync-account="${escapeHtml(account.id)}"><span>${t("actionSyncNow")}</span></button>` : ""}</div></div>
     </article>`;
   }).join("") : allAlerts.length
