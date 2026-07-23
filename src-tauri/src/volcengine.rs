@@ -37,6 +37,70 @@ pub fn discover(
         Err(error) => warnings.push(format!("按量 API：{error}")),
     }
 
+    for product in &mut products {
+        let product_id = product.get("id").and_then(Value::as_str).unwrap_or_default().to_string();
+        let i18n = match product_id.as_str() {
+            "agent" => json!({
+                "summaryKeys": [
+                    { "labelKey":"ark.agent.summary.planType", "noteKey":"ark.note.official" },
+                    { "labelKey":"ark.agent.summary.fiveHour", "noteKey":"ark.agent.note.usedQuota" },
+                    { "labelKey":"ark.agent.summary.daily", "noteKey":"ark.agent.note.usedQuota" },
+                    { "labelKey":"ark.agent.summary.weekly", "noteKey":"ark.agent.note.usedQuota" }
+                ],
+                "columnKeys": ["ark.agent.column.quota", "ark.agent.column.used", "ark.agent.column.remaining", "ark.agent.column.resetTime"]
+            }),
+            "coding" => {
+                let is_seat_data = product.pointer("/rows/0/badge").and_then(Value::as_str) == Some("CP");
+                if is_seat_data {
+                    json!({
+                        "summaryKeys": [
+                            { "labelKey":"ark.coding.seats.total", "noteKey":"ark.note.official" },
+                            { "labelKey":"ark.coding.seats.withUsage", "noteKey":"ark.coding.note.seats" },
+                            { "labelKey":"ark.coding.seats.weeklyAverage" },
+                            { "labelKey":"ark.coding.seats.monthlyAverage" }
+                        ],
+                        "columnKeys": ["ark.coding.seats.column.shortTerm", "ark.coding.seats.column.weekly", "ark.coding.seats.column.monthly", "ark.agent.column.resetTime"]
+                    })
+                } else {
+                    json!({
+                        "summaryKeys": [
+                            { "labelKey":"ark.coding.quota.primary" },
+                            { "labelKey":"ark.coding.quota.secondary" },
+                            { "labelKey":"ark.coding.quota.additional" },
+                            { "labelKey":"ark.coding.quota.status", "noteKey":"ark.note.official" }
+                        ],
+                        "columnKeys": ["ark.coding.quota.column.used", "ark.coding.quota.column.remaining", "ark.agent.column.resetTime", "ark.coding.quota.column.status"]
+                    })
+                }
+            }
+            _ => continue,
+        };
+        if let Some(rows) = product.get_mut("rows").and_then(Value::as_array_mut) {
+            for (index, row) in rows.iter_mut().enumerate() {
+                let row_i18n = match product_id.as_str() {
+                    "agent" => json!({
+                        "nameKey": match index { 0 => "ark.agent.summary.fiveHour", 1 => "ark.agent.summary.daily", 2 => "ark.agent.summary.weekly", _ => "ark.agent.summary.monthly" },
+                        "typeKey":"ark.agent.row.type",
+                        "metricUnitKeys":["ark.agent.metric.quotaAfp", "ark.agent.metric.usedAfp", "ark.agent.metric.remainingAfp", "ark.agent.metric.localTime"]
+                    }),
+                    "coding" if row.get("badge").and_then(Value::as_str) == Some("CP") => json!({
+                        "typeKey":"ark.coding.seats.row.type",
+                        "metricUnitKeys":["ark.note.official", "ark.note.official", "ark.note.official", "ark.agent.metric.localTime"]
+                    }),
+                    "coding" => json!({
+                        "typeKey":"ark.coding.quota.row.type",
+                        "metricUnitKeys":["ark.coding.quota.column.used", "ark.coding.quota.column.remaining", "ark.agent.metric.localTime", "ark.coding.quota.column.status"]
+                    }),
+                    _ => continue,
+                };
+                if let Some(object) = row.as_object_mut() {
+                    object.insert("i18n".into(), row_i18n);
+                }
+            }
+        }
+        if let Some(object) = product.as_object_mut() { object.insert("i18n".into(), i18n); }
+    }
+
     if products.is_empty() {
         return Err(format!(
             "未能读取任何火山方舟产品。请检查 AK/SK、项目和 Ark/费用中心只读权限。{}",
@@ -198,6 +262,25 @@ fn discover_payg(client: &Client, ak: &str, sk: &str, region: &str, project: &st
     let total_tokens = usage_result.map(|v| table_sum(v, "TotalTokens")).unwrap_or(0.0);
     let requests = usage_result.map(|v| table_sum(v, "ReqCnt")).unwrap_or(0.0);
     let endpoint_count = endpoints.as_ref().map(|v| number(result(v), "TotalCount") as i64).unwrap_or(0);
+    let payg_i18n = if usage.is_ok() {
+        json!({
+            "summaryKeys": [
+                { "labelKey":"ark.payg.summary.inputTokens", "noteKey":"ark.note.remoteOfficial" },
+                { "labelKey":"ark.payg.summary.cacheHits", "noteKey":"ark.note.remoteOfficial" },
+                { "labelKey":"ark.payg.summary.outputTokens", "noteKey":"ark.note.remoteOfficial" },
+                { "labelKey":"ark.payg.summary.requests", "noteKey":"ark.note.thisMonth" }
+            ]
+        })
+    } else {
+        json!({
+            "summaryKeys": [
+                { "labelKey":"ark.payg.summary.endpoints", "noteKey":"ark.note.remoteOfficial" },
+                { "labelKey":"ark.payg.summary.tokenUsage", "noteKey":"ark.payg.note.usageUnavailable" },
+                { "labelKey":"ark.payg.summary.project", "noteKey":"ark.note.remoteOfficial" },
+                { "labelKey":"ark.payg.summary.period", "noteKey":"ark.note.thisMonth" }
+            ]
+        })
+    };
     let (usage_text, usage_label, summaries) = if usage.is_ok() {
         (compact_number(total_tokens), "本月总 Token", vec![
             metric("输入 Token", &compact_number(input_tokens), "远端官方"),
@@ -216,7 +299,7 @@ fn discover_payg(client: &Client, ak: &str, sk: &str, region: &str, project: &st
     Ok(Some(json!({
         "id": "payg", "name": "按量 API", "kind": "在线推理",
         "usage": usage_text, "usageLabel": usage_label, "status": "official",
-        "summaries": summaries, "columns": [], "rows": []
+        "i18n": payg_i18n, "summaries": summaries, "columns": [], "rows": []
     })))
 }
 

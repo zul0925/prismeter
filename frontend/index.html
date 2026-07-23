@@ -20,9 +20,9 @@
   <div class="window-chrome" data-tauri-drag-region>
     <div class="window-chrome-brand" data-tauri-drag-region><span aria-hidden="true"><svg viewBox="0 0 20 20"><defs><linearGradient id="prismeterChromeGradient" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#8097ff"/><stop offset=".52" stop-color="#7954d6"/><stop offset="1" stop-color="#4fd1c5"/></linearGradient></defs><rect x=".4" y=".4" width="19.2" height="19.2" rx="6.3" fill="url(#prismeterChromeGradient)"/><g fill="none" stroke="rgba(255,255,255,.72)" stroke-width=".68"><ellipse cx="10" cy="10" rx="3.6" ry="6.8"/><ellipse cx="10" cy="10" rx="3.6" ry="6.8" transform="rotate(60 10 10)"/><ellipse cx="10" cy="10" rx="3.6" ry="6.8" transform="rotate(120 10 10)"/></g></svg></span><b>Prismeter</b></div>
     <div class="window-controls">
-      <button id="windowMinimize" type="button" aria-label="最小化" title="最小化"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M2 6.5h8"/></svg></button>
-      <button id="windowMaximize" type="button" aria-label="最大化" title="最大化"><svg viewBox="0 0 12 12" aria-hidden="true"><rect class="maximize-glyph" x="2.5" y="2.5" width="7" height="7" rx=".5"/><g class="restore-glyph"><path d="M4 3h5v5"/><rect x="2.5" y="4.5" width="5" height="5" rx=".5"/></g></svg></button>
-      <button id="windowClose" type="button" class="window-close" aria-label="关闭" title="关闭"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="m3 3 6 6M9 3 3 9"/></svg></button>
+      <button id="windowMinimize" type="button" data-i18n="shellMinimize" data-i18n-content="false" data-i18n-attrs="aria-label,title" aria-label="最小化" title="最小化"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="M2 6.5h8"/></svg></button>
+      <button id="windowMaximize" type="button" data-i18n="shellMaximize" data-i18n-content="false" data-i18n-attrs="aria-label,title" aria-label="最大化" title="最大化"><svg viewBox="0 0 12 12" aria-hidden="true"><rect class="maximize-glyph" x="2.5" y="2.5" width="7" height="7" rx=".5"/><g class="restore-glyph"><path d="M4 3h5v5"/><rect x="2.5" y="4.5" width="5" height="5" rx=".5"/></g></svg></button>
+      <button id="windowClose" type="button" class="window-close" data-i18n="shellClose" data-i18n-content="false" data-i18n-attrs="aria-label,title" aria-label="关闭" title="关闭"><svg viewBox="0 0 12 12" aria-hidden="true"><path d="m3 3 6 6M9 3 3 9"/></svg></button>
     </div>
   </div>
   <div class="window-resize-handles" aria-hidden="true">
@@ -45,21 +45,21 @@
         <div class="brand-mark" aria-hidden="true"><svg viewBox="0 0 42 42" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="prismeterBrandGradient" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#8097ff"/><stop offset=".52" stop-color="#7954d6"/><stop offset="1" stop-color="#4fd1c5"/></linearGradient></defs><rect x=".7" y=".7" width="40.6" height="40.6" rx="13.3" fill="url(#prismeterBrandGradient)" stroke="rgba(255,255,255,.62)"/><g fill="none" stroke="rgba(255,255,255,.66)" stroke-width="1.25"><ellipse cx="21" cy="21" rx="7.6" ry="14.2"/><ellipse cx="21" cy="21" rx="7.6" ry="14.2" transform="rotate(60 21 21)"/><ellipse cx="21" cy="21" rx="7.6" ry="14.2" transform="rotate(120 21 21)"/></g></svg></div>
         <div>
           <h1>Prismeter</h1>
-          <p>棱镜计量</p>
+          <p data-i18n="appBrandSubtitle">棱镜计量</p>
         </div>
       </div>
 
-      <nav class="primary-nav" aria-label="主导航">
-        <button class="nav-item active" data-view="overview" aria-current="page"><span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="3.5" y="3.5" width="6.5" height="6.5" rx="2"/><rect x="14" y="3.5" width="6.5" height="6.5" rx="2"/><rect x="3.5" y="14" width="6.5" height="6.5" rx="2"/><rect x="14" y="14" width="6.5" height="6.5" rx="2"/></svg></span><span class="nav-label">总览</span></button>
-        <button class="nav-item" data-view="platforms"><span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 3.5 20 8l-8 4.5L4 8 12 3.5Z"/><path d="m4 12 8 4.5 8-4.5M4 16l8 4.5 8-4.5"/></svg></span><span class="nav-label">平台</span></button>
-        <button class="nav-item" data-view="models"><span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="6" cy="12" r="2.5"/><circle cx="18" cy="6" r="2.5"/><circle cx="18" cy="18" r="2.5"/><path d="m8.3 10.9 7.4-3.8M8.3 13.1l7.4 3.8"/></svg></span><span class="nav-label">模型分析</span></button>
-        <button class="nav-item" data-view="alerts"><span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M18.5 10.2a6.5 6.5 0 0 0-13 0c0 6-2.5 6-2.5 7.3h18c0-1.3-2.5-1.3-2.5-7.3Z"/><path d="M9.5 20h5"/></svg></span><span class="nav-label">提醒</span></button>
-        <button class="nav-item" data-view="accounts"><span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4.5 20c.8-4.1 3.3-6.2 7.5-6.2s6.7 2.1 7.5 6.2"/></svg></span><span class="nav-label">账户</span></button>
-        <button class="nav-item" data-view="settings"><span class="nav-icon settings-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.5"/><path d="M12 2.8v2.1M12 19.1v2.1M2.8 12h2.1M19.1 12h2.1M5.5 5.5 7 7M17 17l1.5 1.5M18.5 5.5 17 7M7 17l-1.5 1.5"/></svg></span><span class="nav-label">设置</span></button>
+      <nav class="primary-nav" data-i18n="shellPrimaryNavigation" data-i18n-content="false" data-i18n-attrs="aria-label" aria-label="主导航">
+        <button class="nav-item active" data-view="overview" aria-current="page"><span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="3.5" y="3.5" width="6.5" height="6.5" rx="2"/><rect x="14" y="3.5" width="6.5" height="6.5" rx="2"/><rect x="3.5" y="14" width="6.5" height="6.5" rx="2"/><rect x="14" y="14" width="6.5" height="6.5" rx="2"/></svg></span><span class="nav-label" data-i18n="shellOverview">总览</span></button>
+        <button class="nav-item" data-view="platforms"><span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 3.5 20 8l-8 4.5L4 8 12 3.5Z"/><path d="m4 12 8 4.5 8-4.5M4 16l8 4.5 8-4.5"/></svg></span><span class="nav-label" data-i18n="shellPlatforms">平台</span></button>
+        <button class="nav-item" data-view="models"><span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="6" cy="12" r="2.5"/><circle cx="18" cy="6" r="2.5"/><circle cx="18" cy="18" r="2.5"/><path d="m8.3 10.9 7.4-3.8M8.3 13.1l7.4 3.8"/></svg></span><span class="nav-label" data-i18n="shellModels">模型分析</span></button>
+        <button class="nav-item" data-view="alerts"><span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M18.5 10.2a6.5 6.5 0 0 0-13 0c0 6-2.5 6-2.5 7.3h18c0-1.3-2.5-1.3-2.5-7.3Z"/><path d="M9.5 20h5"/></svg></span><span class="nav-label" data-i18n="shellAlerts">提醒</span></button>
+        <button class="nav-item" data-view="accounts"><span class="nav-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4.5 20c.8-4.1 3.3-6.2 7.5-6.2s6.7 2.1 7.5 6.2"/></svg></span><span class="nav-label" data-i18n="shellAccounts">账户</span></button>
+        <button class="nav-item" data-view="settings"><span class="nav-icon settings-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.5"/><path d="M12 2.8v2.1M12 19.1v2.1M2.8 12h2.1M19.1 12h2.1M5.5 5.5 7 7M17 17l1.5 1.5M18.5 5.5 17 7M7 17l-1.5 1.5"/></svg></span><span class="nav-label" data-i18n="shellSettings">设置</span></button>
       </nav>
 
       <div class="connected-accounts-region">
-        <div class="side-label">已连接账户</div>
+        <div class="side-label" data-i18n="shellConnectedAccounts">已连接账户</div>
         <div id="platformNav" class="platform-nav"></div>
       </div>
 
@@ -68,56 +68,56 @@
     <section class="workspace">
       <header class="topbar">
         <div>
-          <p class="eyebrow" id="eyebrow">用量总览</p>
-          <h2 id="pageTitle">早上好，今天的消耗很平稳</h2>
+          <p class="eyebrow" id="eyebrow" data-i18n="overviewUsage">用量总览</p>
+          <h2 id="pageTitle" data-i18n="overviewGreeting">早上好，今天的消耗很平稳</h2>
         </div>
         <div class="top-actions">
-          <div class="sync-status"><i></i><span id="syncText">刚刚同步</span></div>
-          <button class="icon-button refresh-button" id="refreshButton" title="从远端刷新数据" aria-label="从远端刷新数据"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19.1 8.2A7.8 7.8 0 1 0 20 14"/><path d="M19.1 8.2V3.8M19.1 8.2h-4.4"/></svg></button>
+          <div class="sync-status"><i></i><span id="syncText" data-i18n="overviewSyncedNow">刚刚同步</span></div>
+          <button class="icon-button refresh-button" id="refreshButton" data-i18n="overviewRefresh" data-i18n-content="false" data-i18n-attrs="title,aria-label" title="从远端刷新数据" aria-label="从远端刷新数据"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19.1 8.2A7.8 7.8 0 1 0 20 14"/><path d="M19.1 8.2V3.8M19.1 8.2h-4.4"/></svg></button>
         </div>
       </header>
 
       <div class="view active" id="overviewView">
         <section class="hero glass-panel">
           <div class="hero-copy">
-            <span class="live-pill"><i></i><span id="globalStatusText">正在读取真实连接…</span></span>
-            <p>远端账户监控</p>
-            <div class="hero-value"><strong>0</strong><span>个已连接账户</span></div>
-            <div class="hero-delta"><b>等待连接</b> · 不使用本地估算</div>
+            <span class="live-pill"><i></i><span id="globalStatusText" data-i18n="overviewReadingConnections">正在读取真实连接…</span></span>
+            <p data-i18n="overviewMonitoring">远端账户监控</p>
+            <div class="hero-value"><strong>0</strong><span data-i18n="overviewConnectedAccounts">个已连接账户</span></div>
+            <div class="hero-delta"><b data-i18n="overviewWaitingConnection">等待连接</b> · <span data-i18n="overviewNoLocalEstimates">不使用本地估算</span></div>
           </div>
           <div class="hero-chart-wrap">
-            <div class="hero-status-head"><span>快速判断</span><b id="heroSchedule">等待读取同步计划</b></div>
+            <div class="hero-status-head"><span data-i18n="overviewAtAGlance">快速判断</span><b id="heroSchedule" data-i18n="overviewWaitingSchedule">等待读取同步计划</b></div>
             <div class="hero-status-grid">
-              <article><span>数据新鲜</span><strong id="heroHealthy">0</strong><small>已成功读取远端数据</small></article>
-              <article><span>需要处理</span><strong id="heroAttention">0</strong><small>同步失败或数据待刷新</small></article>
-              <article><span>已暂停</span><strong id="heroPaused">0</strong><small>保留账户但不参与同步</small></article>
+              <article><span data-i18n="dataFresh">数据新鲜</span><strong id="heroHealthy">0</strong><small data-i18n="overviewReadRemoteData">已成功读取远端数据</small></article>
+              <article><span data-i18n="needsAttention">需要处理</span><strong id="heroAttention">0</strong><small data-i18n="overviewSyncNeedsRefresh">同步失败或数据待刷新</small></article>
+              <article><span data-i18n="monitoringPaused">已暂停</span><strong id="heroPaused">0</strong><small data-i18n="overviewPausedRetained">保留账户但不参与同步</small></article>
             </div>
-            <p class="hero-source-note"><i></i>只汇总平台实际返回的数据，不使用本地估算</p>
+            <p class="hero-source-note"><i></i><span data-i18n="overviewRemoteOnly">只汇总平台实际返回的数据，不使用本地估算</span></p>
           </div>
         </section>
 
         <section id="actionCenter" class="action-center glass-panel">
-          <div class="card-title-row"><div><p class="eyebrow">行动中心</p><h3 id="actionCenterTitle">当前无需处理</h3></div><button class="text-button" data-target-view="alerts">查看提醒 <span>→</span></button></div>
+          <div class="card-title-row"><div><p class="eyebrow" data-i18n="overviewActionCenter">行动中心</p><h3 id="actionCenterTitle" data-i18n="overviewNothingToDo">当前无需处理</h3></div><button class="text-button" data-target-view="alerts"><span data-i18n="overviewViewAlerts">查看提醒</span> <span>→</span></button></div>
           <div id="actionList" class="action-list"></div>
         </section>
 
         <section class="section-heading">
-          <div><p class="eyebrow">平台与套餐</p><h3>你正在使用的服务</h3></div>
-          <button class="text-button" data-target-view="platforms">查看全部 <span>→</span></button>
+          <div><p class="eyebrow" data-i18n="overviewPlatformsPlans">平台与套餐</p><h3 data-i18n="overviewServices">你正在使用的服务</h3></div>
+          <button class="text-button" data-target-view="platforms"><span data-i18n="overviewViewAll">查看全部</span> <span>→</span></button>
         </section>
         <section id="platformCards" class="platform-grid"></section>
 
         <section class="bottom-grid">
           <article class="glass-panel activity-card">
-            <div class="card-title-row"><div><p class="eyebrow">同步动态</p><h3>最近同步</h3></div><span class="mini-button passive-label">当前</span></div>
+            <div class="card-title-row"><div><p class="eyebrow" data-i18n="overviewSyncActivity">同步动态</p><h3 data-i18n="overviewRecentSyncs">最近同步</h3></div><span class="mini-button passive-label" data-i18n="overviewCurrent">当前</span></div>
             <div id="activityList" class="activity-list"></div>
           </article>
           <article class="glass-panel insight-card">
             <div class="orb"><span></span></div>
-            <p class="eyebrow">Prism 洞察</p>
-            <h3>所有指标均来自平台远端</h3>
-            <p>添加账户后，Prismeter 才会展示平台实际支持的远端指标。</p>
-            <button class="soft-button" data-target-view="accounts">查看账户</button>
+            <p class="eyebrow" data-i18n="overviewInsight">Prism 洞察</p>
+            <h3 data-i18n="overviewAllRemote">所有指标均来自平台远端</h3>
+            <p data-i18n="overviewConnectForMetrics">添加账户后，Prismeter 才会展示平台实际支持的远端指标。</p>
+            <button class="soft-button" data-target-view="accounts" data-i18n="overviewViewAccounts">查看账户</button>
           </article>
         </section>
       </div>
@@ -126,10 +126,10 @@
         <section class="platform-header glass-panel">
           <div id="selectedPlatformIcon" class="large-platform-icon"></div>
           <div class="platform-heading-copy">
-            <div class="title-line"><h3 id="selectedPlatformName"></h3><span class="connected-badge">已连接</span></div>
+            <div class="title-line"><h3 id="selectedPlatformName"></h3><span class="connected-badge" data-i18n="platformConnected">已连接</span></div>
             <p id="selectedPlatformDescription"></p>
           </div>
-          <div class="header-stat"><span>数据更新</span><strong>等待同步</strong></div>
+          <div class="header-stat"><span data-i18n="platformDataUpdated">数据更新</span><strong data-i18n="platformWaitingSync">等待同步</strong></div>
         </section>
 
         <div id="productTabs" class="segmented-control"></div>
@@ -137,128 +137,128 @@
 
         <section id="balanceTrendCard" class="glass-panel balance-trend-card" hidden>
           <div class="card-title-row">
-            <div><p class="eyebrow">远端快照</p><h3>指标趋势</h3></div>
-            <div class="trend-stat"><strong id="trendChange">—</strong><span id="trendCaption">等待更多快照</span></div>
+            <div><p class="eyebrow" data-i18n="trendRemoteSnapshots">远端快照</p><h3 data-i18n="trendMetrics">指标趋势</h3></div>
+            <div class="trend-stat"><strong id="trendChange">—</strong><span id="trendCaption" data-i18n="trendWaitingSnapshots">等待更多快照</span></div>
           </div>
           <div class="trend-toolbar">
-            <div id="trendMetricTabs" class="trend-metric-tabs" aria-label="选择趋势指标"></div>
-            <div class="trend-range-tabs" role="group" aria-label="选择趋势时间范围">
-              <button type="button" data-trend-range="1">24 小时</button>
-              <button type="button" class="active" data-trend-range="7">7 天</button>
-              <button type="button" data-trend-range="30">30 天</button>
-              <button type="button" data-trend-range="90">90 天</button>
+            <div id="trendMetricTabs" class="trend-metric-tabs" data-i18n="trendChooseMetric" data-i18n-content="false" data-i18n-attrs="aria-label" aria-label="选择趋势指标"></div>
+            <div class="trend-range-tabs" role="group" data-i18n="trendChooseRange" data-i18n-content="false" data-i18n-attrs="aria-label" aria-label="选择趋势时间范围">
+              <button type="button" data-trend-range="1" data-i18n="duration24Hours">24 小时</button>
+              <button type="button" class="active" data-trend-range="7" data-i18n="duration7Days">7 天</button>
+              <button type="button" data-trend-range="30" data-i18n="duration30Days">30 天</button>
+              <button type="button" data-trend-range="90" data-i18n="duration90Days">90 天</button>
             </div>
           </div>
           <section id="trendForecast" class="trend-forecast" hidden aria-live="polite">
             <span class="trend-forecast-icon" aria-hidden="true">↗</span>
-            <div><b id="trendForecastTitle">正在评估消耗节奏</b><span id="trendForecastDetail">预测仅基于 Prismeter 保存的远端快照。</span></div>
-            <small id="trendForecastMeta">需要更多数据</small>
+            <div><b id="trendForecastTitle" data-i18n="detailForecasting">正在评估消耗节奏</b><span id="trendForecastDetail" data-i18n="detailForecastSource">预测仅基于 Prismeter 保存的远端快照。</span></div>
+            <small id="trendForecastMeta" data-i18n="detailMoreData">需要更多数据</small>
           </section>
           <div class="trend-chart-wrap">
-            <svg class="balance-trend-chart" viewBox="0 0 600 170" role="img" aria-label="远端指标历史趋势">
+            <svg class="balance-trend-chart" viewBox="0 0 600 170" role="img" data-i18n="trendMetrics" data-i18n-content="false" data-i18n-attrs="aria-label" aria-label="远端指标历史趋势">
               <defs><linearGradient id="balanceAreaFill" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#3972dc" stop-opacity=".30"/><stop offset="100%" stop-color="#3972dc" stop-opacity="0"/></linearGradient></defs>
               <path class="grid-line" d="M20 30H580 M20 85H580 M20 140H580"/>
               <path id="trendArea" class="trend-area"></path>
               <path id="trendPath" class="trend-path"></path>
               <g id="trendPoints"></g>
             </svg>
-            <div id="trendEmpty" class="trend-empty">同步两次以上后会显示远端指标变化曲线。</div>
+            <div id="trendEmpty" class="trend-empty" data-i18n="detailTrendNeedsSyncs">同步两次以上后会显示远端指标变化曲线。</div>
           </div>
         </section>
 
         <section class="glass-panel detail-table-card">
           <div class="card-title-row">
-            <div><p class="eyebrow" id="detailEyebrow">模型明细</p><h3 id="detailTitle">用量分布</h3></div>
-            <div class="table-actions"><span class="mini-button active passive-label">当前远端数据</span><button class="mini-button" id="exportProductButton">导出 CSV</button></div>
+            <div><p class="eyebrow" id="detailEyebrow" data-i18n="detailModels">模型明细</p><h3 id="detailTitle" data-i18n="detailUsageDistribution">用量分布</h3></div>
+            <div class="table-actions"><span class="mini-button active passive-label" data-i18n="detailCurrentRemote">当前远端数据</span><button class="mini-button" id="exportProductButton" data-i18n="detailExportCsv">导出 CSV</button></div>
           </div>
           <div id="dynamicTable" class="dynamic-table"></div>
-          <div class="legend"><span><i class="official"></i>官方数据</span><span><i class="estimated"></i>未使用本地估算</span><span>— 表示平台未提供</span></div>
+          <div class="legend"><span><i class="official"></i><span data-i18n="detailOfficialData">官方数据</span></span><span><i class="estimated"></i><span data-i18n="detailNoLocalEstimate">未使用本地估算</span></span><span data-i18n="detailNotProvided">— 表示平台未提供</span></div>
         </section>
       </div>
 
       <div class="view" id="modelsView">
         <section class="section-heading standalone model-heading">
-          <div><p class="eyebrow">远端模型数据</p><h3>按平台实际返回字段分析</h3></div>
+          <div><p class="eyebrow" data-i18n="modelsRemoteData">远端模型数据</p><h3 data-i18n="modelsAnalyzeFields">按平台实际返回字段分析</h3></div>
           <div class="model-filter-controls">
-            <label class="model-search"><span aria-hidden="true"><svg viewBox="0 0 20 20"><circle cx="8.6" cy="8.6" r="5.1"/><path d="m12.4 12.4 4.1 4.1"/></svg></span><input id="modelSearchInput" type="search" autocomplete="off" placeholder="搜索模型、产品或账户" aria-label="搜索模型、产品或账户" /></label>
+            <label class="model-search"><span aria-hidden="true"><svg viewBox="0 0 20 20"><circle cx="8.6" cy="8.6" r="5.1"/><path d="m12.4 12.4 4.1 4.1"/></svg></span><input id="modelSearchInput" type="search" autocomplete="off" data-i18n="modelsSearch" data-i18n-content="false" data-i18n-attrs="placeholder,aria-label" placeholder="搜索模型、产品或账户" aria-label="搜索模型、产品或账户" /></label>
             <div class="glass-combobox compact-combo" data-combobox>
               <input id="modelLevelSelect" type="hidden" value="all" />
-              <button class="combo-trigger" type="button" data-combo-trigger aria-haspopup="listbox" aria-expanded="false"><span data-combo-label>全部层级</span><i></i></button>
+              <button class="combo-trigger" type="button" data-combo-trigger aria-haspopup="listbox" aria-expanded="false"><span data-combo-label data-i18n="modelsAllLevels">全部层级</span><i></i></button>
               <div class="combo-menu" role="listbox">
-                <button type="button" class="combo-option selected" data-value="all" role="option">全部层级<span>模型级与产品级</span></button>
-                <button type="button" class="combo-option" data-value="row" role="option">模型级记录<span>平台返回明细行</span></button>
-                <button type="button" class="combo-option" data-value="product" role="option">产品级记录<span>套餐或服务级指标</span></button>
+                <button type="button" class="combo-option selected" data-value="all" role="option">全部层级<span data-i18n="modelsLevelAndProduct">模型级与产品级</span></button>
+                <button type="button" class="combo-option" data-value="row" role="option"><span data-i18n="modelsRowRecords">模型级记录</span><span data-i18n="modelsDetailedRows">平台返回明细行</span></button>
+                <button type="button" class="combo-option" data-value="product" role="option"><span data-i18n="modelsProductRecords">产品级记录</span><span data-i18n="modelsServiceMetrics">套餐或服务级指标</span></button>
               </div>
             </div>
             <div class="glass-combobox compact-combo" data-combobox>
               <input id="modelFamilySelect" type="hidden" value="all" />
-              <button class="combo-trigger" type="button" data-combo-trigger aria-haspopup="listbox" aria-expanded="false"><span data-combo-label>全部模型与产品</span><i></i></button>
+              <button class="combo-trigger" type="button" data-combo-trigger aria-haspopup="listbox" aria-expanded="false"><span data-combo-label data-i18n="modelsAllModels">全部模型与产品</span><i></i></button>
               <div class="combo-menu" role="listbox">
-                <button type="button" class="combo-option selected" data-value="all" role="option">全部模型与产品<span>仅远端实际返回</span></button>
-                <button type="button" class="combo-option" data-value="deepseek" role="option">DeepSeek<span>跨平台</span></button>
-                <button type="button" class="combo-option" data-value="glm" role="option">GLM<span>跨平台</span></button>
-                <button type="button" class="combo-option" data-value="doubao" role="option">Doubao<span>火山方舟</span></button>
-                <button type="button" class="combo-option" data-value="mimo" role="option">Xiaomi MiMo<span>官方模型列表</span></button>
+                <button type="button" class="combo-option selected" data-value="all" role="option"><span data-i18n="modelsAllModels">全部模型与产品</span><span data-i18n="modelsRemoteOnly">仅远端实际返回</span></button>
+                <button type="button" class="combo-option" data-value="deepseek" role="option">DeepSeek<span data-i18n="modelsCrossPlatform">跨平台</span></button>
+                <button type="button" class="combo-option" data-value="glm" role="option">GLM<span data-i18n="modelsCrossPlatform">跨平台</span></button>
+                <button type="button" class="combo-option" data-value="doubao" role="option">Doubao<span data-i18n="modelsArk">火山方舟</span></button>
+                <button type="button" class="combo-option" data-value="mimo" role="option">Xiaomi MiMo<span data-i18n="modelsOfficialList">官方模型列表</span></button>
                 <button type="button" class="combo-option" data-value="gpt" role="option">GPT / Codex<span>OpenAI</span></button>
               </div>
             </div>
           </div>
         </section>
         <section class="glass-panel comparison-hero">
-          <div><p>远端记录</p><strong id="modelTotal">—</strong><span id="modelTotalUnit">等待模型或产品明细</span></div>
-          <div><p>模型级</p><strong id="modelRowTotal">—</strong><span>平台返回的明细行</span></div>
-          <div><p>产品级</p><strong id="modelProductTotal">—</strong><span>套餐或服务级指标</span></div>
-          <div><p>数据覆盖</p><strong id="mainSource">—</strong><span>仅统计已连接平台</span></div>
-          <div><p>最新同步</p><strong id="modelLatestSync">—</strong><span>不会读取本地会话日志</span></div>
+          <div><p data-i18n="modelsRemoteRecords">远端记录</p><strong id="modelTotal">—</strong><span id="modelTotalUnit" data-i18n="modelsAwaitingDetails">等待模型或产品明细</span></div>
+          <div><p data-i18n="modelsLevel">模型级</p><strong id="modelRowTotal">—</strong><span data-i18n="modelsDetailedRows">平台返回的明细行</span></div>
+          <div><p data-i18n="modelsProductLevel">产品级</p><strong id="modelProductTotal">—</strong><span data-i18n="modelsServiceMetrics">套餐或服务级指标</span></div>
+          <div><p data-i18n="modelsCoverageLabel">数据覆盖</p><strong id="mainSource">—</strong><span data-i18n="modelsConnectedOnly">仅统计已连接平台</span></div>
+          <div><p data-i18n="modelsLatestSync">最新同步</p><strong id="modelLatestSync">—</strong><span data-i18n="modelsNoLocalLogs">不会读取本地会话日志</span></div>
         </section>
-        <section id="modelCoverage" class="model-coverage" aria-label="模型数据覆盖情况"></section>
-        <section class="model-results-heading"><div><p class="eyebrow">筛选结果</p><h3 id="modelResultsTitle">远端记录</h3></div><span id="modelResultCount">0 条</span></section>
+        <section id="modelCoverage" class="model-coverage" data-i18n="modelsCoverage" data-i18n-content="false" data-i18n-attrs="aria-label" aria-label="模型数据覆盖情况"></section>
+        <section class="model-results-heading"><div><p class="eyebrow" data-i18n="modelsFiltered">筛选结果</p><h3 id="modelResultsTitle" data-i18n="modelsRemoteRecords">远端记录</h3></div><span id="modelResultCount" data-i18n="modelResultEmpty">0 条</span></section>
         <section id="comparisonCards" class="comparison-grid"></section>
       </div>
 
       <div class="view" id="alertsView">
-        <section class="section-heading standalone alerts-heading"><div><p class="eyebrow">提醒中心</p><h3>余额、周期额度与同步状态</h3></div><button class="soft-button" data-open-settings>全局提醒设置</button></section>
-        <section class="alert-overview" aria-label="提醒分类统计">
-          <article class="glass-panel alert-overview-item"><span>全部提醒</span><strong id="alertTotal">0</strong><small>当前需要关注</small></article>
-          <article class="glass-panel alert-overview-item balance"><span>余额提醒</span><strong id="alertBalanceTotal">0</strong><small>低于余额阈值</small></article>
-          <article class="glass-panel alert-overview-item quota"><span>额度提醒</span><strong id="alertQuotaTotal">0</strong><small>接近周期上限</small></article>
-          <article class="glass-panel alert-overview-item sync"><span>同步与时效</span><strong id="alertSyncTotal">0</strong><small>失败或数据过期</small></article>
+        <section class="section-heading standalone alerts-heading"><div><p class="eyebrow" data-i18n="alertsCenter">提醒中心</p><h3 data-i18n="alertsScope">余额、周期额度与同步状态</h3></div><button class="soft-button" data-open-settings data-i18n="alertsGlobalRules">全局提醒设置</button></section>
+        <section class="alert-overview" data-i18n="alertsCategorySummary" data-i18n-content="false" data-i18n-attrs="aria-label" aria-label="提醒分类统计">
+          <article class="glass-panel alert-overview-item"><span data-i18n="alertsAll">全部提醒</span><strong id="alertTotal">0</strong><small data-i18n="alertsNeedsAttention">当前需要关注</small></article>
+          <article class="glass-panel alert-overview-item balance"><span data-i18n="alertsBalance">余额提醒</span><strong id="alertBalanceTotal">0</strong><small data-i18n="alertsBelowBalance">低于余额阈值</small></article>
+          <article class="glass-panel alert-overview-item quota"><span data-i18n="alertsQuota">额度提醒</span><strong id="alertQuotaTotal">0</strong><small data-i18n="alertsNearLimit">接近周期上限</small></article>
+          <article class="glass-panel alert-overview-item sync"><span data-i18n="alertsSyncFreshness">同步与时效</span><strong id="alertSyncTotal">0</strong><small data-i18n="alertsFailedStale">失败或数据过期</small></article>
         </section>
         <section class="glass-panel alert-rule-panel">
-          <div class="card-title-row"><div><p class="eyebrow">账户规则</p><h3>每个账户独立判断</h3></div><span id="alertRuleSummary" class="history-count">尚未连接账户</span></div>
-          <p class="alert-rule-note">账户可以跟随全局规则，也可以覆盖适用的阈值或单独关闭提醒；暂停监控仍会保留规则。</p>
+          <div class="card-title-row"><div><p class="eyebrow" data-i18n="alertsAccountRules">账户规则</p><h3 data-i18n="alertsPerAccount">每个账户独立判断</h3></div><span id="alertRuleSummary" class="history-count" data-i18n="alertsNoAccounts">尚未连接账户</span></div>
+          <p class="alert-rule-note" data-i18n="alertsRulesNote">账户可以跟随全局规则，也可以覆盖适用的阈值或单独关闭提醒；暂停监控仍会保留规则。</p>
           <div id="alertRuleList" class="alert-rule-list"></div>
         </section>
         <section class="alert-toolbar">
-          <div class="alert-filters" role="group" aria-label="筛选提醒">
-            <button type="button" class="active" data-alert-filter="all">全部</button>
-            <button type="button" data-alert-filter="balance">余额</button>
-            <button type="button" data-alert-filter="quota">额度</button>
-            <button type="button" data-alert-filter="sync">同步与时效</button>
+          <div class="alert-filters" role="group" data-i18n="alertsFilter" data-i18n-content="false" data-i18n-attrs="aria-label" aria-label="筛选提醒">
+            <button type="button" class="active" data-alert-filter="all" data-i18n="alertsAllFilter">全部</button>
+            <button type="button" data-alert-filter="balance" data-i18n="alertsBalanceFilter">余额</button>
+            <button type="button" data-alert-filter="quota" data-i18n="alertsQuotaFilter">额度</button>
+            <button type="button" data-alert-filter="sync" data-i18n="alertsSyncFreshness">同步与时效</button>
           </div>
-          <span id="alertFilterResult">0 条提醒</span>
+          <span id="alertFilterResult" data-i18n="alertFilterEmpty">0 条提醒</span>
         </section>
         <section id="alertList" class="alert-list"></section>
       </div>
 
       <div class="view" id="accountsView">
         <section class="section-heading standalone">
-          <div><p class="eyebrow">本机账户中心</p><h3>所有平台账户</h3></div>
-          <div class="account-heading-actions"><span class="secure-pill"><i></i>凭据由 Windows 加密</span><button class="soft-button" id="addAccountButton">＋ 添加账户</button></div>
+          <div><p class="eyebrow" data-i18n="accountsLocalCenter">本机账户中心</p><h3 data-i18n="accountsAllPlatforms">所有平台账户</h3></div>
+          <div class="account-heading-actions"><span class="secure-pill"><i></i><span data-i18n="accountsWindowsEncryption">凭据由 Windows 加密</span></span><button class="soft-button" id="addAccountButton" data-i18n="accountsAdd">＋ 添加账户</button></div>
         </section>
 
-        <section class="account-health-overview" aria-label="账户同步健康概览">
-          <article class="glass-panel health-overview-item"><span>正在监控</span><strong id="healthMonitored">0</strong><small>参与自动同步</small></article>
-          <article class="glass-panel health-overview-item healthy"><span>状态正常</span><strong id="healthHealthy">0</strong><small>远端同步正常</small></article>
-          <article class="glass-panel health-overview-item attention"><span>需要处理</span><strong id="healthAttention">0</strong><small>失败或数据过期</small></article>
-          <article class="glass-panel health-overview-item paused"><span>已暂停</span><strong id="healthPaused">0</strong><small>保留已有数据</small></article>
+        <section class="account-health-overview" data-i18n="accountsHealthOverview" data-i18n-content="false" data-i18n-attrs="aria-label" aria-label="账户同步健康概览">
+          <article class="glass-panel health-overview-item"><span data-i18n="healthMonitoring">正在监控</span><strong id="healthMonitored">0</strong><small data-i18n="healthAutoSync">参与自动同步</small></article>
+          <article class="glass-panel health-overview-item healthy"><span data-i18n="healthHealthy">状态正常</span><strong id="healthHealthy">0</strong><small data-i18n="healthRemoteHealthy">远端同步正常</small></article>
+          <article class="glass-panel health-overview-item attention"><span data-i18n="healthAttention">需要处理</span><strong id="healthAttention">0</strong><small data-i18n="healthFailedStale">失败或数据过期</small></article>
+          <article class="glass-panel health-overview-item paused"><span data-i18n="healthPaused">已暂停</span><strong id="healthPaused">0</strong><small data-i18n="healthDataRetained">保留已有数据</small></article>
         </section>
 
         <section class="sync-capability-layout">
           <article class="glass-panel sync-center-card">
             <div class="card-title-row">
-              <div><p class="eyebrow">同步中心</p><h3>远端任务状态</h3></div>
-              <span id="syncCenterBadge" class="sync-center-badge">等待任务</span>
+              <div><p class="eyebrow" data-i18n="syncCenter">同步中心</p><h3 data-i18n="syncRemoteTasks">远端任务状态</h3></div>
+              <span id="syncCenterBadge" class="sync-center-badge" data-i18n="syncWaiting">等待任务</span>
             </div>
             <div id="syncCenterSummary" class="sync-center-summary"></div>
             <div id="syncQueueList" class="sync-queue-list"></div>
@@ -266,37 +266,37 @@
 
           <article class="glass-panel capability-matrix-card">
             <div class="card-title-row">
-              <div><p class="eyebrow">数据源能力</p><h3>按平台实际支持展示</h3></div>
-              <span class="capability-source-badge">仅远端数据</span>
+              <div><p class="eyebrow" data-i18n="capabilitySource">数据源能力</p><h3 data-i18n="capabilityByPlatform">按平台实际支持展示</h3></div>
+              <span class="capability-source-badge" data-i18n="capabilityRemoteOnly">仅远端数据</span>
             </div>
-            <p class="capability-matrix-intro">不同平台返回的统计字段并不相同；“未提供”的数据不会按 0 计算，也不会用本地日志推算。</p>
+            <p class="capability-matrix-intro" data-i18n="capabilityIntro">不同平台返回的统计字段并不相同；“未提供”的数据不会按 0 计算，也不会用本地日志推算。</p>
             <div id="capabilityMatrix" class="capability-matrix"></div>
           </article>
         </section>
 
         <section class="glass-panel account-list-card account-directory">
           <div class="card-title-row">
-            <div><p class="eyebrow">已连接</p><h3 id="accountListTitle">账户列表</h3></div>
-            <div class="table-actions"><button class="mini-button" id="retryFailedButton">重试失败账户</button><button class="mini-button" id="syncAccountsButton"><span>全部同步</span></button></div>
+            <div><p class="eyebrow" data-i18n="accountConnected">已连接</p><h3 id="accountListTitle" data-i18n="accountList">账户列表</h3></div>
+            <div class="table-actions"><button class="mini-button" id="retryFailedButton" data-i18n="accountRetryFailed">重试失败账户</button><button class="mini-button" id="syncAccountsButton"><span data-i18n="accountSyncAll">全部同步</span></button></div>
           </div>
-          <div id="accountsEmpty" class="accounts-empty"><span class="empty-account-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="10" cy="8" r="3.5"/><path d="M3.5 19c.7-3.7 2.9-5.5 6.5-5.5 1.5 0 2.8.3 3.8 1M18 11.5v7M14.5 15h7"/></svg></span><b>还没有真实账户</b><p>点击“添加账户”连接平台，同一平台可以添加多个账号。</p><button class="soft-button" data-open-account-dialog>添加第一个账户</button></div>
+          <div id="accountsEmpty" class="accounts-empty"><span class="empty-account-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="10" cy="8" r="3.5"/><path d="M3.5 19c.7-3.7 2.9-5.5 6.5-5.5 1.5 0 2.8.3 3.8 1M18 11.5v7M14.5 15h7"/></svg></span><b data-i18n="accountNoReal">还没有真实账户</b><p data-i18n="accountConnectPrompt">点击“添加账户”连接平台，同一平台可以添加多个账号。</p><button class="soft-button" data-open-account-dialog data-i18n="accountAddFirst">添加第一个账户</button></div>
           <div id="accountsList" class="accounts-list account-directory-list"></div>
         </section>
 
         <section class="glass-panel sync-history-card">
           <div class="card-title-row sync-history-heading">
-            <div><p class="eyebrow">运行记录</p><h3>远端同步历史</h3></div>
-            <div class="sync-history-tools"><div class="sync-history-filters" role="group" aria-label="筛选同步记录"><button type="button" class="active" data-sync-history-filter="all">全部</button><button type="button" data-sync-history-filter="success">成功</button><button type="button" data-sync-history-filter="failed">失败</button></div><span id="syncEventCount" class="history-count">0 条记录</span></div>
+            <div><p class="eyebrow" data-i18n="historyRuns">运行记录</p><h3 data-i18n="historyRemoteSync">远端同步历史</h3></div>
+            <div class="sync-history-tools"><div class="sync-history-filters" role="group" data-i18n="historyFilter" data-i18n-content="false" data-i18n-attrs="aria-label" aria-label="筛选同步记录"><button type="button" class="active" data-sync-history-filter="all" data-i18n="historyAll">全部</button><button type="button" data-sync-history-filter="success" data-i18n="historySucceeded">成功</button><button type="button" data-sync-history-filter="failed" data-i18n="historyFailed">失败</button></div><span id="syncEventCount" class="history-count" data-i18n="historyRecordEmpty">0 条记录</span></div>
           </div>
-          <p class="sync-history-note">仅保存同步时间、结果、耗时和远端产品数量；不记录 API Key，也不读取本地会话日志。</p>
+          <p class="sync-history-note" data-i18n="historyNote">仅保存同步时间、结果、耗时和远端产品数量；不记录 API Key，也不读取本地会话日志。</p>
           <div id="syncEventSummary" class="sync-event-summary"></div>
           <div id="syncEventList" class="sync-event-list"></div>
         </section>
 
         <section class="glass-panel history-card">
           <div class="card-title-row">
-            <div><p class="eyebrow">远端快照</p><h3>余额同步快照</h3></div>
-            <span id="historyCount" class="history-count">0 条记录</span>
+            <div><p class="eyebrow" data-i18n="historyRemoteSnapshots">远端快照</p><h3 data-i18n="historyBalanceSnapshots">余额同步快照</h3></div>
+            <span id="historyCount" class="history-count" data-i18n="historyRecordEmpty">0 条记录</span>
           </div>
           <div id="historyList" class="history-list"></div>
         </section>
@@ -304,114 +304,114 @@
 
       <div class="view" id="settingsView">
         <section class="section-heading standalone settings-heading">
-          <div><p class="eyebrow">应用设置</p><h3>按你的习惯使用 Prismeter</h3></div>
-          <span id="settingsSaveStatus" class="settings-save-status"><i></i>改动会自动保存</span>
+          <div><p class="eyebrow" data-i18n="settingsApp">应用设置</p><h3 data-i18n="settingsPersonalize">按你的习惯使用 Prismeter</h3></div>
+          <span id="settingsSaveStatus" class="settings-save-status"><i></i><span data-i18n="settingsAutoSave">改动会自动保存</span></span>
         </section>
         <div id="settingsForm" class="settings-page-grid">
           <div class="settings-page-column">
             <article class="glass-panel settings-section-card">
-            <div class="settings-card-heading"><span class="settings-card-icon" aria-hidden="true">文</span><div><h4>语言 / Language</h4><p>界面语言立即切换；平台返回的模型名与远端数据保持原样。</p></div></div>
-            <label class="settings-field"><span><b>界面语言</b><small>当前提供简体中文和 English。</small></span><div class="glass-combobox settings-combo" data-combobox>
+             <div class="settings-card-heading"><span class="settings-card-icon" aria-hidden="true">文</span><div><h4 data-i18n="settingsLanguage">语言 / Language</h4><p data-i18n="settingsLanguageNote">界面语言立即切换；平台返回的模型名与远端数据保持原样。</p></div></div>
+             <label class="settings-field"><span><b data-i18n="settingsInterfaceLanguage">界面语言</b><small data-i18n="settingsLanguagesAvailable">当前提供简体中文和 English。</small></span><div class="glass-combobox settings-combo" data-combobox>
               <input id="interfaceLanguage" type="hidden" value="zh-CN" />
-              <button class="combo-trigger" type="button" data-combo-trigger aria-haspopup="listbox" aria-expanded="false"><span data-combo-label>简体中文</span><i></i></button>
+               <button class="combo-trigger" type="button" data-combo-trigger aria-haspopup="listbox" aria-expanded="false"><span data-combo-label data-i18n="settingsChinese">简体中文</span><i></i></button>
               <div class="combo-menu" role="listbox">
-                <button type="button" class="combo-option selected" data-value="zh-CN" role="option">简体中文<span>默认语言</span></button>
+                <button type="button" class="combo-option selected" data-value="zh-CN" role="option"><span data-i18n="settingsChinese">简体中文</span><span data-i18n="settingsDefault">默认语言</span></button>
                 <button type="button" class="combo-option" data-value="en" role="option">English<span>Core interface translation</span></button>
               </div>
             </div></label>
             </article>
 
             <article class="glass-panel settings-section-card">
-            <div class="settings-card-heading"><span class="settings-card-icon" aria-hidden="true">◐</span><div><h4>外观</h4><p>主题切换会立即应用到主界面和所有页面。</p></div></div>
-            <label class="settings-field"><span><b>外观模式</b><small>可固定明暗主题，也可以跟随 Windows。</small></span><div class="glass-combobox settings-combo" data-combobox>
+             <div class="settings-card-heading"><span class="settings-card-icon" aria-hidden="true">◐</span><div><h4 data-i18n="settingsAppearance">外观</h4><p data-i18n="settingsAppearanceNote">主题切换会立即应用到主界面和所有页面。</p></div></div>
+             <label class="settings-field"><span><b data-i18n="settingsAppearanceMode">外观模式</b><small data-i18n="settingsFollowWindows">可固定明暗主题，也可以跟随 Windows。</small></span><div class="glass-combobox settings-combo" data-combobox>
               <input id="appearanceMode" type="hidden" value="system" />
-              <button class="combo-trigger" type="button" data-combo-trigger aria-haspopup="listbox" aria-expanded="false"><span data-combo-label>跟随系统</span><i></i></button>
+              <button class="combo-trigger" type="button" data-combo-trigger aria-haspopup="listbox" aria-expanded="false"><span data-combo-label data-i18n="settingsSystem">跟随系统</span><i></i></button>
               <div class="combo-menu" role="listbox">
-                <button type="button" class="combo-option selected" data-value="system" role="option">跟随系统<span>随 Windows 自动切换</span></button>
-                <button type="button" class="combo-option" data-value="light" role="option">浅色模式<span>明亮液态玻璃</span></button>
-                <button type="button" class="combo-option" data-value="dark" role="option">深色模式<span>降低夜间亮度</span></button>
+                 <button type="button" class="combo-option selected" data-value="system" role="option"><span data-i18n="settingsSystem">跟随系统</span><span data-i18n="settingsAutoTheme">随 Windows 自动切换</span></button>
+                 <button type="button" class="combo-option" data-value="light" role="option"><span data-i18n="settingsLight">浅色模式</span><span data-i18n="settingsBrightGlass">明亮液态玻璃</span></button>
+                 <button type="button" class="combo-option" data-value="dark" role="option"><span data-i18n="settingsDark">深色模式</span><span data-i18n="settingsReducedBrightness">降低夜间亮度</span></button>
               </div>
             </div></label>
             </article>
 
             <article class="glass-panel settings-section-card">
-            <div class="settings-card-heading"><span class="settings-card-icon" aria-hidden="true">!</span><div><h4>提醒</h4><p>阈值修改后立即用于下一次同步与提醒判断。</p></div></div>
+             <div class="settings-card-heading"><span class="settings-card-icon" aria-hidden="true">!</span><div><h4 data-i18n="settingsAlerts">提醒</h4><p data-i18n="settingsAlertsNote">阈值修改后立即用于下一次同步与提醒判断。</p></div></div>
             <div class="settings-threshold-grid">
-              <label><span>低余额提醒阈值</span><div class="input-with-unit"><input id="lowBalanceThreshold" type="number" min="0" step="0.01" value="10"/><b>账户币种</b></div></label>
-              <label><span>套餐额度提醒阈值</span><div class="input-with-unit"><input id="usageThreshold" type="number" min="50" max="100" step="1" value="80"/><b>% 已用</b></div></label>
+               <label><span data-i18n="settingsLowBalance">低余额提醒阈值</span><div class="input-with-unit"><input id="lowBalanceThreshold" type="number" min="0" step="0.01" value="10"/><b data-i18n="settingsCurrency">账户币种</b></div></label>
+               <label><span data-i18n="settingsQuotaAlert">套餐额度提醒阈值</span><div class="input-with-unit"><input id="usageThreshold" type="number" min="50" max="100" step="1" value="80"/><b data-i18n="settingsQuotaUsed">% 已用</b></div></label>
             </div>
-            <label class="check-setting"><input id="notificationsEnabled" type="checkbox" checked/><span><b>Windows 通知</b><small>同步后发现低余额、额度超限或连接失败时提醒。</small></span></label>
-            <button id="testNotificationButton" class="soft-button settings-action" type="button">发送测试通知</button>
+             <label class="check-setting"><input id="notificationsEnabled" type="checkbox" checked/><span><b data-i18n="settingsWindowsNotifications">Windows 通知</b><small data-i18n="settingsNotificationsNote">同步后发现低余额、额度超限或连接失败时提醒。</small></span></label>
+             <button id="testNotificationButton" class="soft-button settings-action" type="button" data-i18n="settingsTestNotification">发送测试通知</button>
             </article>
 
             <article class="glass-panel settings-section-card">
-            <div class="settings-card-heading"><span class="settings-card-icon" aria-hidden="true">↑</span><div><h4>应用更新</h4><p>更新包由 Prismeter 的独立更新密钥签名并在安装前校验。</p></div></div>
-            <label class="settings-field"><span><b>检查更新</b><small>自动检查只会在应用启动后进行，不会自动安装。</small></span><div class="glass-combobox settings-combo" data-combobox>
+             <div class="settings-card-heading"><span class="settings-card-icon" aria-hidden="true">↑</span><div><h4 data-i18n="updateTitle">应用更新</h4><p data-i18n="updateSigned">更新包由 Prismeter 的独立更新密钥签名并在安装前校验。</p></div></div>
+             <label class="settings-field"><span><b data-i18n="updateCheck">检查更新</b><small data-i18n="updateAutomatic">自动检查只会在应用启动后进行，不会自动安装。</small></span><div class="glass-combobox settings-combo" data-combobox>
               <input id="updateCheckMode" type="hidden" value="startup" />
-              <button class="combo-trigger" type="button" data-combo-trigger aria-haspopup="listbox" aria-expanded="false"><span data-combo-label>启动时自动检查</span><i></i></button>
+              <button class="combo-trigger" type="button" data-combo-trigger aria-haspopup="listbox" aria-expanded="false"><span data-combo-label data-i18n="updateOnStartup">启动时自动检查</span><i></i></button>
               <div class="combo-menu" role="listbox">
-                <button type="button" class="combo-option selected" data-value="startup" role="option">启动时自动检查<span>发现新版后由你确认安装</span></button>
-                <button type="button" class="combo-option" data-value="manual" role="option">仅手动检查<span>不会在后台请求版本信息</span></button>
+                 <button type="button" class="combo-option selected" data-value="startup" role="option"><span data-i18n="updateOnStartup">启动时自动检查</span><span data-i18n="updateConfirmInstall">发现新版后由你确认安装</span></button>
+                 <button type="button" class="combo-option" data-value="manual" role="option"><span data-i18n="updateManual">仅手动检查</span><span data-i18n="updateNoBackground">不会在后台请求版本信息</span></button>
               </div>
             </div></label>
-            <div class="settings-info-row"><span><b>当前版本</b><small id="updateStatusText">尚未检查更新</small></span><strong id="updateCurrentVersion">—</strong></div>
-            <button id="checkUpdateButton" class="soft-button settings-action" type="button"><span>检查更新</span></button>
+             <div class="settings-info-row"><span><b data-i18n="updateCurrentVersion">当前版本</b><small id="updateStatusText" data-i18n="updateNotChecked">尚未检查更新</small></span><strong id="updateCurrentVersion">—</strong></div>
+             <button id="checkUpdateButton" class="soft-button settings-action" type="button"><span data-i18n="updateCheck">检查更新</span></button>
             </article>
           </div>
 
           <div class="settings-page-column">
             <article class="glass-panel settings-section-card">
-              <div class="settings-card-heading"><span class="settings-card-icon" aria-hidden="true">↻</span><div><h4>同步</h4><p>控制远端数据何时刷新，不会读取本地会话日志。</p></div></div>
-              <label class="settings-field"><span><b>自动同步</b><small>已暂停的账户不会参与；临时失败会在 2、5、15 分钟后分级重试。</small></span><div class="glass-combobox settings-combo" data-combobox>
+               <div class="settings-card-heading"><span class="settings-card-icon" aria-hidden="true">↻</span><div><h4 data-i18n="syncSettings">同步</h4><p data-i18n="syncSettingsNote">控制远端数据何时刷新，不会读取本地会话日志。</p></div></div>
+               <label class="settings-field"><span><b data-i18n="syncAutomatic">自动同步</b><small data-i18n="syncRetryNote">已暂停的账户不会参与；临时失败会在 2、5、15 分钟后分级重试。</small></span><div class="glass-combobox settings-combo" data-combobox>
                 <input id="autoSyncMinutes" type="hidden" value="30" />
-                <button class="combo-trigger" type="button" data-combo-trigger aria-haspopup="listbox" aria-expanded="false"><span data-combo-label>每 30 分钟</span><i></i></button>
+                <button class="combo-trigger" type="button" data-combo-trigger aria-haspopup="listbox" aria-expanded="false"><span data-combo-label data-i18n="syncEvery30Minutes">每 30 分钟</span><i></i></button>
                 <div class="combo-menu" role="listbox">
-                  <button type="button" class="combo-option" data-value="0" role="option">关闭<span>仅手动同步</span></button>
-                  <button type="button" class="combo-option" data-value="15" role="option">每 15 分钟<span>高频监控</span></button>
-                  <button type="button" class="combo-option selected" data-value="30" role="option">每 30 分钟<span>推荐</span></button>
-                  <button type="button" class="combo-option" data-value="60" role="option">每小时<span>平衡</span></button>
-                  <button type="button" class="combo-option" data-value="180" role="option">每 3 小时<span>低频</span></button>
+                   <button type="button" class="combo-option" data-value="0" role="option"><span data-i18n="syncOff">关闭</span><span data-i18n="syncManualOnly">仅手动同步</span></button>
+                   <button type="button" class="combo-option" data-value="15" role="option"><span data-i18n="syncEvery15Minutes">每 15 分钟</span><span data-i18n="syncHighFrequency">高频监控</span></button>
+                   <button type="button" class="combo-option selected" data-value="30" role="option"><span data-i18n="syncEvery30Minutes">每 30 分钟</span><span data-i18n="syncRecommended">推荐</span></button>
+                   <button type="button" class="combo-option" data-value="60" role="option"><span data-i18n="syncEveryHour">每小时</span><span data-i18n="syncBalanced">平衡</span></button>
+                   <button type="button" class="combo-option" data-value="180" role="option"><span data-i18n="syncEvery3Hours">每 3 小时</span><span data-i18n="syncLowFrequency">低频</span></button>
                 </div>
               </div></label>
-              <label class="check-setting"><input id="syncOnStartup" type="checkbox"/><span><b>启动后同步一次</b><small>启动后自动拉取已启用账户的最新远端数据。</small></span></label>
-              <label class="settings-field"><span><b>数据过期提醒</b><small>超过所选时间仍未成功同步时，在总览和提醒中心标记为过期。</small></span><div class="glass-combobox settings-combo" data-combobox>
+               <label class="check-setting"><input id="syncOnStartup" type="checkbox"/><span><b data-i18n="syncOnStartup">启动后同步一次</b><small data-i18n="syncOnStartupNote">启动后自动拉取已启用账户的最新远端数据。</small></span></label>
+               <label class="settings-field"><span><b data-i18n="syncStale">数据过期提醒</b><small data-i18n="syncStaleNote">超过所选时间仍未成功同步时，在总览和提醒中心标记为过期。</small></span><div class="glass-combobox settings-combo" data-combobox>
                 <input id="staleAfterMinutes" type="hidden" value="0" />
-                <button class="combo-trigger" type="button" data-combo-trigger aria-haspopup="listbox" aria-expanded="false"><span data-combo-label>自动判断</span><i></i></button>
+                <button class="combo-trigger" type="button" data-combo-trigger aria-haspopup="listbox" aria-expanded="false"><span data-combo-label data-i18n="staleAutomatic">自动判断</span><i></i></button>
                 <div class="combo-menu" role="listbox">
-                  <button type="button" class="combo-option selected" data-value="0" role="option">自动判断<span>同步间隔的 3 倍，至少 1 小时</span></button>
-                  <button type="button" class="combo-option" data-value="60" role="option">1 小时<span>适合高频监控</span></button>
-                  <button type="button" class="combo-option" data-value="180" role="option">3 小时<span>较快发现数据中断</span></button>
-                  <button type="button" class="combo-option" data-value="360" role="option">6 小时<span>手动同步的默认标准</span></button>
-                  <button type="button" class="combo-option" data-value="720" role="option">12 小时<span>减少非必要提醒</span></button>
-                  <button type="button" class="combo-option" data-value="1440" role="option">24 小时<span>每日检查</span></button>
-                  <button type="button" class="combo-option" data-value="10080" role="option">7 天<span>仅提醒长期未更新</span></button>
+                   <button type="button" class="combo-option selected" data-value="0" role="option"><span data-i18n="staleAutomatic">自动判断</span><span data-i18n="staleAutomaticNote">同步间隔的 3 倍，至少 1 小时</span></button>
+                   <button type="button" class="combo-option" data-value="60" role="option"><span data-i18n="stale1Hour">1 小时</span><span data-i18n="staleHighFrequency">适合高频监控</span></button>
+                   <button type="button" class="combo-option" data-value="180" role="option"><span data-i18n="stale3Hours">3 小时</span><span data-i18n="staleDetectSooner">较快发现数据中断</span></button>
+                   <button type="button" class="combo-option" data-value="360" role="option"><span data-i18n="stale6Hours">6 小时</span><span data-i18n="staleManualDefault">手动同步的默认标准</span></button>
+                   <button type="button" class="combo-option" data-value="720" role="option"><span data-i18n="stale12Hours">12 小时</span><span data-i18n="staleReduceAlerts">减少非必要提醒</span></button>
+                   <button type="button" class="combo-option" data-value="1440" role="option"><span data-i18n="stale24Hours">24 小时</span><span data-i18n="staleDaily">每日检查</span></button>
+                   <button type="button" class="combo-option" data-value="10080" role="option"><span data-i18n="stale7Days">7 天</span><span data-i18n="staleLongOnly">仅提醒长期未更新</span></button>
                 </div>
               </div></label>
             </article>
 
             <article class="glass-panel settings-section-card">
-              <div class="settings-card-heading"><span class="settings-card-icon" aria-hidden="true">⌁</span><div><h4>本地历史</h4><p>只保存远端同步结果与数值快照，不保存凭据、请求正文或本地会话。</p></div></div>
-              <label class="settings-field"><span><b>保留时间</b><small>修改后会立即清理超过期限的余额快照和同步记录。</small></span><div class="glass-combobox settings-combo" data-combobox>
+               <div class="settings-card-heading"><span class="settings-card-icon" aria-hidden="true">⌁</span><div><h4 data-i18n="historyLocal">本地历史</h4><p data-i18n="historyLocalNote">只保存远端同步结果与数值快照，不保存凭据、请求正文或本地会话。</p></div></div>
+               <label class="settings-field"><span><b data-i18n="historyRetention">保留时间</b><small data-i18n="historyRetentionNote">修改后会立即清理超过期限的余额快照和同步记录。</small></span><div class="glass-combobox settings-combo" data-combobox>
                 <input id="historyRetentionDays" type="hidden" value="90" />
-                <button class="combo-trigger" type="button" data-combo-trigger aria-haspopup="listbox" aria-expanded="false"><span data-combo-label>90 天</span><i></i></button>
+                <button class="combo-trigger" type="button" data-combo-trigger aria-haspopup="listbox" aria-expanded="false"><span data-combo-label data-i18n="retention90Days">90 天</span><i></i></button>
                 <div class="combo-menu" role="listbox">
-                  <button type="button" class="combo-option" data-value="30" role="option">30 天<span>减少本地记录</span></button>
-                  <button type="button" class="combo-option selected" data-value="90" role="option">90 天<span>推荐</span></button>
-                  <button type="button" class="combo-option" data-value="180" role="option">180 天<span>长期观察</span></button>
-                  <button type="button" class="combo-option" data-value="365" role="option">1 年<span>最长保留</span></button>
+                  <button type="button" class="combo-option" data-value="30" role="option"><span data-i18n="retention30Days">30 天</span><span data-i18n="retentionFewerRecords">减少本地记录</span></button>
+                  <button type="button" class="combo-option selected" data-value="90" role="option"><span data-i18n="retention90Days">90 天</span><span data-i18n="syncRecommended">推荐</span></button>
+                  <button type="button" class="combo-option" data-value="180" role="option"><span data-i18n="retention180Days">180 天</span><span data-i18n="retentionLongTerm">长期观察</span></button>
+                  <button type="button" class="combo-option" data-value="365" role="option"><span data-i18n="retention1Year">1 年</span><span data-i18n="retentionMaximum">最长保留</span></button>
                 </div>
               </div></label>
-              <div class="settings-info-row"><span><b>当前记录</b><small id="historyStorageDetail">尚未读取本地历史</small></span><strong id="historyStorageSummary">—</strong></div>
-              <button id="clearHistoryButton" class="soft-button settings-action danger-action" type="button">清除历史记录</button>
+               <div class="settings-info-row"><span><b data-i18n="historyCurrent">当前记录</b><small id="historyStorageDetail" data-i18n="historyNotRead">尚未读取本地历史</small></span><strong id="historyStorageSummary">—</strong></div>
+               <button id="clearHistoryButton" class="soft-button settings-action danger-action" type="button" data-i18n="historyClear">清除历史记录</button>
             </article>
 
             <article class="glass-panel settings-section-card">
-              <div class="settings-card-heading"><span class="settings-card-icon" aria-hidden="true">▣</span><div><h4>窗口与托盘</h4><p>控制主窗口关闭后的行为，以及应用是否继续在后台运行。</p></div></div>
-              <label class="check-setting"><input id="closeToTray" type="checkbox" checked/><span><b>关闭时隐藏到托盘</b><small>开启后，右上角关闭按钮和 Alt+F4 会隐藏窗口，账户同步仍会继续。</small></span></label>
-              <label class="check-setting"><input id="launchAtStartup" type="checkbox"/><span><b>登录 Windows 后自动启动</b><small>以后台模式启动到托盘，不会在登录后弹出主窗口。</small></span></label>
-              <div class="settings-info-row"><span><b>托盘左键</b><small>单击托盘图标即可恢复主窗口</small></span><strong>打开主窗口</strong></div>
-              <div class="settings-exit-copy"><b>退出应用</b><small>结束后台同步、关闭托盘图标并退出 Prismeter。</small></div>
-              <button id="exitAppButton" class="soft-button settings-action danger-action" type="button">退出 Prismeter</button>
+               <div class="settings-card-heading"><span class="settings-card-icon" aria-hidden="true">▣</span><div><h4 data-i18n="trayTitle">窗口与托盘</h4><p data-i18n="trayNote">控制主窗口关闭后的行为，以及应用是否继续在后台运行。</p></div></div>
+               <label class="check-setting"><input id="closeToTray" type="checkbox" checked/><span><b data-i18n="trayClose">关闭时隐藏到托盘</b><small data-i18n="trayCloseNote">开启后，右上角关闭按钮和 Alt+F4 会隐藏窗口，账户同步仍会继续。</small></span></label>
+               <label class="check-setting"><input id="launchAtStartup" type="checkbox"/><span><b data-i18n="trayStartup">登录 Windows 后自动启动</b><small data-i18n="trayStartupNote">以后台模式启动到托盘，不会在登录后弹出主窗口。</small></span></label>
+               <div class="settings-info-row"><span><b data-i18n="trayLeftClick">托盘左键</b><small data-i18n="trayRestore">单击托盘图标即可恢复主窗口</small></span><strong data-i18n="trayOpen">打开主窗口</strong></div>
+               <div class="settings-exit-copy"><b data-i18n="trayExit">退出应用</b><small data-i18n="trayExitNote">结束后台同步、关闭托盘图标并退出 Prismeter。</small></div>
+               <button id="exitAppButton" class="soft-button settings-action danger-action" type="button" data-i18n="trayQuit">退出 Prismeter</button>
             </article>
           </div>
         </div>
@@ -419,207 +419,209 @@
     </section>
   </main>
 
-  <div class="toast" id="toast" role="status" aria-live="polite" aria-atomic="true"><span class="toast-icon" aria-hidden="true">i</span><p>提示</p></div>
+  <div class="toast" id="toast" role="status" aria-live="polite" aria-atomic="true"><span class="toast-icon" aria-hidden="true">i</span><p data-i18n="toastNotice">提示</p></div>
 
   <dialog id="updateDialog" class="metric-dialog glass-panel update-dialog">
-    <button class="dialog-close" id="updateDialogClose" aria-label="稍后处理">×</button>
-    <p class="eyebrow">安全更新</p>
-    <h3 id="updateDialogTitle">发现新版本</h3>
-    <p id="updateDialogSummary">下载安装前会验证更新签名。</p>
+    <button class="dialog-close" id="updateDialogClose" data-i18n="dialogLater" data-i18n-content="false" data-i18n-attrs="aria-label" aria-label="稍后处理">×</button>
+    <p class="eyebrow" data-i18n="dialogSecurityUpdate">安全更新</p>
+    <h3 id="updateDialogTitle" data-i18n="dialogNewVersion">发现新版本</h3>
+    <p id="updateDialogSummary" data-i18n="dialogVerifySignature">下载安装前会验证更新签名。</p>
     <div id="updateReleaseNotes" class="update-release-notes"></div>
-    <div class="update-progress" id="updateProgress" hidden><div><i id="updateProgressBar"></i></div><span id="updateProgressText">准备下载…</span></div>
+    <div class="update-progress" id="updateProgress" hidden><div><i id="updateProgressBar"></i></div><span id="updateProgressText" data-i18n="dialogPreparing">准备下载…</span></div>
     <div class="form-actions update-actions">
-      <button type="button" class="soft-button" id="skipUpdateButton">跳过此版本</button>
-      <button type="button" class="soft-button" id="laterUpdateButton">稍后</button>
-      <button type="button" class="primary-button" id="installUpdateButton"><span>下载并安装</span></button>
+       <button type="button" class="soft-button" id="skipUpdateButton" data-i18n="dialogSkipVersion">跳过此版本</button>
+       <button type="button" class="soft-button" id="laterUpdateButton" data-i18n="dialogLaterShort">稍后</button>
+       <button type="button" class="primary-button" id="installUpdateButton"><span data-i18n="dialogInstall">下载并安装</span></button>
     </div>
   </dialog>
 
   <dialog id="clearHistoryDialog" class="metric-dialog glass-panel clear-history-dialog">
-    <button class="dialog-close" id="clearHistoryDialogClose" aria-label="取消清除">×</button>
-    <p class="eyebrow">本地数据管理</p>
-    <h3>清除历史记录？</h3>
-    <p id="clearHistoryDialogSummary">将删除本机保存的余额快照、远端指标快照和同步运行记录。已连接账户、凭据、设置和当前远端数据不会受到影响。</p>
+    <button class="dialog-close" id="clearHistoryDialogClose" data-i18n="dialogCancelClear" data-i18n-content="false" data-i18n-attrs="aria-label" aria-label="取消清除">×</button>
+    <p class="eyebrow" data-i18n="dialogLocalData">本地数据管理</p>
+    <h3 data-i18n="dialogClearHistory">清除历史记录？</h3>
+    <p id="clearHistoryDialogSummary" data-i18n="dialogClearSummary">将删除本机保存的余额快照、远端指标快照和同步运行记录。已连接账户、凭据、设置和当前远端数据不会受到影响。</p>
     <div class="form-actions">
-      <button type="button" class="soft-button" id="clearHistoryCancel">取消</button>
-      <button type="button" class="primary-button danger-confirm" id="clearHistoryConfirm"><span>确认清除</span></button>
+       <button type="button" class="soft-button" id="clearHistoryCancel" data-i18n="dialogCancel">取消</button>
+       <button type="button" class="primary-button danger-confirm" id="clearHistoryConfirm"><span data-i18n="dialogConfirmClear">确认清除</span></button>
     </div>
   </dialog>
 
   <dialog id="deleteAccountDialog" class="metric-dialog glass-panel delete-account-dialog">
-    <button class="dialog-close" id="deleteAccountDialogClose" aria-label="取消移除">×</button>
-    <p class="eyebrow">账户管理</p>
-    <h3 id="deleteAccountDialogTitle">移除账户？</h3>
-    <p id="deleteAccountDialogSummary">移除后，本机保存的连接凭据和该账户的历史记录会一并删除；平台侧账户与远端数据不会受到影响。</p>
+    <button class="dialog-close" id="deleteAccountDialogClose" data-i18n="dialogCancelRemove" data-i18n-content="false" data-i18n-attrs="aria-label" aria-label="取消移除">×</button>
+    <p class="eyebrow" data-i18n="dialogAccountManagement">账户管理</p>
+    <h3 id="deleteAccountDialogTitle" data-i18n="dialogRemoveAccount">移除账户？</h3>
+    <p id="deleteAccountDialogSummary" data-i18n="dialogRemoveSummary">移除后，本机保存的连接凭据和该账户的历史记录会一并删除；平台侧账户与远端数据不会受到影响。</p>
     <div class="form-actions">
-      <button type="button" class="soft-button" id="deleteAccountCancel">取消</button>
-      <button type="button" class="primary-button danger-confirm" id="deleteAccountConfirm"><span>确认移除</span></button>
+      <button type="button" class="soft-button" id="deleteAccountCancel" data-i18n="dialogCancel">取消</button>
+       <button type="button" class="primary-button danger-confirm" id="deleteAccountConfirm"><span data-i18n="dialogRemove">移除</span></button>
     </div>
   </dialog>
 
   <dialog id="accountAlertsDialog" class="account-dialog metric-dialog glass-panel account-alerts-dialog">
-    <button class="dialog-close" id="accountAlertsDialogClose" aria-label="关闭账户提醒设置">×</button>
-    <p class="eyebrow">账户提醒</p>
-    <h3 id="accountAlertsTitle">提醒规则</h3>
-    <p id="accountAlertsSummary">留空的阈值会跟随“设置”中的全局提醒规则。</p>
+    <button class="dialog-close" id="accountAlertsDialogClose" data-i18n="dialogCloseAccountAlerts" data-i18n-content="false" data-i18n-attrs="aria-label" aria-label="关闭账户提醒设置">×</button>
+    <p class="eyebrow" data-i18n="accountAlerts">账户提醒</p>
+    <h3 id="accountAlertsTitle" data-i18n="accountRules">提醒规则</h3>
+    <p id="accountAlertsSummary" data-i18n="accountRulesNote">留空的阈值会跟随“设置”中的全局提醒规则。</p>
     <form id="accountAlertsForm" class="account-form">
-      <label class="check-setting account-alert-master"><input id="accountAlertsEnabled" type="checkbox" checked/><span><b>此账户参与提醒</b><small>关闭后，提醒中心和 Windows 通知都不会再报告此账户。</small></span></label>
+      <label class="check-setting account-alert-master"><input id="accountAlertsEnabled" type="checkbox" checked/><span><b data-i18n="accountAlertsEnabled">此账户参与提醒</b><small data-i18n="accountAlertsDisabledNote">关闭后，提醒中心和 Windows 通知都不会再报告此账户。</small></span></label>
       <div class="account-alert-fields" id="accountAlertFields">
-        <label id="accountBalanceRule"><span>低余额阈值</span><div class="input-with-unit"><input id="accountLowBalanceThreshold" type="number" min="0" step="0.01" placeholder="跟随全局设置"/><b>账户币种</b></div></label>
-        <label id="accountUsageRule"><span>套餐额度阈值</span><div class="input-with-unit"><input id="accountUsageThreshold" type="number" min="50" max="100" step="1" placeholder="跟随全局设置"/><b>% 已用</b></div></label>
-        <label class="settings-field account-stale-rule"><span><b>数据过期提醒</b><small>仅覆盖此账户；选择跟随全局可恢复统一管理。</small></span><div class="glass-combobox" data-combobox>
+        <label id="accountBalanceRule"><span data-i18n="settingsLowBalance">低余额阈值</span><div class="input-with-unit"><input id="accountLowBalanceThreshold" type="number" min="0" step="0.01" data-i18n="accountFollowGlobal" data-i18n-content="false" data-i18n-attrs="placeholder" placeholder="跟随全局设置"/><b data-i18n="settingsCurrency">账户币种</b></div></label>
+        <label id="accountUsageRule"><span data-i18n="settingsQuotaAlert">套餐额度阈值</span><div class="input-with-unit"><input id="accountUsageThreshold" type="number" min="50" max="100" step="1" data-i18n="accountFollowGlobal" data-i18n-content="false" data-i18n-attrs="placeholder" placeholder="跟随全局设置"/><b data-i18n="settingsQuotaUsed">% 已用</b></div></label>
+        <label class="settings-field account-stale-rule"><span><b data-i18n="syncStale">数据过期提醒</b><small data-i18n="accountStaleOverride">仅覆盖此账户；选择跟随全局可恢复统一管理。</small></span><div class="glass-combobox" data-combobox>
           <input id="accountStaleAfterMinutes" type="hidden" value="" />
-          <button class="combo-trigger" type="button" data-combo-trigger aria-haspopup="listbox" aria-expanded="false"><span data-combo-label>跟随全局</span><i></i></button>
+          <button class="combo-trigger" type="button" data-combo-trigger aria-haspopup="listbox" aria-expanded="false"><span data-combo-label data-i18n="accountFollowGlobal">跟随全局</span><i></i></button>
           <div class="combo-menu" role="listbox">
-            <button type="button" class="combo-option selected" data-value="" role="option">跟随全局<span>使用设置页规则</span></button>
-            <button type="button" class="combo-option" data-value="60" role="option">1 小时</button>
-            <button type="button" class="combo-option" data-value="180" role="option">3 小时</button>
-            <button type="button" class="combo-option" data-value="360" role="option">6 小时</button>
-            <button type="button" class="combo-option" data-value="720" role="option">12 小时</button>
-            <button type="button" class="combo-option" data-value="1440" role="option">24 小时</button>
-            <button type="button" class="combo-option" data-value="10080" role="option">7 天</button>
+            <button type="button" class="combo-option selected" data-value="" role="option"><span data-i18n="accountFollowGlobal">跟随全局</span><span data-i18n="accountUseSettings">使用设置页规则</span></button>
+            <button type="button" class="combo-option" data-value="60" role="option" data-i18n="stale1Hour">1 小时</button>
+            <button type="button" class="combo-option" data-value="180" role="option" data-i18n="stale3Hours">3 小时</button>
+            <button type="button" class="combo-option" data-value="360" role="option" data-i18n="stale6Hours">6 小时</button>
+            <button type="button" class="combo-option" data-value="720" role="option" data-i18n="stale12Hours">12 小时</button>
+            <button type="button" class="combo-option" data-value="1440" role="option" data-i18n="stale24Hours">24 小时</button>
+            <button type="button" class="combo-option" data-value="10080" role="option" data-i18n="stale7Days">7 天</button>
           </div>
         </div></label>
       </div>
-      <div class="form-actions"><button type="button" class="soft-button" id="accountAlertsCancel">取消</button><button type="submit" class="primary-button" id="accountAlertsSave"><span>应用规则</span></button></div>
+       <div class="form-actions"><button type="button" class="soft-button" id="accountAlertsCancel" data-i18n="dialogCancel">取消</button><button type="submit" class="primary-button" id="accountAlertsSave"><span data-i18n="accountApplyRules">应用规则</span></button></div>
     </form>
   </dialog>
 
   <dialog id="renameAccountDialog" class="account-dialog metric-dialog glass-panel rename-account-dialog">
-    <button class="dialog-close" id="renameAccountDialogClose">×</button>
-    <p class="eyebrow">账户管理</p>
-    <h3>重命名账户</h3>
-    <p>名称只用于 Prismeter 本机展示，不会修改平台侧账户。</p>
+    <button class="dialog-close" id="renameAccountDialogClose" data-i18n="dialogClose" data-i18n-content="false" data-i18n-attrs="aria-label" aria-label="关闭">×</button>
+    <p class="eyebrow" data-i18n="dialogAccountManagement">账户管理</p>
+    <h3 data-i18n="renameTitle">重命名账户</h3>
+    <p data-i18n="renameNote">名称只用于 Prismeter 本机展示，不会修改平台侧账户。</p>
     <form id="renameAccountForm" class="account-form">
-      <label><span>账户名称</span><input id="renameAccountName" maxlength="50" required autocomplete="off" placeholder="例如：团队 DeepSeek" /></label>
-      <div class="form-actions"><button type="button" class="soft-button" id="renameAccountCancel">取消</button><button type="submit" class="primary-button" id="renameAccountSave"><span>保存名称</span></button></div>
+      <label><span data-i18n="renameName">账户名称</span><input id="renameAccountName" maxlength="50" required autocomplete="off" data-i18n="renamePlaceholder" data-i18n-content="false" data-i18n-attrs="placeholder" placeholder="例如：团队 DeepSeek" /></label>
+      <div class="form-actions"><button type="button" class="soft-button" id="renameAccountCancel" data-i18n="dialogCancel">取消</button><button type="submit" class="primary-button" id="renameAccountSave"><span data-i18n="renameSave">保存名称</span></button></div>
     </form>
   </dialog>
 
   <dialog id="connectionDialog" class="account-dialog metric-dialog glass-panel connection-dialog">
-    <button class="dialog-close" id="connectionDialogClose">×</button>
-    <p class="eyebrow">账户管理</p>
-    <h3 id="connectionDialogTitle">连接设置</h3>
-    <p id="connectionDialogSubtitle">新凭据验证成功后才会替换旧配置。</p>
+    <button class="dialog-close" id="connectionDialogClose" data-i18n="dialogClose" data-i18n-content="false" data-i18n-attrs="aria-label" aria-label="关闭">×</button>
+    <p class="eyebrow" data-i18n="dialogAccountManagement">账户管理</p>
+    <h3 id="connectionDialogTitle" data-i18n="connectionTitle">连接设置</h3>
+    <p id="connectionDialogSubtitle" data-i18n="connectionNote">新凭据验证成功后才会替换旧配置。</p>
     <form id="connectionForm" class="account-form">
       <div id="editDeepseekCredentials" class="credential-fields">
-        <label><span>新 API Key</span><input id="editAccountKey" type="password" autocomplete="off" placeholder="留空则继续使用当前 Key" /></label>
+        <label><span data-i18n="credentialNewApiKey">新 API Key</span><input id="editAccountKey" type="password" autocomplete="off" data-i18n="credentialKeepKey" data-i18n-content="false" data-i18n-attrs="placeholder" placeholder="留空则继续使用当前 Key" /></label>
       </div>
       <div id="editVolcengineCredentials" class="credential-fields" hidden>
-        <label><span>新 Access Key</span><input id="editVolcAccessKey" autocomplete="off" placeholder="留空则继续使用当前 AK" /></label>
-        <label><span>新 Secret Key</span><input id="editVolcSecretKey" type="password" autocomplete="off" placeholder="留空则继续使用当前 SK" /></label>
+        <label><span data-i18n="credentialAccessKey">新 Access Key</span><input id="editVolcAccessKey" autocomplete="off" data-i18n="credentialKeepAccess" data-i18n-content="false" data-i18n-attrs="placeholder" placeholder="留空则继续使用当前 AK" /></label>
+        <label><span data-i18n="credentialSecretKey">新 Secret Key</span><input id="editVolcSecretKey" type="password" autocomplete="off" data-i18n="credentialKeepSecret" data-i18n-content="false" data-i18n-attrs="placeholder" placeholder="留空则继续使用当前 SK" /></label>
         <div class="credential-row">
-          <label><span>区域</span><input id="editVolcRegion" autocomplete="off" /></label>
-          <label><span>项目</span><input id="editVolcProject" autocomplete="off" /></label>
+          <label><span data-i18n="credentialRegion">区域</span><input id="editVolcRegion" autocomplete="off" /></label>
+          <label><span data-i18n="credentialProject">项目</span><input id="editVolcProject" autocomplete="off" /></label>
         </div>
       </div>
       <div id="editMimoCredentials" class="credential-fields" hidden>
-        <label><span>新 MiMo API Key</span><input id="editMimoApiKey" type="password" autocomplete="off" placeholder="留空则继续使用当前 Key" /></label>
-        <label><span>OpenAI 兼容 Base URL</span><input id="editMimoBaseUrl" autocomplete="off" /></label>
-        <div class="mimo-endpoint-presets" role="group" aria-label="MiMo 官方接入区域">
-          <button type="button" data-mimo-target="editMimoBaseUrl" data-mimo-base-url="https://api.xiaomimimo.com/v1">按量 API</button>
-          <button type="button" data-mimo-target="editMimoBaseUrl" data-mimo-base-url="https://token-plan-cn.xiaomimimo.com/v1">Token Plan · 中国</button>
-          <button type="button" data-mimo-target="editMimoBaseUrl" data-mimo-base-url="https://token-plan-sgp.xiaomimimo.com/v1">新加坡</button>
-          <button type="button" data-mimo-target="editMimoBaseUrl" data-mimo-base-url="https://token-plan-ams.xiaomimimo.com/v1">欧洲</button>
+        <label><span data-i18n="credentialMimoKey">新 MiMo API Key</span><input id="editMimoApiKey" type="password" autocomplete="off" data-i18n="credentialKeepKey" data-i18n-content="false" data-i18n-attrs="placeholder" placeholder="留空则继续使用当前 Key" /></label>
+        <label><span data-i18n="credentialBaseUrl">OpenAI 兼容 Base URL</span><input id="editMimoBaseUrl" autocomplete="off" /></label>
+        <div class="mimo-endpoint-presets" role="group" data-i18n="credentialMimoRegions" data-i18n-content="false" data-i18n-attrs="aria-label" aria-label="MiMo 官方接入区域">
+          <button type="button" data-mimo-target="editMimoBaseUrl" data-mimo-base-url="https://api.xiaomimimo.com/v1" data-i18n="mimoPayg">按量 API</button>
+          <button type="button" data-mimo-target="editMimoBaseUrl" data-mimo-base-url="https://token-plan-cn.xiaomimimo.com/v1" data-i18n="mimoTokenChina">Token Plan · 中国</button>
+          <button type="button" data-mimo-target="editMimoBaseUrl" data-mimo-base-url="https://token-plan-sgp.xiaomimimo.com/v1" data-i18n="mimoSingapore">新加坡</button>
+          <button type="button" data-mimo-target="editMimoBaseUrl" data-mimo-base-url="https://token-plan-ams.xiaomimimo.com/v1" data-i18n="mimoEurope">欧洲</button>
         </div>
       </div>
-      <p class="connection-privacy">凭据不会回显。留空代表沿用现有凭据；验证失败不会覆盖当前连接。</p>
-      <div class="form-actions"><button type="button" class="soft-button" id="connectionDialogCancel">取消</button><button type="submit" class="primary-button" id="connectionSave"><span>验证并保存</span></button></div>
+      <p class="connection-privacy" data-i18n="connectionPrivacy">凭据不会回显。留空代表沿用现有凭据；验证失败不会覆盖当前连接。</p>
+      <div class="form-actions"><button type="button" class="soft-button" id="connectionDialogCancel" data-i18n="dialogCancel">取消</button><button type="submit" class="primary-button" id="connectionSave"><span data-i18n="connectionSave">验证并保存</span></button></div>
     </form>
   </dialog>
 
   <dialog id="diagnosticDialog" class="metric-dialog glass-panel diagnostic-dialog">
-    <button class="dialog-close" id="diagnosticDialogClose">×</button>
-    <p class="eyebrow">连接诊断</p>
-    <div class="diagnostic-title-row"><div><h3 id="diagnosticTitle">账户诊断</h3><p id="diagnosticSubtitle"></p></div><span id="diagnosticBadge" class="freshness-badge"><i></i><b>—</b></span></div>
+    <button class="dialog-close" id="diagnosticDialogClose" data-i18n="dialogClose" data-i18n-content="false" data-i18n-attrs="aria-label" aria-label="关闭">×</button>
+    <p class="eyebrow" data-i18n="diagnosticConnection">连接诊断</p>
+    <div class="diagnostic-title-row"><div><h3 id="diagnosticTitle" data-i18n="diagnosticAccount">账户诊断</h3><p id="diagnosticSubtitle"></p></div><span id="diagnosticBadge" class="freshness-badge"><i></i><b>—</b></span></div>
     <div id="diagnosticMetrics" class="diagnostic-metrics"></div>
     <div id="diagnosticError" class="diagnostic-error" hidden></div>
-    <p class="diagnostic-privacy">诊断信息不包含 API Key、Secret Key 或登录令牌。</p>
-    <div class="form-actions"><button type="button" class="soft-button" id="diagnosticDialogDone">完成</button><button type="button" class="primary-button" id="copyDiagnosticButton"><span>复制诊断信息</span></button></div>
+    <p class="diagnostic-privacy" data-i18n="diagnosticPrivacy">诊断信息不包含 API Key、Secret Key 或登录令牌。</p>
+    <div class="form-actions"><button type="button" class="soft-button" id="diagnosticDialogDone" data-i18n="diagnosticDone">完成</button><button type="button" class="primary-button" id="copyDiagnosticButton"><span data-i18n="diagnosticCopy">复制诊断信息</span></button></div>
   </dialog>
 
   <dialog id="metricDialog" class="metric-dialog glass-panel">
-    <button class="dialog-close" id="dialogClose">×</button>
-    <p class="eyebrow">指标详情</p>
+    <button class="dialog-close" id="dialogClose" data-i18n="dialogClose" data-i18n-content="false" data-i18n-attrs="aria-label" aria-label="关闭">×</button>
+    <p class="eyebrow" data-i18n="metricDetails">指标详情</p>
     <h3 id="dialogTitle"></h3>
     <p id="dialogDescription"></p>
     <div id="dialogMetrics" class="dialog-metrics"></div>
   </dialog>
 
   <dialog id="accountDialog" class="account-dialog metric-dialog glass-panel">
-    <button class="dialog-close" id="accountDialogClose">×</button>
-    <p class="eyebrow">新建连接</p>
-    <h3>添加平台账户</h3>
-    <p>每个账号都会作为独立连接保存，同一平台可以添加多个账号。</p>
+    <button class="dialog-close" id="accountDialogClose" data-i18n="dialogClose" data-i18n-content="false" data-i18n-attrs="aria-label" aria-label="关闭">×</button>
+    <p class="eyebrow" data-i18n="accountNewConnection">新建连接</p>
+    <h3 data-i18n="accountAddPlatform">添加平台账户</h3>
+    <p data-i18n="accountIndependent">每个账号都会作为独立连接保存，同一平台可以添加多个账号。</p>
     <form id="accountForm" class="account-form">
-      <label><span>平台</span><div class="glass-combobox" data-combobox>
+       <label><span data-i18n="accountPlatform">平台</span><div class="glass-combobox" data-combobox>
           <input id="accountProvider" type="hidden" value="deepseek" />
-          <button class="combo-trigger" type="button" data-combo-trigger aria-haspopup="listbox" aria-expanded="false"><span data-combo-label>DeepSeek 官方 API</span><i></i></button>
+          <button class="combo-trigger" type="button" data-combo-trigger aria-haspopup="listbox" aria-expanded="false"><span data-combo-label data-i18n="providerDeepSeek">DeepSeek 官方 API</span><i></i></button>
           <div class="combo-menu" role="listbox">
-            <button type="button" class="combo-option selected" data-value="deepseek" role="option">DeepSeek 官方 API<span>余额接口</span></button>
-            <button type="button" class="combo-option" data-value="kimi" role="option">Kimi API<span>官方余额接口</span></button>
-            <button type="button" class="combo-option" data-value="volcengine" role="option">火山方舟<span>Agent / Coding / API</span></button>
-            <button type="button" class="combo-option disabled-option" data-value="mimo" role="option" disabled aria-disabled="true">Xiaomi MiMo<span>暂不可添加 · 官方未开放第三方用量统计接口</span></button>
-            <button type="button" class="combo-option" data-value="openai" role="option">OpenAI<span>ChatGPT 订阅 / Codex 用量</span></button>
+            <button type="button" class="combo-option selected" data-value="deepseek" role="option"><span data-i18n="providerDeepSeek">DeepSeek 官方 API</span><span data-i18n="providerBalanceEndpoint">余额接口</span></button>
+            <button type="button" class="combo-option" data-value="kimi" role="option">Kimi API<span data-i18n="providerKimiBalance">官方余额接口</span></button>
+            <button type="button" class="combo-option" data-value="volcengine" role="option"><span data-i18n="providerArk">火山方舟</span><span data-i18n="providerAgentCodingApi">Agent / Coding / API</span></button>
+            <button type="button" class="combo-option disabled-option" data-value="mimo" role="option" disabled aria-disabled="true">Xiaomi MiMo<span data-i18n="providerMimoUnavailable">暂不可添加 · 官方未开放第三方用量统计接口</span></button>
+            <button type="button" class="combo-option" data-value="openai" role="option">OpenAI<span data-i18n="providerOpenAiUsage">ChatGPT 订阅 / Codex 用量</span></button>
           </div>
         </div></label>
-      <label><span>账户名称</span><input id="accountName" name="name" autocomplete="off" placeholder="例如：工作室主账户" /></label>
+      <label><span data-i18n="accountName">账户名称</span><input id="accountName" name="name" autocomplete="off" data-i18n="accountNamePlaceholder" data-i18n-content="false" data-i18n-attrs="placeholder" placeholder="例如：工作室主账户" /></label>
       <div id="deepseekCredentials" class="credential-fields">
-        <label><span>API Key</span><input id="accountKey" name="apiKey" type="password" autocomplete="off" placeholder="sk-…" required /></label>
+        <label><span data-i18n="credentialApiKey">API Key</span><input id="accountKey" name="apiKey" type="password" autocomplete="off" placeholder="sk-…" required /></label>
       </div>
       <div id="volcengineCredentials" class="credential-fields" hidden>
-        <label><span>Access Key</span><input id="volcAccessKey" name="accessKey" autocomplete="off" placeholder="AKLT…" /></label>
-        <label><span>Secret Key</span><input id="volcSecretKey" name="secretKey" type="password" autocomplete="off" placeholder="仅保存在此 Windows 用户下" /></label>
+        <label><span data-i18n="credentialAccess">Access Key</span><input id="volcAccessKey" name="accessKey" autocomplete="off" placeholder="AKLT…" /></label>
+        <label><span data-i18n="credentialSecret">Secret Key</span><input id="volcSecretKey" name="secretKey" type="password" autocomplete="off" data-i18n="credentialWindowsOnly" data-i18n-content="false" data-i18n-attrs="placeholder" placeholder="仅保存在此 Windows 用户下" /></label>
         <div class="credential-row">
-          <label><span>区域</span><input id="volcRegion" name="region" value="cn-beijing" autocomplete="off" /></label>
-          <label><span>项目</span><input id="volcProject" name="projectName" value="default" autocomplete="off" /></label>
+          <label><span data-i18n="credentialRegion">区域</span><input id="volcRegion" name="region" value="cn-beijing" autocomplete="off" /></label>
+          <label><span data-i18n="credentialProject">项目</span><input id="volcProject" name="projectName" value="default" autocomplete="off" /></label>
         </div>
       </div>
       <div id="mimoCredentials" class="credential-fields" hidden>
-        <label><span>MiMo API Key</span><input id="mimoApiKey" name="mimoApiKey" type="password" autocomplete="off" placeholder="sk-… 或 tp-…" /></label>
-        <label><span>OpenAI 兼容 Base URL</span><input id="mimoBaseUrl" name="mimoBaseUrl" autocomplete="off" value="https://api.xiaomimimo.com/v1" placeholder="以小米控制台显示为准" /></label>
-        <div class="mimo-endpoint-presets" role="group" aria-label="MiMo 官方接入区域">
-          <button type="button" class="selected" data-mimo-target="mimoBaseUrl" data-mimo-base-url="https://api.xiaomimimo.com/v1">按量 API</button>
-          <button type="button" data-mimo-target="mimoBaseUrl" data-mimo-base-url="https://token-plan-cn.xiaomimimo.com/v1">Token Plan · 中国</button>
-          <button type="button" data-mimo-target="mimoBaseUrl" data-mimo-base-url="https://token-plan-sgp.xiaomimimo.com/v1">新加坡</button>
-          <button type="button" data-mimo-target="mimoBaseUrl" data-mimo-base-url="https://token-plan-ams.xiaomimimo.com/v1">欧洲</button>
+        <label><span data-i18n="credentialMimoApiKey">MiMo API Key</span><input id="mimoApiKey" name="mimoApiKey" type="password" autocomplete="off" data-i18n="credentialMimoFormat" data-i18n-content="false" data-i18n-attrs="placeholder" placeholder="sk-… 或 tp-…" /></label>
+        <label><span data-i18n="credentialBaseUrl">OpenAI 兼容 Base URL</span><input id="mimoBaseUrl" name="mimoBaseUrl" autocomplete="off" value="https://api.xiaomimimo.com/v1" data-i18n="credentialMimoConsole" data-i18n-content="false" data-i18n-attrs="placeholder" placeholder="以小米控制台显示为准" /></label>
+        <div class="mimo-endpoint-presets" role="group" data-i18n="credentialMimoRegions" data-i18n-content="false" data-i18n-attrs="aria-label" aria-label="MiMo 官方接入区域">
+          <button type="button" class="selected" data-mimo-target="mimoBaseUrl" data-mimo-base-url="https://api.xiaomimimo.com/v1" data-i18n="mimoPayg">按量 API</button>
+          <button type="button" data-mimo-target="mimoBaseUrl" data-mimo-base-url="https://token-plan-cn.xiaomimimo.com/v1" data-i18n="mimoTokenChina">Token Plan · 中国</button>
+          <button type="button" data-mimo-target="mimoBaseUrl" data-mimo-base-url="https://token-plan-sgp.xiaomimimo.com/v1" data-i18n="mimoSingapore">新加坡</button>
+          <button type="button" data-mimo-target="mimoBaseUrl" data-mimo-base-url="https://token-plan-ams.xiaomimimo.com/v1" data-i18n="mimoEurope">欧洲</button>
         </div>
       </div>
       <div id="openaiCredentials" class="credential-fields" hidden>
         <div class="capability-note">
-          <b>复用当前 Windows 用户的 OpenAI 官方登录态</b>
-          <span>无需粘贴 Token 或 API Key；账户连接后，ChatGPT 订阅和 Codex 用量会作为两个产品展示。</span>
+          <b data-i18n="capabilityOpenAiLogin">复用当前 Windows 用户的 OpenAI 官方登录态</b>
+          <span data-i18n="capabilityOpenAiLoginNote">无需粘贴 Token 或 API Key；账户连接后，ChatGPT 订阅和 Codex 用量会作为两个产品展示。</span>
         </div>
       </div>
-      <button id="connectAccountButton" class="connect-button" type="submit"><span>连接并验证</span><i></i></button>
+      <button id="connectAccountButton" class="connect-button" type="submit"><span data-i18n="accountConnectVerify">连接并验证</span><i></i></button>
     </form>
     <div id="deepseekCapability" class="capability-note">
-      <b>DeepSeek 官方可用指标</b>
-      <span>可调用状态 · 币种 · 总余额 · 赠送余额 · 充值余额</span>
-      <small>API Key 由 Windows DPAPI 加密，历史趋势从首次连接后开始记录。</small>
+      <b data-i18n="capabilityDeepSeek">DeepSeek 官方可用指标</b>
+      <span data-i18n="capabilityDeepSeekMetrics">可调用状态 · 币种 · 总余额 · 赠送余额 · 充值余额</span>
+      <small data-i18n="capabilityDeepSeekNote">API Key 由 Windows DPAPI 加密，历史趋势从首次连接后开始记录。</small>
     </div>
     <div id="kimiCapability" class="capability-note" hidden>
-      <b>Kimi 官方可用指标</b>
-      <span>可用余额 · 代金券余额 · 现金余额</span>
-      <small>通过 Kimi 官方余额接口读取。API Key 仅经 Windows DPAPI 加密保存；连接后将采集趋势快照并参与低余额提醒与耗尽预估。</small>
+      <b data-i18n="capabilityKimi">Kimi 官方可用指标</b>
+      <span data-i18n="capabilityKimiMetrics">可用余额 · 代金券余额 · 现金余额</span>
+      <small data-i18n="capabilityKimiNote">通过 Kimi 官方余额接口读取。API Key 仅经 Windows DPAPI 加密保存；连接后将采集趋势快照并参与低余额提醒与耗尽预估。</small>
     </div>
     <div id="volcengineCapability" class="capability-note volcengine-note" hidden>
-      <b>火山方舟按实际授权发现产品</b>
-      <span>Agent Plan AFP · Coding Plan 席位用量 · 按量推理与接入点</span>
-      <small>使用火山 IAM 的 AK/SK 签名访问；凭据由 Windows DPAPI 加密。未开通或未授权的产品不会显示。</small>
+      <b data-i18n="capabilityArk">火山方舟按实际授权发现产品</b>
+      <span data-i18n="capabilityArkMetrics">Agent Plan AFP · Coding Plan 席位用量 · 按量推理与接入点</span>
+      <small data-i18n="capabilityArkNote">使用火山 IAM 的 AK/SK 签名访问；凭据由 Windows DPAPI 加密。未开通或未授权的产品不会显示。</small>
     </div>
     <div id="mimoCapability" class="capability-note" hidden>
-      <b>Xiaomi MiMo 官方可用指标</b>
-      <span>API Key 有效性 · 计费类型 · 官方可用模型列表 · 模型所有者</span>
-      <small>余额、Token Plan Credits 和历史用量目前只在小米控制台展示，官方尚未开放第三方统计 API，Prismeter 不会进行本地估算。tp- Key 请填写控制台提供的 Token Plan Base URL。</small>
+      <b data-i18n="capabilityMimo">Xiaomi MiMo 官方可用指标</b>
+      <span data-i18n="capabilityMimoMetrics">API Key 有效性 · 计费类型 · 官方可用模型列表 · 模型所有者</span>
+      <small data-i18n="capabilityMimoNote">余额、Token Plan Credits 和历史用量目前只在小米控制台展示，官方尚未开放第三方统计 API，Prismeter 不会进行本地估算。tp- Key 请填写控制台提供的 Token Plan Base URL。</small>
     </div>
     <div id="openaiCapability" class="capability-note" hidden>
-      <b>OpenAI 平台按产品展示</b>
-      <span>ChatGPT：账户与套餐 · Codex：周期额度、重置时间、每日与累计 Token、连续使用天数</span>
-      <small>个人 ChatGPT 聊天用量没有开放的对外统计字段，因此不会用 Codex Token 代替。数据由官方 app-server 从 OpenAI 服务端读取。</small>
+      <b data-i18n="capabilityOpenAi">OpenAI 平台按产品展示</b>
+      <span data-i18n="capabilityOpenAiMetrics">ChatGPT：账户与套餐 · Codex：周期额度、重置时间、每日与累计 Token、连续使用天数</span>
+      <small data-i18n="capabilityOpenAiNote">个人 ChatGPT 聊天用量没有开放的对外统计字段，因此不会用 Codex Token 代替。数据由官方 app-server 从 OpenAI 服务端读取。</small>
     </div>
   </dialog>
 
+  <script src="i18n.js"></script>
+  <script src="messages.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

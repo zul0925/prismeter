@@ -109,7 +109,7 @@ fn build_product(models: &[Model], plan_type: &str, base_url: &str) -> Value {
     } else {
         "按量 API"
     };
-    let rows: Vec<Value> = models.iter().map(|model| json!({
+    let mut rows: Vec<Value> = models.iter().map(|model| json!({
         "name": model.id,
         "type": model_type(&model.id),
         "badge": "Mi",
@@ -120,6 +120,14 @@ fn build_product(models: &[Model], plan_type: &str, base_url: &str) -> Value {
             { "value": "OpenAI", "unit": "兼容协议" }
         ]
     })).collect();
+    for row in &mut rows {
+        if let Some(object) = row.as_object_mut() {
+            object.insert("i18n".into(), json!({
+                "typeKey":"mimo.row.model",
+                "metricUnitKeys":["mimo.column.owner", "mimo.row.keyVerified", "mimo.row.usageUnavailable", "mimo.column.protocol"]
+            }));
+        }
+    }
     json!({
         "id": "mimo-models",
         "name": "MiMo 官方模型",
@@ -127,6 +135,15 @@ fn build_product(models: &[Model], plan_type: &str, base_url: &str) -> Value {
         "usage": format!("{} 个", models.len()),
         "usageLabel": "远端可用模型",
         "status": "Running",
+        "i18n": {
+            "summaryKeys": [
+                { "labelKey":"mimo.summary.apiKey", "valueKey":"mimo.value.verified" },
+                { "labelKey":"mimo.summary.remoteModels", "valueKey":"mimo.value.modelCount", "valueParams": { "count": models.len() }, "noteKey":"mimo.note.modelsEndpoint" },
+                { "labelKey":"mimo.summary.usage", "valueKey":"mimo.value.consoleOnly", "noteKey":"mimo.note.noThirdPartyUsageApi" },
+                { "labelKey":"mimo.summary.baseUrl", "noteKey":"mimo.note.official" }
+            ],
+            "columnKeys": ["mimo.column.owner", "mimo.column.callStatus", "mimo.column.usageData", "mimo.column.protocol"]
+        },
         "summaries": [
             { "label": "API Key", "value": "已验证", "note": billing },
             { "label": "远端模型", "value": format!("{} 个", models.len()), "note": "官方 /v1/models" },

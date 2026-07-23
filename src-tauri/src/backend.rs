@@ -145,6 +145,7 @@ struct SyncEvent {
     #[serde(default)] duration_ms: u64,
     #[serde(default)] product_count: usize,
     #[serde(default)] message: String,
+    #[serde(default)] message_code: String,
 }
 
 #[derive(Clone, Default, Serialize, Deserialize)]
@@ -965,7 +966,7 @@ fn handle_request(mut request: Request, store: &Arc<Store>, base_url: &str) {
         .map(|h| format!("{}/", h.value.as_str().trim_end_matches('/')) == base_url)
         .unwrap_or(true);
     if !origin_ok {
-        respond_json(request, 403, json!({ "ok": false, "error": "已拒绝非 Prismeter 页面发起的本地请求。" }));
+        respond_json(request, 403, api_error_payload("已拒绝非 Prismeter 页面发起的本地请求。"));
         return;
     }
     let path = request.url().split('?').next().unwrap_or("/").to_string();
@@ -982,13 +983,13 @@ fn handle_request(mut request: Request, store: &Arc<Store>, base_url: &str) {
 
     let mut body = String::new();
     if let Err(error) = request.as_reader().read_to_string(&mut body) {
-        respond_json(request, 400, json!({ "ok": false, "error": format!("无法读取请求：{error}") }));
+        respond_json(request, 400, api_error_payload(&format!("无法读取请求：{error}")));
         return;
     }
     let result = route_api(request.method(), &path, &body, store);
     match result {
         Ok((status, value)) => respond_json(request, status, value),
-        Err(error) => respond_json(request, error_status(&error), json!({ "ok": false, "error": error })),
+        Err(error) => respond_json(request, error_status(&error), api_error_payload(&error)),
     }
 }
 
@@ -1344,6 +1345,7 @@ fn parse_remote_number(value: &str, label: &str) -> Option<(f64, String)> {
 }
 
 fn add_sync_event(state: &mut PersistedState, account: &Account, success: bool, message: String) {
+    let message_code = if success { "sync_succeeded".to_string() } else { error_code(&message).to_string() };
     state.sync_events.push(SyncEvent {
         id: new_id(),
         account_id: account.id.clone(),
@@ -1352,6 +1354,7 @@ fn add_sync_event(state: &mut PersistedState, account: &Account, success: bool, 
         duration_ms: account.last_sync_duration_ms,
         product_count: account.products.len() + usize::from(!account.balances.is_empty()),
         message,
+        message_code,
     });
     if state.sync_events.len() > SYNC_EVENT_STORAGE_LIMIT {
         let excess = state.sync_events.len() - SYNC_EVENT_STORAGE_LIMIT;
@@ -1364,15 +1367,16 @@ fn public_account(account: &Account) -> Value {
     json!({
         "id": account.id,
         "provider": if account.provider.is_empty() { "deepseek" } else { &account.provider },
-        "name": account.name, "keyHint": account.key_hint, "email": account.email,
+        "name": account.name, "nameKey": default_account_name_key(account), "keyHint": account.key_hint, "email": account.email,
         "planType": account.plan_type, "createdAt": account.created_at,
         "enabled": account.enabled != Some(false), "lastAttemptAt": account.last_attempt_at,
         "alertSettings": account.alert_settings,
         "lastSyncDurationMs": account.last_sync_duration_ms,
         "consecutiveFailures": account.consecutive_failures, "nextRetryAt": next_retry_at(account), "lastSync": account.last_sync,
-        "lastError": account.last_error, "isAvailable": account.is_available,
+        "lastError": account.last_error, "lastErrorCode": account.last_error.as_deref().map(error_code), "isAvailable": account.is_available,
         "region": account.region, "projectName": account.project_name, "baseUrl": account.base_url,
-        "balances": account.balances, "products": account.products, "productErrors": account.product_errors
+        "balances": account.balances, "products": account.products, "productErrors": account.product_errors,
+        "productErrorCodes": account.product_errors.iter().map(|error| error_code(error)).collect::<Vec<_>>()
     })
 }
 
@@ -1449,9 +1453,18 @@ fn capability_matrix(accounts: &[Account]) -> Vec<Value> {
         let observed_products: HashSet<String> = connected.iter().flat_map(|account| account.products.iter())
             .filter_map(|product| product.get("id").and_then(Value::as_str).map(str::to_string))
             .collect();
+        let items: Vec<Value> = items.into_iter().map(|mut item| {
+            let item_id = item.get("id").and_then(Value::as_str).unwrap_or("unknown").to_string();
+            if let Some(object) = item.as_object_mut() {
+                object.insert("labelKey".into(), Value::String(format!("capability.{id}.{item_id}.label")));
+                object.insert("sourceKey".into(), Value::String(format!("capability.{id}.{item_id}.source")));
+            }
+            item
+        }).collect();
         json!({
             "provider": id,
             "label": label,
+            "labelKey": format!("capability.{id}.label"),
             "accountCount": connected.len(),
             "connected": !connected.is_empty(),
             "observedProductIds": observed_products,
@@ -1504,6 +1517,33 @@ fn error_status(error: &str) -> u16 {
     } else {
         500
     }
+}
+
+fn default_account_name_key(account: &Account) -> Option<&'static str> {
+    match (account.provider.as_str(), account.name.as_str()) {
+        ("openai", "OpenAI 本机账户") => Some("account.default.openai"),
+        ("volcengine", "火山方舟主账户") => Some("account.default.volcengine"),
+        ("deepseek", "DeepSeek 主账户") => Some("account.default.deepseek"),
+        ("kimi", "Kimi 主账户") => Some("account.default.kimi"),
+        _ => None,
+    }
+}
+
+fn error_code(error: &str) -> &'static str {
+    if error.contains("不存在") { "not_found" }
+    else if error.contains("正在同步") { "sync_in_progress" }
+    else if error.contains("无效") || error.contains("请输入") || error.contains("应为") || error.contains("之间") { "invalid_input" }
+    else if error.contains("暂不支持") || error.contains("暂不可添加") { "unsupported" }
+    else if error.contains("权限") || error.contains("拒绝") { "permission_denied" }
+    else { "operation_failed" }
+}
+
+fn api_error_payload(error: &str) -> Value {
+    json!({
+        "ok": false,
+        "errorCode": error_code(error),
+        "error": error,
+    })
 }
 
 fn alerts(state: &PersistedState) -> Vec<Value> {

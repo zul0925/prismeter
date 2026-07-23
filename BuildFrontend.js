@@ -5,7 +5,7 @@ const path = require("path");
 // intentionally a validator: older revisions regenerated it from a 0.7.7
 // prototype and silently discarded newer UI and native-window fixes.
 const frontend = path.join(__dirname, "frontend");
-const required = ["index.html", "styles.css", "app.js"];
+const required = ["index.html", "styles.css", "i18n.js", "messages.js", "app.js"];
 
 for (const filename of required) {
   const file = path.join(frontend, filename);
@@ -18,6 +18,15 @@ const html = fs.readFileSync(path.join(frontend, "index.html"), "utf8");
 const script = fs.readFileSync(path.join(frontend, "app.js"), "utf8");
 if (!html.includes('id="windowMinimize"') || !script.includes("loadBackendState()")) {
   throw new Error("Frontend validation failed: required application shell is incomplete.");
+}
+if (!html.includes('src="i18n.js"') || !html.includes('src="messages.js"') || !script.includes("window.PrismeterI18n")) {
+  throw new Error("Frontend validation failed: the standard i18n runtime is not wired into the application shell.");
+}
+const runtimeIndex = html.indexOf('src="i18n.js"');
+const catalogIndex = html.indexOf('src="messages.js"');
+const appIndex = html.indexOf('src="app.js"');
+if (!(runtimeIndex < catalogIndex && catalogIndex < appIndex)) {
+  throw new Error("Frontend validation failed: i18n runtime, catalog, and application scripts must load in that order.");
 }
 
 const htmlIds = [...html.matchAll(/\bid="([^"]+)"/g)].map(match => match[1]);

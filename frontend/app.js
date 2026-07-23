@@ -4,16 +4,16 @@ const providers = {
     short: "OA",
     color: "#313a4c",
     gradient: "linear-gradient(135deg,#263042,#778299)",
-    description: "ChatGPT 订阅身份与 Codex 远端用量",
+    description: "ChatGPT subscription identity and Codex remote usage",
     primaryProduct: "codex",
     products: {}
   },
   volcengine: {
-    name: "火山引擎方舟",
-    short: "火",
+    name: "Volcengine Ark",
+    short: "Ark",
     color: "#4c72f4",
     gradient: "linear-gradient(135deg,#3d7bff,#6d56e8)",
-    description: "以计费产品区分 Agent Plan、Coding Plan 与按量 API",
+    description: "Separates Agent Plan, Coding Plan, and pay-as-you-go API by billing product",
     primaryProduct: "remote",
     products: {}
   },
@@ -22,16 +22,16 @@ const providers = {
     short: "Mi",
     color: "#ef7c31",
     gradient: "linear-gradient(135deg,#ff9b45,#e75f2b)",
-    description: "添加账户后读取 MiMo 官方模型能力",
+    description: "Read official MiMo model capabilities after connecting an account",
     primaryProduct: "remote",
     products: {}
   },
   deepseek: {
-    name: "DeepSeek 官方",
+    name: "DeepSeek official",
     short: "DS",
     color: "#26a4d8",
     gradient: "linear-gradient(135deg,#1aa8dc,#3972dc)",
-    description: "余额官方查询，历史用量从 Prismeter 连接后开始采集",
+    description: "Official balance lookup; usage history starts after Prismeter connects",
     primaryProduct: "remote",
     products: {}
   },
@@ -40,7 +40,7 @@ const providers = {
     short: "Ki",
     color: "#4338ca",
     gradient: "linear-gradient(135deg,#5b4ce8,#a66df4)",
-    description: "Kimi 官方余额查询，历史用量从 Prismeter 连接后开始采集",
+    description: "Official Kimi balance lookup; usage history starts after Prismeter connects",
     primaryProduct: "remote",
     products: {}
   }
@@ -75,17 +75,17 @@ const state = { view: "overview", provider: "volcengine", accountId: null, renam
 Object.entries(providers).forEach(([id, p]) => state.products[id] = p.primaryProduct);
 function remotePlaceholder(platformName, supported = false) {
   return {
-    name: supported ? "等待连接" : "暂未支持",
-    kind: "远端数据",
+    name: supported ? t("placeholderWaiting") : t("placeholderUnsupported"),
+    kind: t("placeholderRemoteData"),
     usage: "—",
-    usageLabel: supported ? "尚未连接" : "未接入远端 API",
+    usageLabel: supported ? t("placeholderNotConnected") : t("placeholderNoApi"),
     progress: 0,
-    reset: supported ? "连接账户后同步" : "等待后续版本",
+    reset: supported ? t("placeholderSyncAfterConnect") : t("placeholderLaterVersion"),
     summaries: [
-      ["数据状态", "无远端数据", supported ? "请连接账户" : "当前版本未支持"],
-      ["数据来源", "—", "不使用本地估算"],
-      ["最近同步", "—", "尚未同步"],
-      ["平台", platformName, "远端官方接口"]
+      [t("placeholderDataStatus"), t("placeholderNoRemoteData"), supported ? t("placeholderConnectAccount") : t("placeholderUnsupportedVersion")],
+      [t("placeholderDataSource"), "—", t("placeholderNoLocalEstimates")],
+      [t("placeholderLatestSync"), "—", t("placeholderNeverSynced")],
+      [t("placeholderPlatform"), platformName, t("placeholderOfficialApi")]
     ],
     columns: [], rows: []
   };
@@ -99,193 +99,27 @@ function initializeRemoteOnlyProviders() {
   });
 
   const openai = providers.openai;
-  openai.description = "连接 OpenAI 登录账户后，分别展示 ChatGPT 订阅身份与 Codex 远端用量";
+  openai.description = t("providerOpenAiConnect");
 
   const xiaomi = providers.mimo;
-  xiaomi.description = "官方尚未开放第三方用量统计接口，当前暂不开放新的 MiMo 连接";
+  xiaomi.description = t("providerMimoUnavailable");
 }
 
 const els = Object.fromEntries([...document.querySelectorAll("[id]")].map(el => [el.id, el]));
 const systemThemeQuery = window.matchMedia("(prefers-color-scheme: dark)");
 const localizedTextNodes = new WeakMap();
-const englishUi = Object.freeze({
-  "总览":"Overview", "模型对比":"Model comparison", "提醒":"Alerts", "账户":"Accounts", "设置":"Settings", "已连接账户":"Connected accounts",
-  "应用设置":"Application settings", "按你的习惯使用 Prismeter":"Make Prismeter work your way", "改动会自动保存":"Changes save automatically",
-  "语言 / Language":"Language", "界面语言立即切换；平台返回的模型名与远端数据保持原样。":"Changes apply immediately. Provider model names and remote data remain unchanged.",
-  "界面语言":"Interface language", "当前提供简体中文和 English。":"Simplified Chinese and English are available.", "简体中文":"Simplified Chinese", "默认语言":"Default language",
-  "外观":"Appearance", "外观模式":"Appearance mode", "跟随系统":"Follow system", "浅色模式":"Light", "深色模式":"Dark",
-  "提醒":"Alerts", "低余额提醒阈值":"Low-balance threshold", "套餐额度提醒阈值":"Quota threshold", "Windows 通知":"Windows notifications", "发送测试通知":"Send test notification",
-  "应用更新":"App updates", "检查更新":"Check for updates", "启动时自动检查":"Check on startup", "仅手动检查":"Manual only", "当前版本":"Current version",
-  "同步":"Sync", "自动同步":"Automatic sync", "关闭":"Off", "每 15 分钟":"Every 15 minutes", "每 30 分钟":"Every 30 minutes", "每小时":"Hourly", "每 3 小时":"Every 3 hours",
-  "启动后同步一次":"Sync once on launch", "数据过期提醒":"Stale-data alert", "本地历史":"Local history", "保留时间":"Retention", "当前记录":"Current records", "清除历史记录":"Clear history",
-  "窗口与托盘":"Window and tray", "关闭时隐藏到托盘":"Close to tray", "登录 Windows 后自动启动":"Launch at Windows sign-in", "退出应用":"Quit app", "退出 Prismeter":"Quit Prismeter",
-  "添加平台账户":"Add platform account", "平台":"Platform", "账户名称":"Account name", "连接并验证":"Connect and verify", "新建连接":"New connection",
-  "安全更新":"Secure update", "发现新版本":"Update available", "稍后处理":"Later", "立即安装":"Install now", "检查更新":"Check for updates"
-  ,"用量总览":"Usage overview", "账户列表":"Account list", "远端同步历史":"Remote sync history", "运行记录":"Activity log", "同步中心":"Sync center", "远端任务状态":"Remote task status",
-  "全部同步":"Sync all", "重试失败账户":"Retry failed accounts", "立即同步":"Sync now", "同步中":"Syncing", "查看数据":"View data", "连接诊断":"Connection diagnostics", "连接设置":"Connection settings", "重命名":"Rename", "暂停监控":"Pause monitoring", "恢复监控":"Resume monitoring", "移除":"Remove",
-  "提醒规则":"Alert rules", "提醒已关闭":"Alerts off", "查看提醒":"View alerts", "调整规则":"Adjust rules", "当前无需处理":"Nothing needs attention", "没有需要立即处理的事项":"Nothing requires immediate action",
-  "数据更新":"Data updated", "已连接":"Connected", "未连接":"Not connected", "尚未同步":"Not synced", "刚刚":"Just now", "等待同步":"Waiting to sync", "数据新鲜":"Data fresh", "已暂停":"Paused", "未连接":"Not connected",
-  "指标趋势":"Metric trend", "远端快照":"Remote snapshots", "等待采集":"Collecting", "本地快照":"Local snapshots", "当前总余额":"Current balance", "可用余额":"Available balance", "赠送余额":"Promotional balance", "充值余额":"Cash balance", "代金券余额":"Voucher balance", "现金余额":"Cash balance",
-  "按量计费":"Pay as you go", "API 可调用":"API available", "余额不可用":"Balance unavailable", "官方":"Official", "连接后采集":"Collected after connection", "远端同步":"Remote sync",
-  "新建连接":"New connection", "添加平台账户":"Add platform account", "账户名称":"Account name", "连接并验证":"Connect and verify", "正在验证…":"Verifying…", "正在发现产品…":"Discovering products…", "取消":"Cancel", "验证并保存":"Verify and save",
-  "全部提醒":"All alerts", "余额提醒":"Balance alerts", "额度提醒":"Quota alerts", "同步与时效":"Sync and freshness", "需要处理":"Needs attention", "已启用":"Enabled", "关闭":"Off", "保存失败":"Save failed", "已自动保存":"Saved automatically", "正在保存…":"Saving…", "等待保存…":"Waiting to save…",
-  "清除历史记录":"Clear history", "确认清除":"Clear", "确认移除":"Remove", "发送测试通知":"Send test notification", "退出 Prismeter":"Quit Prismeter", "打开主窗口":"Open main window"
-});
-
-// Static HTML is kept in Chinese so the first paint is useful offline. Dynamic UI
-// must use these keyed messages instead of assembling Chinese sentences at render time.
-const uiMessages = Object.freeze({
-  "zh-CN": {
-    operationIncomplete:"操作未完成，请稍后重试", localServiceError:"本地服务返回异常", operationFailed:"操作失败",
-    notSynced:"尚未同步", invalidTime:"时间无效", neverSynced:"从未同步", justNow:"刚刚",
-    minutesAgo:"{count} 分钟前", hoursAgo:"{count} 小时前", daysAgo:"{count} 天前", retrySoon:"即将自动重试",
-    retryMinutes:"{count} 分钟后自动重试", retryHours:"{count} 小时后自动重试", monitoringPaused:"监控已暂停",
-    pausedDetail:"不会参与自动或全部同步", firstSync:"等待首次远端同步", repeatedFailure:"持续失败", syncFailed:"同步失败",
-    lastSuccess:"上次成功：{time}", dataFresh:"数据新鲜", refreshRecommended:"建议刷新", dataStale:"数据已过期",
-    updatedAt:"更新于 {time}", noDuration:"尚无耗时记录", autoSyncOff:"自动同步已关闭", autoSyncEvery:"每 {minutes} 分钟自动同步",
-    desktopPreferenceFailed:"Windows 拒绝应用此设置", percentagePoints:"{sign}{value} 个百分点",
-    waitingForAccounts:"等待连接账户", localServiceUnavailable:"本地服务异常", noAccounts:"尚未连接账户", addAccountInApp:"打开 Prismeter 添加账户",
-    allAccountsPaused:"{count} 个账户均已暂停", needsAttention:"需要处理", syncFailedFor:"{name} 同步失败", refreshNeeded:"需要刷新", usageNeedsAttention:"请留意用量",
-    alertsWaiting:"{count} 条提醒等待处理", readyToUse:"可以继续使用", healthyAccounts:"{count} 个账户状态正常", restoreAfter:"{time} 恢复",
-    automaticSyncOff:"自动同步已关闭", automaticSyncEvery:"每 {minutes} 分钟自动同步", nextSync:"每 {minutes} 分钟 · 下次 {time}",
-    dragToSort:"按住拖拽排序", dragPlatformToSort:"按住拖拽调整平台顺序", addAccount:"添加账户", showHereAfterConnection:"连接后显示在这里",
-    pausedAccounts:"{count} 个已暂停", availability:"工作可用性", monitoredAccounts:"个监控账户", continueSafely:"可安心继续", noRemoteAlerts:"暂无需要处理的远端告警",
-    startMonitoring:"添加账户后开始监控", openAccountsForReason:"打开账户中心查看原因", monitoredSummary:"当前监控 {count} 个账户；不读取本地会话日志，也不使用模拟数据补齐。",
-    refreshAccounts:"{count} 个需刷新", noRemoteData:"无远端数据", notConnected:"未连接", syncAfterConnection:"连接账户后同步", noConnectedPlatform:"尚未连接平台",
-    addPlatformInstruction:"请到账户中心添加平台账户，连接成功后才会出现在这里。", goToAccounts:"前往账户中心", remoteSync:"远端同步", activityAfterSync:"连接账户并完成远端同步后，这里才会显示活动。",
-    actionItems:"{count} 项需要处理", alertDetail:"请查看提醒中心了解详情", predictedRestore:"预计 {time} 恢复", remoteStatusAttention:"远端状态需要关注", snoozedAlertNote:"已暂缓的提醒仍会保留在提醒中心，且不会影响首页或托盘状态。",
-    unauthorizedProducts:"{count} 项未授权或未开通", independentAccountData:"独立账户数据", remoteMetrics:"远端指标", collecting:"等待采集",
-    minutes:"{count} 分钟", hours:"{count} 小时", days:"{count} 天"
-    ,overviewEyebrow:"用量总览", overviewTitle:"集中查看各平台远端用量", platformsEyebrow:"平台中心", platformsTitle:"按平台支持能力展示远端指标", modelsEyebrow:"模型分析", modelsTitle:"只分析平台实际返回的模型与产品字段", alertsEyebrow:"提醒中心", alertsTitle:"关注余额、额度与同步状态", accountsEyebrow:"账户中心", accountsTitle:"连接远端账户，凭据加密保存在本机", settingsTitle:"外观、同步与提醒按你的习惯运行"
-  },
-  en: {
-    operationIncomplete:"The operation did not finish. Please try again.", localServiceError:"The local service returned an invalid response.", operationFailed:"Operation failed",
-    notSynced:"Not synced", invalidTime:"Invalid time", neverSynced:"Never synced", justNow:"Just now",
-    minutesAgo:"{count} minutes ago", hoursAgo:"{count} hours ago", daysAgo:"{count} days ago", retrySoon:"Retrying automatically soon",
-    retryMinutes:"Retrying automatically in {count} minutes", retryHours:"Retrying automatically in {count} hours", monitoringPaused:"Monitoring paused",
-    pausedDetail:"This account is excluded from automatic and manual syncs", firstSync:"Waiting for the first remote sync", repeatedFailure:"Repeated failures", syncFailed:"Sync failed",
-    lastSuccess:"Last successful sync: {time}", dataFresh:"Data is fresh", refreshRecommended:"Refresh recommended", dataStale:"Data is stale",
-    updatedAt:"Updated {time}", noDuration:"No duration recorded", autoSyncOff:"Automatic sync is off", autoSyncEvery:"Sync automatically every {minutes} minutes",
-    desktopPreferenceFailed:"Windows rejected this setting", percentagePoints:"{sign}{value} percentage points",
-    waitingForAccounts:"Waiting for an account connection", localServiceUnavailable:"Local service unavailable", noAccounts:"No connected account", addAccountInApp:"Add an account in Prismeter",
-    allAccountsPaused:"All {count} accounts are paused", needsAttention:"Needs attention", syncFailedFor:"{name} failed to sync", refreshNeeded:"Refresh needed", usageNeedsAttention:"Watch your usage",
-    alertsWaiting:"{count} alerts are waiting", readyToUse:"Ready to use", healthyAccounts:"{count} accounts are healthy", restoreAfter:"Restores {time}",
-    automaticSyncOff:"Automatic sync is off", automaticSyncEvery:"Sync automatically every {minutes} minutes", nextSync:"Every {minutes} minutes · next {time}",
-    dragToSort:"Drag to reorder", dragPlatformToSort:"Drag to reorder platforms", addAccount:"Add account", showHereAfterConnection:"Connected accounts appear here",
-    pausedAccounts:"{count} paused", availability:"Availability", monitoredAccounts:"monitored accounts", continueSafely:"Safe to continue", noRemoteAlerts:"No remote alerts need attention",
-    startMonitoring:"Add an account to start monitoring", openAccountsForReason:"Open Accounts to see why", monitoredSummary:"Monitoring <strong>{count}</strong> accounts. Local session logs and synthetic estimates are never used.",
-    refreshAccounts:"{count} need refresh", noRemoteData:"No remote data", notConnected:"Not connected", syncAfterConnection:"Sync after connecting an account", noConnectedPlatform:"No platform connected",
-    addPlatformInstruction:"Add a platform account in Accounts. It appears here after connecting.", goToAccounts:"Go to Accounts", remoteSync:"Remote sync", activityAfterSync:"Activity appears here after an account completes a remote sync.",
-    actionItems:"{count} items need attention", alertDetail:"See Alert Center for details", predictedRestore:"Expected to restore {time}", remoteStatusAttention:"Remote status needs attention", snoozedAlertNote:"Snoozed alerts remain in Alert Center and do not affect Overview or the tray.",
-    unauthorizedProducts:"{count} products are unauthorized or unavailable", independentAccountData:"Independent account data", remoteMetrics:"Remote metrics", collecting:"Collecting",
-    minutes:"{count} minutes", hours:"{count} hours", days:"{count} days"
-    ,overviewEyebrow:"Usage overview", overviewTitle:"View remote usage across all platforms", platformsEyebrow:"Platform center", platformsTitle:"Remote metrics by each platform's supported capabilities", modelsEyebrow:"Model analysis", modelsTitle:"Analyze only fields returned by platform models and products", alertsEyebrow:"Alert center", alertsTitle:"Watch balance, quota, and sync health", accountsEyebrow:"Account center", accountsTitle:"Connect remote accounts; credentials are encrypted locally", settingsTitle:"Appearance, sync, and alerts tailored to you"
-  }
-});
-
-// Longer static copy is intentionally kept separate from status messages. This
-// makes content review possible without turning rendering code into a dictionary.
-const additionalEnglishUi = Object.freeze({
-  "Prismeter · AI 用量中心":"Prismeter · AI usage center", "棱镜计量":"Prismeter", "模型分析":"Model analysis", "主导航":"Main navigation",
-  "早上好，今天的消耗很平稳":"Good morning. Your usage is steady today.", "刚刚同步":"Synced just now", "正在读取真实连接…":"Reading connected accounts…",
-  "远端账户监控":"Remote account monitoring", "个已连接账户":"connected accounts", "等待连接":"Waiting for a connection", "· 不使用本地估算":"· no local estimates",
-  "快速判断":"At a glance", "等待读取同步计划":"Reading the sync schedule", "已成功读取远端数据":"Remote data read successfully",
-  "同步失败或数据待刷新":"Sync failed or data needs refreshing", "保留账户但不参与同步":"Account retained but excluded from sync",
-  "只汇总平台实际返回的数据，不使用本地估算":"Only platform-returned data is summarized; local estimates are never used.",
-  "行动中心":"Action center", "平台与套餐":"Platforms and plans", "你正在使用的服务":"Services you use", "查看全部":"View all",
-  "同步动态":"Sync activity", "最近同步":"Recent syncs", "当前":"Current", "Prism 洞察":"Prism insights",
-  "所有指标均来自平台远端":"Every metric comes from the platform", "添加账户后，Prismeter 才会展示平台实际支持的远端指标。":"Add an account to see the remote metrics it actually supports.",
-  "查看账户":"View accounts", "等待更多快照":"Waiting for more snapshots", "正在评估消耗节奏":"Estimating usage pace",
-  "预测仅基于 Prismeter 保存的远端快照。":"Forecasts only use remote snapshots saved by Prismeter.", "需要更多数据":"More data needed",
-  "同步两次以上后会显示远端指标变化曲线。":"A remote metric trend appears after at least two syncs.", "模型明细":"Model details", "用量分布":"Usage distribution",
-  "当前远端数据":"Current remote data", "导出 CSV":"Export CSV", "官方数据":"Official data", "未使用本地估算":"No local estimates",
-  "— 表示平台未提供":"— means the platform did not provide this value", "远端模型数据":"Remote model data", "按平台实际返回字段分析":"Analysis based on fields actually returned by each platform",
-  "全部层级":"All levels", "模型级与产品级":"Model and product", "模型级记录":"Model-level records", "平台返回明细行":"Detailed rows returned by the platform",
-  "产品级记录":"Product-level records", "套餐或服务级指标":"Plan or service metrics", "全部模型与产品":"All models and products",
-  "仅远端实际返回":"Only values actually returned remotely", "跨平台":"Cross-platform", "官方模型列表":"Official model list", "远端记录":"Remote records",
-  "等待模型或产品明细":"Waiting for model or product details", "数据覆盖":"Data coverage", "仅统计已连接平台":"Only connected platforms are included",
-  "最新同步":"Latest sync", "不会读取本地会话日志":"Local session logs are never read", "筛选结果":"Filtered results",
-  "提醒中心":"Alert center", "余额、周期额度与同步状态":"Balance, cycle quota, and sync health", "全局提醒设置":"Global alert settings",
-  "当前需要关注":"Needs attention now", "低于余额阈值":"Below balance threshold", "接近周期上限":"Near cycle limit", "失败或数据过期":"Failed or stale",
-  "账户规则":"Account rules", "每个账户独立判断":"Each account is evaluated independently", "尚未连接账户":"No account connected",
-  "账户可以跟随全局规则，也可以覆盖适用的阈值或单独关闭提醒；暂停监控仍会保留规则。":"An account can follow global rules, override thresholds, or disable alerts. Pausing monitoring keeps its rules.",
-  "本机账户中心":"Local account center", "所有平台账户":"All platform accounts", "凭据由 Windows 加密":"Credentials are encrypted by Windows",
-  "正在监控":"Monitoring", "参与自动同步":"Included in automatic sync", "状态正常":"Healthy", "远端同步正常":"Remote sync is healthy",
-  "保留已有数据":"Existing data retained", "等待任务":"Waiting for work", "数据源能力":"Data-source capabilities", "按平台实际支持展示":"Shown only when supported by the platform",
-  "不同平台返回的统计字段并不相同；“未提供”的数据不会按 0 计算，也不会用本地日志推算。":"Platforms return different fields. Unavailable values are not treated as zero or estimated from local logs.",
-  "还没有真实账户":"No real account yet", "点击“添加账户”连接平台，同一平台可以添加多个账号。":"Select Add account to connect a platform. You can add more than one account per platform.",
-  "添加第一个账户":"Add your first account", "仅保存同步时间、结果、耗时和远端产品数量；不记录 API Key，也不读取本地会话日志。":"Only sync time, result, duration, and remote product count are stored. API keys and local session logs are never recorded.",
-  "余额同步快照":"Balance sync snapshots", "主题切换会立即应用到主界面和所有页面。":"Theme changes apply immediately to every view.",
-  "可固定明暗主题，也可以跟随 Windows。":"Choose a fixed light or dark theme, or follow Windows.", "随 Windows 自动切换":"Switch automatically with Windows",
-  "明亮液态玻璃":"Bright liquid glass", "降低夜间亮度":"Reduced brightness at night", "阈值修改后立即用于下一次同步与提醒判断。":"Threshold changes apply to the next sync and alert evaluation.",
-  "账户币种":"Account currency", "% 已用":"% used", "同步后发现低余额、额度超限或连接失败时提醒。":"Alerts are raised after syncs find a low balance, quota limit, or connection failure.",
-  "自动检查只会在应用启动后进行，不会自动安装。":"Automatic checks run after launch; updates are never installed automatically.", "发现新版后由你确认安装":"You decide whether to install a new version",
-  "不会在后台请求版本信息":"No background version requests", "尚未检查更新":"Not checked yet", "控制远端数据何时刷新，不会读取本地会话日志。":"Control when remote data refreshes. Local session logs are never read.",
-  "已暂停的账户不会参与；临时失败会在 2、5、15 分钟后分级重试。":"Paused accounts are excluded. Temporary failures retry after 2, 5, and 15 minutes.",
-  "仅手动同步":"Manual sync only", "高频监控":"High-frequency monitoring", "推荐":"Recommended", "平衡":"Balanced", "低频":"Low-frequency",
-  "启动后自动拉取已启用账户的最新远端数据。":"Fetch the latest remote data for enabled accounts after launch.", "超过所选时间仍未成功同步时，在总览和提醒中心标记为过期。":"If a sync has not succeeded within the selected time, it is marked stale in Overview and Alerts.",
-  "自动判断":"Automatic", "同步间隔的 3 倍，至少 1 小时":"Three times the sync interval, at least one hour", "适合高频监控":"Good for high-frequency monitoring",
-  "较快发现数据中断":"Detect data interruptions sooner", "手动同步的默认标准":"Default standard for manual sync", "减少非必要提醒":"Reduce unnecessary alerts",
-  "每日检查":"Daily check", "仅提醒长期未更新":"Only alert on long-running staleness", "只保存远端同步结果与数值快照，不保存凭据、请求正文或本地会话。":"Only remote sync results and value snapshots are stored. Credentials, request bodies, and local sessions are not.",
-  "修改后会立即清理超过期限的余额快照和同步记录。":"Changing this immediately removes expired balance snapshots and sync records.", "减少本地记录":"Fewer local records",
-  "长期观察":"Long-term observation", "最长保留":"Maximum retention", "尚未读取本地历史":"Local history has not been read",
-  "控制主窗口关闭后的行为，以及应用是否继续在后台运行。":"Control what happens when the main window closes and whether the app continues in the background.",
-  "开启后，右上角关闭按钮和 Alt+F4 会隐藏窗口，账户同步仍会继续。":"When enabled, the Close button and Alt+F4 hide the window while account syncs continue.",
-  "以后台模式启动到托盘，不会在登录后弹出主窗口。":"Start in the tray without opening the main window after sign-in.", "托盘左键":"Tray left click",
-  "单击托盘图标即可恢复主窗口":"Click the tray icon to restore the main window", "结束后台同步、关闭托盘图标并退出 Prismeter。":"Stop background syncs, close the tray icon, and quit Prismeter."
-  ,"24 小时":"24 hours", "7 天":"7 days", "30 天":"30 days", "90 天":"90 days", "火山方舟":"Volcengine Ark", "模型级":"Model level", "平台返回的明细行":"Detailed rows returned by the platform", "产品级":"Product level",
-  "0 条":"0 items", "全部":"All", "余额":"Balance", "额度":"Quota", "0 条提醒":"0 alerts", "＋ 添加账户":"＋ Add account", "仅远端数据":"Remote data only", "成功":"Succeeded", "失败":"Failed", "0 条记录":"0 records",
-  "更新包由 Prismeter 的独立更新密钥签名并在安装前校验。":"Update packages are signed with Prismeter's dedicated update key and verified before installation.",
-  "1 小时":"1 hour", "3 小时":"3 hours", "6 小时":"6 hours", "12 小时":"12 hours", "180 天":"180 days", "1 年":"1 year", "提示":"Notice", "下载安装前会验证更新签名。":"The update signature will be verified before download and installation.",
-  "准备下载…":"Preparing download…", "跳过此版本":"Skip this version", "稍后":"Later", "下载并安装":"Download and install", "本地数据管理":"Local data management", "清除历史记录？":"Clear history?",
-  "将删除本机保存的余额快照、远端指标快照和同步运行记录。已连接账户、凭据、设置和当前远端数据不会受到影响。":"This deletes locally stored balance snapshots, remote metric snapshots, and sync activity. Connected accounts, credentials, settings, and current remote data are unaffected.",
-  "账户管理":"Account management", "移除账户？":"Remove account?", "移除后，本机保存的连接凭据和该账户的历史记录会一并删除；平台侧账户与远端数据不会受到影响。":"Removing an account also deletes its locally stored credentials and history. The platform account and its remote data are unaffected.",
-  "账户提醒":"Account alerts", "留空的阈值会跟随“设置”中的全局提醒规则。":"Leave a threshold blank to follow the global alert rule in Settings.", "此账户参与提醒":"Enable alerts for this account", "关闭后，提醒中心和 Windows 通知都不会再报告此账户。":"When disabled, neither Alert Center nor Windows notifications report this account.",
-  "低余额阈值":"Low-balance threshold", "套餐额度阈值":"Plan quota threshold", "仅覆盖此账户；选择跟随全局可恢复统一管理。":"Only overrides this account. Choose Follow global to restore centralized management.", "跟随全局":"Follow global", "使用设置页规则":"Use Settings rules", "应用规则":"Apply rules",
-  "重命名账户":"Rename account", "名称只用于 Prismeter 本机展示，不会修改平台侧账户。":"This name is only shown locally in Prismeter and does not change the platform account.", "保存名称":"Save name", "新凭据验证成功后才会替换旧配置。":"Existing credentials are replaced only after the new ones verify successfully.",
-  "新 API Key":"New API key", "新 Access Key":"New access key", "新 Secret Key":"New secret key", "区域":"Region", "项目":"Project", "新 MiMo API Key":"New MiMo API key", "OpenAI 兼容 Base URL":"OpenAI-compatible base URL", "按量 API":"Pay-as-you-go API", "Token Plan · 中国":"Token Plan · China", "新加坡":"Singapore", "欧洲":"Europe",
-  "凭据不会回显。留空代表沿用现有凭据；验证失败不会覆盖当前连接。":"Credentials are never shown again. Leave blank to retain the current value; failed verification does not replace the connection.",
-  "账户诊断":"Account diagnostics", "诊断信息不包含 API Key、Secret Key 或登录令牌。":"Diagnostics never include API keys, secret keys, or sign-in tokens.", "完成":"Done", "复制诊断信息":"Copy diagnostics", "指标详情":"Metric details", "每个账号都会作为独立连接保存，同一平台可以添加多个账号。":"Each account is saved as an independent connection. You can add multiple accounts for one platform.",
-  "DeepSeek 官方 API":"DeepSeek official API", "余额接口":"Balance endpoint", "官方余额接口":"Official balance endpoint", "暂不可添加 · 官方未开放第三方用量统计接口":"Unavailable · the official platform does not offer a third-party usage API", "ChatGPT 订阅 / Codex 用量":"ChatGPT subscription / Codex usage", "复用当前 Windows 用户的 OpenAI 官方登录态":"Use the current Windows user's official OpenAI sign-in", "无需粘贴 Token 或 API Key；账户连接后，ChatGPT 订阅和 Codex 用量会作为两个产品展示。":"No token or API key is needed. Once connected, ChatGPT subscription and Codex usage appear as two products.",
-  "DeepSeek 官方可用指标":"DeepSeek official metrics", "可调用状态 · 币种 · 总余额 · 赠送余额 · 充值余额":"Availability · currency · total balance · promotional balance · cash balance", "API Key 由 Windows DPAPI 加密，历史趋势从首次连接后开始记录。":"The API key is encrypted with Windows DPAPI. Trend history starts after the first connection.",
-  "Kimi 官方可用指标":"Kimi official metrics", "可用余额 · 代金券余额 · 现金余额":"Available balance · voucher balance · cash balance", "通过 Kimi 官方余额接口读取。API Key 仅经 Windows DPAPI 加密保存；连接后将采集趋势快照并参与低余额提醒与耗尽预估。":"Read through Kimi's official balance endpoint. The API key is stored only with Windows DPAPI encryption; connection enables trend snapshots, low-balance alerts, and depletion forecasts.",
-  "火山方舟按实际授权发现产品":"Volcengine Ark discovers products from actual permissions", "Agent Plan AFP · Coding Plan 席位用量 · 按量推理与接入点":"Agent Plan AFP · Coding Plan seat usage · pay-as-you-go inference and endpoints", "使用火山 IAM 的 AK/SK 签名访问；凭据由 Windows DPAPI 加密。未开通或未授权的产品不会显示。":"Access uses Volcengine IAM AK/SK signing; credentials are encrypted with Windows DPAPI. Products that are unavailable or unauthorized are not shown.",
-  "Xiaomi MiMo 官方可用指标":"Xiaomi MiMo official metrics", "API Key 有效性 · 计费类型 · 官方可用模型列表 · 模型所有者":"API key validity · billing type · official model list · model owner", "余额、Token Plan Credits 和历史用量目前只在小米控制台展示，官方尚未开放第三方统计 API，Prismeter 不会进行本地估算。tp- Key 请填写控制台提供的 Token Plan Base URL。":"Balance, Token Plan credits, and historical usage are currently shown only in Xiaomi Console. The official platform has no third-party statistics API, so Prismeter makes no local estimates. For a tp- key, enter the Token Plan base URL from the console.",
-  "OpenAI 平台按产品展示":"OpenAI is displayed by product", "ChatGPT：账户与套餐 · Codex：周期额度、重置时间、每日与累计 Token、连续使用天数":"ChatGPT: account and plan · Codex: cycle quota, reset time, daily and cumulative tokens, and consecutive active days", "个人 ChatGPT 聊天用量没有开放的对外统计字段，因此不会用 Codex Token 代替。数据由官方 app-server 从 OpenAI 服务端读取。":"Personal ChatGPT chat usage has no public reporting field, so Codex tokens are not used as a substitute. Data is read from OpenAI through the official app-server.",
-  "最小化":"Minimize", "最大化":"Maximize", "还原":"Restore", "从远端刷新数据":"Refresh remote data", "选择趋势指标":"Choose trend metric", "选择趋势时间范围":"Choose trend time range", "远端指标历史趋势":"Remote metric history", "搜索模型、产品或账户":"Search models, products, or accounts", "模型数据覆盖情况":"Model data coverage", "提醒分类统计":"Alert category summary", "筛选提醒":"Filter alerts", "账户同步健康概览":"Account sync health overview", "筛选同步记录":"Filter sync activity", "取消清除":"Cancel clear", "取消移除":"Cancel removal", "关闭账户提醒设置":"Close account alert settings", "跟随全局设置":"Follow global settings", "例如：团队 DeepSeek":"For example: Team DeepSeek", "留空则继续使用当前 Key":"Leave blank to keep the current key", "留空则继续使用当前 AK":"Leave blank to keep the current AK", "留空则继续使用当前 SK":"Leave blank to keep the current SK", "MiMo 官方接入区域":"MiMo official access region", "例如：工作室主账户":"For example: Studio primary account", "仅保存在此 Windows 用户下":"Stored only for this Windows user", "sk-… 或 tp-…":"sk-… or tp-…", "以小米控制台显示为准":"Follow the value shown in Xiaomi Console"
-});
-
-// Last-resort renderer translation for legacy and provider-returned composite
-// strings. Entries are applied longest-first, so complete phrases always win
-// over individual words. This is intentionally used only in English mode.
-const englishFragments = Object.freeze({
-  "集中查看各平台远端用量":"View remote usage across all platforms", "按平台支持能力展示远端指标":"Remote metrics by supported platform capabilities",
-  "只分析平台实际返回的模型与产品字段":"Analyze only fields returned by platform models and products", "关注余额、额度与同步状态":"Watch balance, quota, and sync health",
-  "连接远端账户，凭据加密保存在本机":"Connect remote accounts; credentials are encrypted locally", "外观、同步与提醒按你的习惯运行":"Appearance, sync, and alerts tailored to you",
-  "不读取本地会话日志，也不使用模拟数据补齐。":"Local session logs and synthetic estimates are never used.", "添加账户后开始监控":"Add an account to start monitoring",
-  "打开账户中心查看原因":"Open Accounts to see why", "暂无需要处理的远端告警":"No remote alerts need attention", "已暂缓的提醒仍会保留在提醒中心，且不会影响首页或托盘状态。":"Snoozed alerts remain in Alert Center and do not affect Overview or the tray.",
-  "连接账户并完成远端同步后，这里才会显示活动。":"Activity appears here after an account completes a remote sync.", "请到账户中心添加平台账户，连接成功后才会出现在这里。":"Add a platform account in Accounts. It appears here after connecting.",
-  "本地服务异常":"Local service unavailable", "等待连接账户":"Waiting for an account connection", "尚未连接账户":"No connected account", "尚未添加账户":"No account added", "尚未添加真实账户":"No real account added",
-  "工作可用性":"Availability", "可以继续使用":"Ready to use", "需要处理":"Needs attention", "需要刷新":"Refresh needed", "请留意用量":"Watch your usage",
-  "当前无需处理":"Nothing needs attention", "没有需要立即处理的事项":"Nothing requires immediate action", "远端状态需要关注":"Remote status needs attention", "请查看提醒中心了解详情":"See Alert Center for details",
-  "本月用量":"This month's usage", "远端用量":"Remote usage", "官方用量":"Official usage", "远端指标":"Remote metrics", "远端同步":"Remote sync", "远端数据":"Remote data", "远端模型":"Remote models",
-  "同步于":"Synced", "预计":"Expected", "下次":"next", "恢复":"restores", "自动同步":"Automatic sync", "同步失败":"Sync failed", "同步完成":"Sync complete", "同步中":"Syncing", "立即同步":"Sync now",
-  "数据新鲜":"Data is fresh", "数据已过期":"Data is stale", "数据状态":"Data status", "数据来源":"Data source", "数据覆盖":"Data coverage", "当前总余额":"Current balance", "当前可用余额":"Available balance",
-  "可用余额":"Available balance", "赠送余额":"Promotional balance", "充值余额":"Cash balance", "代金券余额":"Voucher balance", "余额不可用":"Balance unavailable", "余额提醒":"Balance alerts",
-  "按量计费":"Pay as you go", "按量 API":"Pay-as-you-go API", "套餐额度":"Plan quota", "额度提醒":"Quota alerts", "额度已用":"quota used", "周期已用":"cycle used", "本地快照":"Local snapshots",
-  "官方登录态":"Official sign-in", "官方产品":"Official product", "官方接口":"Official endpoint", "官方余额查询":"Official balance lookup", "官方模型列表":"Official model list", "火山引擎方舟":"Volcengine Ark", "火山方舟":"Volcengine Ark",
-  "DeepSeek 官方":"DeepSeek", "Kimi 官方":"Kimi", "小米控制台":"Xiaomi Console", "个账户均已暂停":"accounts are paused", "个账户状态正常":"accounts are healthy", "个账户已连接":"accounts connected", "个已暂停":"paused",
-  "个需刷新":"need refresh", "个账户":"accounts", "条提醒等待处理":"alerts are waiting", "条提醒":"alerts", "条记录":"records", "项需要处理":"items need attention", "项未授权或未开通":"products are unauthorized or unavailable",
-  "天周期已用":"-day cycle used", "分钟后自动重试":"minutes until automatic retry", "小时后自动重试":"hours until automatic retry", "刚刚同步":"Synced just now", "刚刚":"Just now", "分钟前":"minutes ago", "小时前":"hours ago", "天前":"days ago",
-  "已连接":"Connected", "未连接":"Not connected", "已暂停":"Paused", "未授权":"Unauthorized", "未开通":"Unavailable", "成功":"Succeeded", "失败":"Failed", "等待连接":"Waiting for connection", "等待采集":"Collecting",
-  "全部同步":"Sync all", "查看账户":"View accounts", "查看提醒":"View alerts", "调整规则":"Adjust rules", "打开主窗口":"Open main window", "账户中心":"Account center", "提醒中心":"Alert center", "用量总览":"Usage overview", "平台中心":"Platform center", "模型分析":"Model analysis",
-  "本机账户":"Local account", "主账户":"Primary account", "主题账户":"Primary account", "账户":"Account", "平台":"Platform", "本月":"This month", "可安心继续":"Safe to continue"
-});
+const staticMessages = window.PrismeterStaticMessages;
 
 function t(key, values = {}) {
-  const source = uiMessages[state.interfaceLanguage === "en" ? "en" : "zh-CN"];
-  const template = source[key] || uiMessages["zh-CN"][key] || key;
-  return template.replace(/\{(\w+)\}/g, (_, name) => String(values[name] ?? ""));
+  return window.PrismeterI18n.t(key, values);
+}
+
+function localizeBootstrapProviders() {
+  Object.assign(providers.openai, { description:t("bootstrapOpenAiDescription") });
+  Object.assign(providers.volcengine, { name:t("bootstrapArkName"), short:t("bootstrapArkShort"), description:t("bootstrapArkDescription") });
+  Object.assign(providers.mimo, { description:t("bootstrapMimoDescription") });
+  Object.assign(providers.deepseek, { name:t("bootstrapDeepSeekName"), description:t("bootstrapDeepSeekDescription") });
+  Object.assign(providers.kimi, { description:t("bootstrapKimiDescription") });
 }
 
 function translateStatic(value) {
@@ -297,9 +131,9 @@ function translateStatic(value) {
   const prefix = match?.[1] || "";
   const copy = match?.[2] || text;
   const suffix = match?.[3] || "";
-  const translated = englishUi[copy] || additionalEnglishUi[copy];
+  const translated = staticMessages.exact[copy];
   if (translated) return `${prefix}${translated}${suffix}`;
-  const localized = Object.entries(englishFragments)
+  const localized = Object.entries(staticMessages.fragments)
     .sort(([left], [right]) => right.length - left.length)
     .reduce((result, [chinese, english]) => result.split(chinese).join(english), copy);
   return localized === copy ? value : `${prefix}${localized}${suffix}`;
@@ -363,8 +197,10 @@ function localizeSubtree(root) {
 function applyInterfaceLanguage(language = "zh-CN") {
   const normalized = language === "en" ? "en" : "zh-CN";
   state.interfaceLanguage = normalized;
-  document.documentElement.lang = normalized;
-  document.title = normalized === "en" ? "Prismeter · AI usage center" : "Prismeter · AI 用量中心";
+  window.PrismeterI18n.setLanguage(normalized);
+  localizeBootstrapProviders();
+  window.PrismeterI18n.apply(document.body);
+  document.title = t("appTitle");
   localizeSubtree(document.body);
 }
 
@@ -410,6 +246,9 @@ function escapeHtml(value = "") {
 }
 
 function errorMessage(error, fallback = t("operationIncomplete")) {
+  const backendCodes = { not_found:"backendNotFound", sync_in_progress:"backendSyncInProgress", invalid_input:"backendInvalidInput", unsupported:"backendUnsupported", permission_denied:"backendPermissionDenied", operation_failed:"backendOperationFailed" };
+  const code = error?.errorCode || error?.code;
+  if (backendCodes[code]) return t(backendCodes[code]);
   if (typeof error === "string" && error.trim()) return error;
   if (typeof error?.message === "string" && error.message.trim()) return error.message;
   if (typeof error?.error === "string" && error.error.trim()) return error.error;
@@ -422,7 +261,7 @@ function formatDate(value) {
   if (!value) return t("notSynced");
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return t("invalidTime");
-  return new Intl.DateTimeFormat(state.interfaceLanguage, { month:"2-digit", day:"2-digit", hour:"2-digit", minute:"2-digit" }).format(date);
+  return window.PrismeterI18n.formatDate(date, { month:"2-digit", day:"2-digit", hour:"2-digit", minute:"2-digit" });
 }
 
 function relativeSyncTime(value) {
@@ -479,7 +318,11 @@ async function apiRequest(path, options = {}, allowPartial = false) {
     headers: { "Content-Type": "application/json", ...(options.headers || {}) }
   });
   const payload = await response.json().catch(() => ({ error: t("localServiceError") }));
-  if (!response.ok || (!allowPartial && payload.ok === false)) throw new Error(payload.error || t("operationFailed"));
+  if (!response.ok || (!allowPartial && payload.ok === false)) {
+    const error = new Error(payload.error || t("operationFailed"));
+    error.errorCode = payload.errorCode;
+    throw error;
+  }
   return payload;
 }
 
@@ -515,18 +358,18 @@ function exportCurrentProduct() {
   const account = getSelectedAccount(state.provider);
   const product = provider?.products?.[state.products[state.provider]];
   if (!account || !product || !(product.rows || []).length) {
-    showToast("当前产品没有可导出的远端明细");
+    showToast(t("csvNoRemoteDetails"));
     return;
   }
-  const header = ["平台", "账户", "产品", "资源 / 日期", "类型", ...(product.columns || [])];
+  const header = [t("csvPlatform"), t("csvAccount"), t("csvProduct"), t("csvResourceDate"), t("csvType"), ...(product.columns || [])];
   const rows = (product.rows || []).map(row => [
-    provider.name, account.name, product.name, row.name, row.type,
+    provider.name, accountDisplayName(account), product.name, row.name, row.type,
     ...(row.metrics || []).map(metric => metric?.[0] ?? "—")
   ]);
   const meta = [
-    ["数据来源", "平台远端官方接口"],
-    ["最近同步", account.lastSync || "—"],
-    ["导出时间", new Date().toISOString()]
+    [t("csvDataSource"), t("csvOfficialRemote")],
+    [t("csvLastSync"), account.lastSync || "—"],
+    [t("csvExportTime"), new Date().toISOString()]
   ];
   const csv = "\uFEFF" + [
     ...meta.map(row => row.map(csvCell).join(",")),
@@ -535,7 +378,7 @@ function exportCurrentProduct() {
     ...rows.map(row => row.map(csvCell).join(","))
   ].join("\r\n");
   downloadText(`Prismeter-${safeFilePart(provider.name)}-${safeFilePart(product.name)}-${new Date().toISOString().slice(0,10)}.csv`, csv, "text/csv;charset=utf-8");
-  showToast("远端产品明细已导出");
+  showToast(t("csvExported"));
 }
 
 function getSelectedAccount(providerId = state.provider) {
@@ -549,7 +392,7 @@ function applyDeepSeekAccountData(account = getSelectedAccount("deepseek")) {
   if (!account) {
     provider.products = { remote: remotePlaceholder(provider.name, true) };
     provider.primaryProduct = "remote";
-    provider.description = "尚未连接真实账户；添加 API Key 后读取官方余额数据";
+    provider.description = t("providerNoBalanceAccount", { provider: "DeepSeek " });
     state.products.deepseek = "remote";
     return;
   }
@@ -557,23 +400,23 @@ function applyDeepSeekAccountData(account = getSelectedAccount("deepseek")) {
   const balance = account.balances?.find(item => item.currency === "CNY") || account.balances?.[0];
   const symbol = moneySymbol(balance?.currency);
   const historyCount = state.backend.history.filter(item => item.accountId === account.id).length;
-  provider.description = `${account.name} · 官方余额查询 · ${account.keyHint}`;
+  provider.description = t("providerBalanceDescription", { account: accountDisplayName(account), provider: "DeepSeek ", hint: account.keyHint });
   provider.products = { api: {
     name: "DeepSeek API",
-    kind: "按量计费",
+    kind: t("providerPayg"),
     usage: balance ? `${symbol} ${balance.total}` : "—",
-    usageLabel: "当前总余额",
+    usageLabel: t("providerCurrentTotal"),
     progress: 0,
-    reset: `同步于 ${formatDate(account.lastSync)}`,
+    reset: t("providerSyncedAt", { time: formatDate(account.lastSync) }),
     summaries: [
-      ["当前总余额", balance ? `${symbol} ${balance.total}` : "—", "DeepSeek 官方"],
-      ["赠送余额", balance ? `${symbol} ${balance.granted}` : "—", "官方"],
-      ["充值余额", balance ? `${symbol} ${balance.toppedUp}` : "—", "官方"],
-      ["本地快照", `${historyCount} 条`, "连接后采集"]
+      [t("providerCurrentTotal"), balance ? `${symbol} ${balance.total}` : "—", "DeepSeek " + t("providerOfficial")],
+      [t("providerPromotionalBalance"), balance ? `${symbol} ${balance.granted}` : "—", t("providerOfficial")],
+      [t("providerCashBalance"), balance ? `${symbol} ${balance.toppedUp}` : "—", t("providerOfficial")],
+      [t("providerLocalSnapshots"), t("providerSnapshotCount", { count: historyCount }), t("providerCollectedAfterConnect")]
     ],
-    columns: ["币种", "总余额", "赠送余额", "充值余额"],
-    rows: (account.balances || []).map(item => resource(account.name, account.isAvailable ? "API 可调用" : "余额不可用", "DS", [
-      [item.currency, "官方"], [`${moneySymbol(item.currency)} ${item.total}`, "官方"], [`${moneySymbol(item.currency)} ${item.granted}`, "官方"], [`${moneySymbol(item.currency)} ${item.toppedUp}`, "官方"]
+    columns: [t("providerCurrency"), t("providerTotalBalance"), t("providerPromotionalBalance"), t("providerCashBalance")],
+    rows: (account.balances || []).map(item => resource(accountDisplayName(account), account.isAvailable ? t("providerApiAvailable") : t("providerBalanceUnavailable"), "DS", [
+      [item.currency, t("providerOfficial")], [`${moneySymbol(item.currency)} ${item.total}`, t("providerOfficial")], [`${moneySymbol(item.currency)} ${item.granted}`, t("providerOfficial")], [`${moneySymbol(item.currency)} ${item.toppedUp}`, t("providerOfficial")]
     ]))
   }};
   provider.primaryProduct = "api";
@@ -585,22 +428,43 @@ function applyKimiAccountData(account = getSelectedAccount("kimi")) {
   if (!account) {
     provider.products = { remote: remotePlaceholder(provider.name, true) };
     provider.primaryProduct = "remote";
-    provider.description = "尚未连接真实账户；添加 API Key 后读取 Kimi 官方余额数据";
+    provider.description = t("providerNoBalanceAccount", { provider: "Kimi " });
     state.products.kimi = "remote";
     return;
   }
   const balance = account.balances?.find(item => item.currency === "CNY") || account.balances?.[0];
   const historyCount = state.backend.history.filter(item => item.accountId === account.id).length;
-  provider.description = `${account.name} · Kimi 官方余额查询 · ${account.keyHint}`;
+  provider.description = t("providerBalanceDescription", { account: accountDisplayName(account), provider: "Kimi ", hint: account.keyHint });
   provider.products = { api: {
-    name: "Kimi API", kind: "按量计费", usage: balance ? `¥ ${balance.total}` : "—", usageLabel: "当前可用余额", progress: 0,
-    reset: `同步于 ${formatDate(account.lastSync)}`,
-    summaries: [["可用余额", balance ? `¥ ${balance.total}` : "—", "Kimi 官方"], ["代金券余额", balance ? `¥ ${balance.granted}` : "—", "Kimi 官方"], ["现金余额", balance ? `¥ ${balance.toppedUp}` : "—", "Kimi 官方"], ["本地快照", `${historyCount} 条`, "连接后采集"]],
-    columns: ["币种", "可用余额", "代金券余额", "现金余额"],
-    rows: (account.balances || []).map(item => resource(account.name, account.isAvailable ? "API 可调用" : "余额不可用", "Ki", [[item.currency, "官方"], [`¥ ${item.total}`, "官方"], [`¥ ${item.granted}`, "官方"], [`¥ ${item.toppedUp}`, "官方"]]))
+    name: "Kimi API", kind: t("providerPayg"), usage: balance ? `¥ ${balance.total}` : "—", usageLabel: t("providerAvailableBalance"), progress: 0,
+    reset: t("providerSyncedAt", { time: formatDate(account.lastSync) }),
+    summaries: [[t("providerAvailableBalance"), balance ? `¥ ${balance.total}` : "—", "Kimi " + t("providerOfficial")], [t("providerVoucherBalance"), balance ? `¥ ${balance.granted}` : "—", "Kimi " + t("providerOfficial")], [t("providerKimiCashBalance"), balance ? `¥ ${balance.toppedUp}` : "—", "Kimi " + t("providerOfficial")], [t("providerLocalSnapshots"), t("providerSnapshotCount", { count: historyCount }), t("providerCollectedAfterConnect")]],
+    columns: [t("providerCurrency"), t("providerAvailableBalance"), t("providerVoucherBalance"), t("providerKimiCashBalance")],
+    rows: (account.balances || []).map(item => resource(accountDisplayName(account), account.isAvailable ? t("providerApiAvailable") : t("providerBalanceUnavailable"), "Ki", [[item.currency, t("providerOfficial")], [`¥ ${item.total}`, t("providerOfficial")], [`¥ ${item.granted}`, t("providerOfficial")], [`¥ ${item.toppedUp}`, t("providerOfficial")]]))
   }};
   provider.primaryProduct = "api";
   if (!provider.products[state.products.kimi]) state.products.kimi = "api";
+}
+
+function i18nField(value, key, params) {
+  return key && window.PrismeterI18n.has(key) ? t(key, params) : localizeRemoteCopy(value);
+}
+
+function accountDisplayName(account) {
+  return i18nField(account?.name || "", account?.nameKey);
+}
+
+function localizeBackendErrors(errors = [], codes = []) {
+  return errors.map((error, index) => {
+    const code = codes[index];
+    return code ? errorMessage({ errorCode: code }, localizeRemoteCopy(error)) : localizeRemoteCopy(error);
+  });
+}
+
+function localizeSyncEventMessage(event) {
+  if (event?.messageCode === "sync_succeeded") return t("historyRemoteUpdated");
+  if (event?.messageCode) return errorMessage({ errorCode: event.messageCode }, localizeRemoteCopy(event.message));
+  return localizeRemoteCopy(event?.message || (event?.success ? t("historyRemoteUpdated") : t("historyRemoteRequestFailed")));
 }
 
 function applyOpenAIAccountData(account = getSelectedAccount("openai")) {
@@ -608,7 +472,7 @@ function applyOpenAIAccountData(account = getSelectedAccount("openai")) {
   if (!account) {
     provider.products = { remote: remotePlaceholder(provider.name, true) };
     provider.primaryProduct = "remote";
-    provider.description = "连接当前 Windows 用户的 OpenAI 登录账户；ChatGPT 与 Codex 按产品分开展示";
+    provider.description = t("providerOpenAiConnect");
     state.products.openai = "remote";
     return;
   }
@@ -618,20 +482,20 @@ function applyOpenAIAccountData(account = getSelectedAccount("openai")) {
     const percent = String(item.usage || "").match(/(-?\d+(?:\.\d+)?)\s*%/);
     products[item.id] = {
       name: item.name || item.id,
-      kind: item.kind || "ChatGPT 订阅",
+      kind: item.kind || t("providerChatGptSubscription"),
       usage: item.usage || "—",
-      usageLabel: item.usageLabel || "远端用量",
+      usageLabel: i18nField(item.usageLabel, item.usageLabelKey, item.usageLabelParams) || t("remoteUsage"),
       progress: percent ? Math.max(0, Math.min(100, Number(percent[1]))) : 0,
       resetAt: item.resetAt || null,
-      reset: item.resetAt ? `额度 ${relativeFutureTime(item.resetAt)} 恢复` : `同步于 ${formatDate(account.lastSync)}`,
-      summaries: (item.summaries || []).map(metric => [metric.label, metric.value, metric.note]),
-      columns: item.columns || [],
-      rows: (item.rows || []).map(row => resource(row.name, row.type, row.badge, (row.metrics || []).map(metric => [metric.value, metric.unit])))
+      reset: item.resetAt ? t("providerQuotaRestore", { time: relativeFutureTime(item.resetAt) }) : t("providerSyncedAt", { time: formatDate(account.lastSync) }),
+      summaries: (item.summaries || []).map((metric, index) => { const keys = item.i18n?.summaryKeys?.[index] || metric; return [i18nField(metric.label, keys.labelKey), i18nField(metric.value, keys.valueKey, keys.valueParams), i18nField(metric.note, keys.noteKey)]; }),
+      columns: (item.columns || []).map((column, index) => i18nField(column, item.i18n?.columnKeys?.[index])),
+      rows: (item.rows || []).map(row => resource(i18nField(row.name, row.nameKey || row.i18n?.nameKey), i18nField(row.type, row.typeKey || row.i18n?.typeKey), row.badge, (row.metrics || []).map((metric, index) => [metric.value, i18nField(metric.unit, row.i18n?.metricUnitKeys?.[index])])) )
     };
   }
   provider.products = products;
   provider.primaryProduct = Object.keys(products)[0] || "codex";
-  provider.description = `${account.name} · OpenAI ${account.planType || "ChatGPT"} · ${account.email || "官方登录态"}`;
+  provider.description = t("providerOpenAiDescription", { account: accountDisplayName(account), plan: account.planType || "ChatGPT", email: account.email || t("providerOfficialLogin") });
   if (!provider.products[state.products.openai]) state.products.openai = provider.primaryProduct;
 }
 
@@ -640,7 +504,7 @@ function applyVolcengineAccountData(account = getSelectedAccount("volcengine")) 
   if (!account) {
     provider.products = { remote: remotePlaceholder(provider.name, true) };
     provider.primaryProduct = "remote";
-    provider.description = "添加 AK/SK 后从火山控制面同步读取套餐用量";
+    provider.description = t("providerArkConnect");
     state.products.volcengine = "remote";
     return;
   }
@@ -650,19 +514,19 @@ function applyVolcengineAccountData(account = getSelectedAccount("volcengine")) 
     const percent = String(item.usage || "").match(/(-?\d+(?:\.\d+)?)\s*%/);
     products[item.id] = {
       name: item.name || item.id,
-      kind: item.kind || "官方产品",
+      kind: item.kind || t("providerOfficialProduct"),
       usage: item.usage || "—",
-      usageLabel: item.usageLabel || "官方用量",
+      usageLabel: i18nField(item.usageLabel, item.usageLabelKey, item.usageLabelParams) || t("officialProduct"),
       progress: percent ? Math.max(0, Math.min(100, Number(percent[1]))) : 0,
-      reset: `同步于 ${formatDate(account.lastSync)}`,
-      summaries: (item.summaries || []).map(metric => [metric.label, metric.value, metric.note]),
-      columns: item.columns || [],
-      rows: (item.rows || []).map(row => resource(row.name, row.type, row.badge, (row.metrics || []).map(metric => [metric.value, metric.unit])))
+      reset: t("providerSyncedAt", { time: formatDate(account.lastSync) }),
+      summaries: (item.summaries || []).map((metric, index) => { const keys = item.i18n?.summaryKeys?.[index] || metric; return [i18nField(metric.label, keys.labelKey), i18nField(metric.value, keys.valueKey, keys.valueParams), i18nField(metric.note, keys.noteKey)]; }),
+      columns: (item.columns || []).map((column, index) => i18nField(column, item.i18n?.columnKeys?.[index])),
+      rows: (item.rows || []).map(row => resource(i18nField(row.name, row.nameKey || row.i18n?.nameKey), i18nField(row.type, row.typeKey || row.i18n?.typeKey), row.badge, (row.metrics || []).map((metric, index) => [metric.value, i18nField(metric.unit, row.i18n?.metricUnitKeys?.[index])])) )
     };
   }
   provider.products = products;
   provider.primaryProduct = Object.keys(products)[0] || "payg";
-  provider.description = `${account.name} · ${account.keyHint} · ${account.projectName || APP_DEFAULTS.volcengineProject}`;
+  provider.description = `${accountDisplayName(account)} · ${account.keyHint} · ${account.projectName || APP_DEFAULTS.volcengineProject}`;
   if (!provider.products[state.products.volcengine]) state.products.volcengine = provider.primaryProduct;
 }
 
@@ -671,7 +535,7 @@ function applyMimoAccountData(account = getSelectedAccount("mimo")) {
   if (!account) {
     provider.products = { remote: remotePlaceholder(provider.name, true) };
     provider.primaryProduct = "remote";
-    provider.description = "添加 MiMo API Key 后读取官方模型列表；余额与 Credits 仅在小米控制台可见";
+    provider.description = t("providerMimoConnect");
     state.products.mimo = "remote";
     return;
   }
@@ -679,19 +543,19 @@ function applyMimoAccountData(account = getSelectedAccount("mimo")) {
   for (const item of account.products || []) {
     products[item.id] = {
       name: item.name || item.id,
-      kind: item.kind || "API Key 能力",
+      kind: item.kind || t("providerApiKeyCapability"),
       usage: item.usage || "—",
-      usageLabel: item.usageLabel || "远端模型",
+      usageLabel: i18nField(item.usageLabel, item.usageLabelKey, item.usageLabelParams) || t("providerRemoteModels"),
       progress: 0,
-      reset: `同步于 ${formatDate(account.lastSync)}`,
-      summaries: (item.summaries || []).map(metric => [metric.label, metric.value, metric.note]),
-      columns: item.columns || [],
-      rows: (item.rows || []).map(row => resource(row.name, row.type, row.badge, (row.metrics || []).map(metric => [metric.value, metric.unit])))
+      reset: t("providerSyncedAt", { time: formatDate(account.lastSync) }),
+      summaries: (item.summaries || []).map((metric, index) => { const keys = item.i18n?.summaryKeys?.[index] || metric; return [i18nField(metric.label, keys.labelKey), i18nField(metric.value, keys.valueKey, keys.valueParams), i18nField(metric.note, keys.noteKey)]; }),
+      columns: (item.columns || []).map((column, index) => i18nField(column, item.i18n?.columnKeys?.[index])),
+      rows: (item.rows || []).map(row => resource(i18nField(row.name, row.nameKey || row.i18n?.nameKey), i18nField(row.type, row.typeKey || row.i18n?.typeKey), row.badge, (row.metrics || []).map((metric, index) => [metric.value, i18nField(metric.unit, row.i18n?.metricUnitKeys?.[index])])) )
     };
   }
   provider.products = products;
   provider.primaryProduct = Object.keys(products)[0] || "mimo-models";
-  provider.description = `${account.name} · ${account.planType === "token_plan" ? "Token Plan" : "按量 API"} · ${account.keyHint}`;
+  provider.description = t("providerMimoDescription", { account: accountDisplayName(account), plan: account.planType === "token_plan" ? "Token Plan" : t("providerPayg"), hint: account.keyHint });
   if (!provider.products[state.products.mimo]) state.products.mimo = provider.primaryProduct;
 }
 
@@ -788,7 +652,7 @@ function renderNavigation() {
   els.platformNav.innerHTML = accounts.length ? accounts.map(account => {
     const provider = providers[account.provider];
     const accountId = escapeHtml(account.id);
-    return `<button class="${account.id === state.accountId ? 'active' : ''} ${account.enabled === false ? 'paused-account' : ''}" data-account="${accountId}" data-sort-account="${accountId}" data-account-provider="${escapeHtml(account.provider)}">${platformLogo(account.provider, "nav-brand-logo")}<span><b>${escapeHtml(account.name)}</b><small>${escapeHtml(provider?.name || account.provider)}</small></span><i class="drag-handle nav-drag-handle" data-drag-account="${accountId}" title="${t("dragToSort")}" aria-label="${t("dragToSort")}">⋮⋮</i></button>`;
+    return `<button class="${account.id === state.accountId ? 'active' : ''} ${account.enabled === false ? 'paused-account' : ''}" data-account="${accountId}" data-sort-account="${accountId}" data-account-provider="${escapeHtml(account.provider)}">${platformLogo(account.provider, "nav-brand-logo")}<span><b>${escapeHtml(accountDisplayName(account))}</b><small>${escapeHtml(provider?.name || account.provider)}</small></span><i class="drag-handle nav-drag-handle" data-drag-account="${accountId}" title="${t("dragToSort")}" aria-label="${t("dragToSort")}">⋮⋮</i></button>`;
   }).join("") : `<button class="nav-empty-account" data-view="accounts"><span class="nav-add-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></span><span><b>${t("addAccount")}</b><small>${t("showHereAfterConnection")}</small></span></button>`;
 }
 
@@ -818,11 +682,11 @@ function renderOverview() {
   document.querySelector("#heroSchedule").textContent = automaticSyncLabel();
   renderActionCenter();
   const insight = document.querySelector(".insight-card");
-  insight.querySelector("h3").textContent = "所有指标均来自平台远端";
+  insight.querySelector("h3").textContent = t("overviewAllRemote");
   insight.querySelector("p:not(.eyebrow)").innerHTML = connectedCount
     ? t("monitoredSummary", { count:connectedCount })
-    : translateStatic("添加账户后，Prismeter 才会展示对应平台实际支持的远端指标。");
-  insight.querySelector("button").textContent = translateStatic("查看账户");
+    : t("overviewConnectForMetrics");
+  insight.querySelector("button").textContent = t("overviewViewAccounts");
   insight.querySelector("button").dataset.targetView = "accounts";
   const platformOrder = orderedProviderIds(accounts);
   els.platformCards.innerHTML = platformOrder.map(id => [id, providers[id]]).filter(([,provider]) => provider).map(([id,p]) => {
@@ -831,7 +695,7 @@ function renderOverview() {
     const isRemote = connectedAccounts.length > 0;
     const platformFreshness = overallFreshness(connectedAccounts);
     const freshnessClass = !isRemote ? "none" : platformFreshness.monitored === 0 ? "paused" : platformFreshness.attention ? "attention" : "fresh";
-    const freshnessLabel = !isRemote ? "—" : platformFreshness.monitored === 0 ? translateStatic("已暂停") : platformFreshness.attention ? t("refreshAccounts", { count:platformFreshness.attention }) : t("dataFresh");
+    const freshnessLabel = !isRemote ? "—" : platformFreshness.monitored === 0 ? t("healthPaused") : platformFreshness.attention ? t("refreshAccounts", { count:platformFreshness.attention }) : t("dataFresh");
     const productLabel = isRemote ? `${connectedAccounts.length} ${t("monitoredAccounts")} · ${product.name}` : t("noRemoteData");
     return `<article class="platform-card ${isRemote ? 'real-data' : 'remote-empty'}" data-provider="${escapeHtml(id)}" data-sort-provider="${escapeHtml(id)}" style="${providerStyle(id)}">
       <div class="platform-card-top">${platformLogo(id, "card-brand-logo")}<span><i class="status-dot ${freshnessClass}" title="${escapeHtml(freshnessLabel)}"></i><i class="drag-handle" data-drag-provider="${escapeHtml(id)}" title="${t("dragPlatformToSort")}" aria-label="${t("dragPlatformToSort")}">⋮⋮</i></span></div>
@@ -852,7 +716,7 @@ function renderOverview() {
     const value = ["deepseek", "kimi"].includes(account.provider)
       ? (primary ? escapeHtml(`${moneySymbol(primary.currency)} ${primary.total}`) : "—")
       : escapeHtml(primary?.usage || "—");
-    const freshness = accountFreshness(account); return `<div class="activity-item">${platformLogo(account.provider, "activity-brand-logo")}<div class="activity-main"><b>${escapeHtml(account.name)}</b><span>${escapeHtml(provider?.name || account.provider)} · ${t("remoteSync")}</span></div><div class="activity-value"><b>${value}</b><span class="freshness-text ${freshness.level}">${escapeHtml(freshness.label)} · ${escapeHtml(relativeSyncTime(account.lastSync))}</span></div></div>`;
+    const freshness = accountFreshness(account); return `<div class="activity-item">${platformLogo(account.provider, "activity-brand-logo")}<div class="activity-main"><b>${escapeHtml(accountDisplayName(account))}</b><span>${escapeHtml(provider?.name || account.provider)} · ${t("remoteSync")}</span></div><div class="activity-value"><b>${value}</b><span class="freshness-text ${freshness.level}">${escapeHtml(freshness.label)} · ${escapeHtml(relativeSyncTime(account.lastSync))}</span></div></div>`;
   }).join("") : `<div class="history-empty">${t("activityAfterSync")}</div>`;
 }
 
@@ -861,17 +725,17 @@ function renderActionCenter() {
   const priority = { sync:0, freshness:1, status:1, balance:2, quota:2 };
   const symbols = { sync:"!", freshness:"↻", status:"!", balance:"¥", quota:"%" };
   const items = alerts.slice().sort((left, right) => (priority[left.kind] ?? 3) - (priority[right.kind] ?? 3)).slice(0, 3);
-  els.actionCenterTitle.textContent = items.length ? t("actionItems", { count:items.length }) : translateStatic("当前无需处理");
+  els.actionCenterTitle.textContent = items.length ? t("actionItems", { count:items.length }) : t("overviewNothingToDo");
   els.actionList.innerHTML = items.length ? items.map(item => {
     const account = (state.backend.accounts || []).find(candidate => candidate.id === item.accountId);
     const canSync = account && ["sync", "freshness", "status"].includes(item.kind);
     const actions = canSync
-      ? `<button class="mini-button" data-sync-account="${escapeHtml(account.id)}"><span>立即同步</span></button><button class="mini-button" data-view-account="${escapeHtml(account.id)}" data-account-provider="${escapeHtml(account.provider)}">查看账户</button>`
-      : `<button class="mini-button" data-target-view="alerts">查看提醒</button>${account ? `<button class="mini-button" data-account-alerts="${escapeHtml(account.id)}">调整规则</button>` : ""}`;
+      ? `<button class="mini-button" data-sync-account="${escapeHtml(account.id)}"><span>${t("actionSyncNow")}</span></button><button class="mini-button" data-view-account="${escapeHtml(account.id)}" data-account-provider="${escapeHtml(account.provider)}">${t("actionViewAccount")}</button>`
+      : `<button class="mini-button" data-target-view="alerts">${t("overviewViewAlerts")}</button>${account ? `<button class="mini-button" data-account-alerts="${escapeHtml(account.id)}">${t("actionAdjustRules")}</button>` : ""}`;
     const resetAt = item.kind === "quota" ? productResetAt(account, item.productId) : null;
     const detail = `${item.message || t("alertDetail")}${resetAt ? ` · ${t("predictedRestore", { time:relativeFutureTime(resetAt) })}` : ""}`;
     return `<article class="action-item"><span class="action-symbol ${["sync", "freshness", "status"].includes(item.kind) ? "sync" : ""}">${symbols[item.kind] || "!"}</span><div class="action-copy"><b>${escapeHtml(item.title || t("remoteStatusAttention"))}</b><span>${escapeHtml(detail)}</span></div><div class="action-actions">${actions}</div></article>`;
-  }).join("") : `<article class="action-item"><span class="action-symbol good">✓</span><div class="action-copy"><b>${translateStatic("没有需要立即处理的事项")}</b><span>${t("snoozedAlertNote")}</span></div></article>`;
+  }).join("") : `<article class="action-item"><span class="action-symbol good">✓</span><div class="action-copy"><b>${t("actionNothingImmediate")}</b><span>${t("snoozedAlertNote")}</span></div></article>`;
 }
 
 function renderPlatform() {
@@ -894,18 +758,18 @@ function renderPlatform() {
   }
   els.selectedPlatformIcon.innerHTML = platformLogo(id, "large-brand-logo");
   els.selectedPlatformIcon.removeAttribute("style");
-  els.selectedPlatformName.textContent = account ? account.name : provider.name;
-  const warningSuffix = account?.productErrors?.length ? ` · ${account.productErrors.length} 项未授权或未开通` : "";
-  els.selectedPlatformDescription.textContent = account ? `${provider.name} · ${account.keyHint} · 独立账户数据${warningSuffix}` : provider.description;
+  els.selectedPlatformName.textContent = account ? accountDisplayName(account) : provider.name;
+  const warningSuffix = account?.productErrors?.length ? t("platformUnauthorizedProducts", { count: account.productErrors.length }) : "";
+  els.selectedPlatformDescription.textContent = account ? t("platformAccountDescription", { provider: provider.name, hint: account.keyHint, warning: warningSuffix }) : provider.description;
   const connectionBadge = document.querySelector(".connected-badge");
   const isConnected = Boolean(account);
-  const freshness = accountFreshness(account); connectionBadge.textContent = isConnected ? freshness.label : "未连接";
+  const freshness = accountFreshness(account); connectionBadge.textContent = isConnected ? freshness.label : t("notConnected");
   connectionBadge.classList.toggle("offline", !isConnected); connectionBadge.dataset.freshness = isConnected ? freshness.level : "none";
   document.querySelector(".header-stat strong").textContent = isConnected ? relativeSyncTime(account.lastSync) : "—";
   els.productTabs.innerHTML = Object.entries(provider.products).map(([pid,p]) => `<button class="${pid===productId?'active':''}" data-product="${escapeHtml(pid)}">${escapeHtml(p.name)}</button>`).join("");
   els.productSummary.innerHTML = product.summaries.map(([label,value,note]) => `<article class="summary-card"><span>${escapeHtml(label)}</span><strong>${escapeHtml(value)}</strong><small>${escapeHtml(note)}</small></article>`).join("");
   els.detailEyebrow.textContent = product.kind;
-  els.detailTitle.textContent = `${product.name} · 远端指标`;
+  els.detailTitle.textContent = t("detailRemoteMetrics", { name: product.name });
   renderDynamicTable(product);
   els.exportProductButton.disabled = !account || !(product.rows || []).length;
   renderMetricTrend(account, productId);
@@ -918,7 +782,7 @@ function metricHistoryKey(account, productId) {
 function formatMetricNumber(value, unit = "") {
   const number = Number(value);
   const formatted = Number.isFinite(number)
-    ? new Intl.NumberFormat(state.interfaceLanguage, { maximumFractionDigits:Math.abs(number) < 10 ? 2 : 1 }).format(number)
+    ? window.PrismeterI18n.formatNumber(number, { maximumFractionDigits:Math.abs(number) < 10 ? 2 : 1 })
     : "—";
   if (unit === "CNY") return `¥ ${formatted}`;
   if (unit === "USD") return `$ ${formatted}`;
@@ -929,7 +793,7 @@ function clearMetricTrend(message) {
   els.trendPath.setAttribute("d", "");
   els.trendArea.setAttribute("d", "");
   els.trendPoints.innerHTML = "";
-  els.trendChange.textContent = "等待采集";
+  els.trendChange.textContent = t("collecting");
   els.trendChange.classList.remove("down");
   els.trendEmpty.textContent = message;
   els.trendEmpty.hidden = false;
@@ -938,38 +802,38 @@ function clearMetricTrend(message) {
 
 function forecastDuration(milliseconds) {
   const minutes = Math.max(0, Math.round(milliseconds / 60000));
-  if (minutes < 60) return `${minutes} 分钟`;
+  if (minutes < 60) return t("minutes", { count:minutes });
   const hours = Math.round(minutes / 60);
-  if (hours < 48) return `${hours} 小时`;
-  return `${Math.round(hours / 24)} 天`;
+  if (hours < 48) return t("hours", { count:hours });
+  return t("days", { count:Math.round(hours / 24) });
 }
 
 function estimateMetricExhaustion(snapshots, metric, resetAt) {
-  if (snapshots.length < 3) return { state:"collecting", title:`还需 ${3 - snapshots.length} 个快照`, detail:"至少积累 3 个跨时段远端快照后，才会估算消耗节奏。", meta:"预测尚未开始" };
+  if (snapshots.length < 3) return { state:"collecting", title:t("forecastCollecting", { count:3 - snapshots.length }), detail:t("forecastNeedSamples"), meta:t("forecastNotStarted") };
   const first = snapshots[0], last = snapshots.at(-1);
   const elapsed = new Date(last.timestamp).getTime() - new Date(first.timestamp).getTime();
   const delta = Number(last.value) - Number(first.value);
   if (!Number.isFinite(elapsed) || elapsed < 30 * 60 * 1000 || !Number.isFinite(delta)) {
-    return { state:"collecting", title:"继续积累快照", detail:"快照时间跨度不足 30 分钟，暂不生成不可靠的预测。", meta:"预测尚未开始" };
+    return { state:"collecting", title:t("forecastKeepCollecting"), detail:t("forecastShortSpan"), meta:t("forecastNotStarted") };
   }
   const isQuota = metric.unit === "%";
   const isBalance = ["CNY", "USD"].includes(metric.unit);
   const consumption = isQuota ? delta : isBalance ? -delta : 0;
   const target = isQuota ? 100 : 0;
   const remaining = isQuota ? target - Number(last.value) : Number(last.value);
-  if (!isQuota && !isBalance) return { state:"unsupported", title:"此指标暂不预测", detail:"仅对百分比额度和货币余额估算耗尽时间，累计用量等指标不会被误判为可用额度。", meta:"只展示历史趋势" };
-  if (remaining <= 0) return { state:"risk", title:isQuota ? "额度已达到上限" : "余额已用尽", detail:"请查看平台的实际状态或等待下一次远端同步。", meta:"以平台远端数据为准" };
-  if (consumption <= 0) return { state:"steady", title:"近期没有持续消耗", detail:"最近快照未显示稳定的额度消耗，因此不猜测耗尽时间。", meta:"预测会随新快照更新" };
+  if (!isQuota && !isBalance) return { state:"unsupported", title:t("forecastUnsupported"), detail:t("forecastUnsupportedDetail"), meta:t("forecastHistoryOnly") };
+  if (remaining <= 0) return { state:"risk", title:isQuota ? t("forecastQuotaExhausted") : t("forecastBalanceExhausted"), detail:t("forecastCheckRemote"), meta:t("forecastRemoteSource") };
+  if (consumption <= 0) return { state:"steady", title:t("forecastNoConsumption"), detail:t("forecastNoConsumptionDetail"), meta:t("forecastUpdates") };
   const untilExhausted = remaining / consumption * elapsed;
-  if (!Number.isFinite(untilExhausted) || untilExhausted > 90 * 86400000) return { state:"steady", title:"近期消耗较低", detail:"按当前快照节奏，预测跨度超过 90 天，暂不显示不可靠的远期时间。", meta:"预测会随新快照更新" };
+  if (!Number.isFinite(untilExhausted) || untilExhausted > 90 * 86400000) return { state:"steady", title:t("forecastLowConsumption"), detail:t("forecastLongHorizon"), meta:t("forecastUpdates") };
   const estimatedAt = new Date(new Date(last.timestamp).getTime() + untilExhausted);
   const resetTime = resetAt ? new Date(resetAt).getTime() : NaN;
   const beforeReset = Number.isFinite(resetTime) && estimatedAt.getTime() < resetTime;
   const rate = consumption / (elapsed / 3600000);
-  const rateText = isQuota ? `${rate.toFixed(1)} 个百分点/小时` : `${formatMetricNumber(rate, metric.unit)}/小时`;
-  if (beforeReset) return { state:"risk", title:`预计 ${forecastDuration(untilExhausted)} 后耗尽`, detail:`按最近 ${snapshots.length} 个远端快照，平均消耗 ${rateText}；将在额度恢复前达到上限。`, meta:`平台预计 ${relativeFutureTime(resetAt)} 恢复` };
-  if (Number.isFinite(resetTime)) return { state:"healthy", title:"重置前预计不会耗尽", detail:`按最近 ${snapshots.length} 个远端快照，平均消耗 ${rateText}；预测达到上限前额度会先恢复。`, meta:`平台预计 ${relativeFutureTime(resetAt)} 恢复` };
-  return { state:"attention", title:`预计 ${forecastDuration(untilExhausted)} 后耗尽`, detail:`按最近 ${snapshots.length} 个远端快照，平均消耗 ${rateText}。这是趋势估算，不是平台承诺。`, meta:`预计 ${formatDate(estimatedAt)}` };
+  const rateText = isQuota ? t("forecastRatePercent", { rate:rate.toFixed(1) }) : t("forecastRateValue", { rate:formatMetricNumber(rate, metric.unit) });
+  if (beforeReset) return { state:"risk", title:t("forecastExhaustsIn", { duration:forecastDuration(untilExhausted) }), detail:t("forecastBeforeReset", { count:snapshots.length, rate:rateText }), meta:t("forecastRestores", { time:relativeFutureTime(resetAt) }) };
+  if (Number.isFinite(resetTime)) return { state:"healthy", title:t("forecastResetFirst"), detail:t("forecastResetFirstDetail", { count:snapshots.length, rate:rateText }), meta:t("forecastRestores", { time:relativeFutureTime(resetAt) }) };
+  return { state:"attention", title:t("forecastExhaustsIn", { duration:forecastDuration(untilExhausted) }), detail:t("forecastEstimate", { count:snapshots.length, rate:rateText }), meta:t("forecastAt", { time:formatDate(estimatedAt) }) };
 }
 
 function renderTrendForecast(forecast) {
@@ -1014,14 +878,14 @@ function renderMetricTrend(account, productId) {
   const cached = state.metricHistoryCache.get(key);
   if (!cached) {
     els.trendMetricTabs.innerHTML = "";
-    els.trendCaption.textContent = `正在读取最近 ${state.metricRangeDays} 天的远端快照`;
-    clearMetricTrend("正在读取远端指标历史…");
+    els.trendCaption.textContent = t("trendLoading", { days:state.metricRangeDays });
+    clearMetricTrend(t("trendLoadingDetail"));
     loadMetricHistory(account, productId, key);
     return;
   }
   if (cached.error) {
     els.trendMetricTabs.innerHTML = "";
-    els.trendCaption.textContent = "趋势读取失败";
+    els.trendCaption.textContent = t("trendFailed");
     clearMetricTrend(cached.error);
     return;
   }
@@ -1038,15 +902,15 @@ function renderMetricTrend(account, productId) {
   els.trendMetricTabs.innerHTML = metrics.map(metric => `<button type="button" class="${metric.id === selectedId ? "active" : ""}" data-trend-metric="${escapeHtml(metric.id)}" title="${escapeHtml(metric.label)}">${escapeHtml(metric.label)}</button>`).join("");
   const selected = metrics.find(metric => metric.id === selectedId);
   if (!selected) {
-    els.trendCaption.textContent = `最近 ${state.metricRangeDays} 天 · 尚无可绘制数值`;
-    clearMetricTrend("当前产品暂未返回可用于趋势分析的数值指标。");
+    els.trendCaption.textContent = t("trendNoValues", { days:state.metricRangeDays });
+    clearMetricTrend(t("trendNoMetrics"));
     return;
   }
   const snapshots = selected.items.sort((a,b) => new Date(a.timestamp) - new Date(b.timestamp));
   renderTrendForecast(estimateMetricExhaustion(snapshots, selected, productResetAt(account, productId)));
-  els.trendCaption.textContent = `${snapshots.length} 个远端快照 · 最近 ${state.metricRangeDays} 天`;
+  els.trendCaption.textContent = t("trendSummary", { count:snapshots.length, days:state.metricRangeDays });
   if (snapshots.length < 2) {
-    clearMetricTrend("至少完成两次跨小时同步后，才会显示变化曲线。");
+    clearMetricTrend(t("trendNeedTwoSyncs"));
     return;
   }
   const values = snapshots.map(item => Number(item.value));
@@ -1117,8 +981,8 @@ function populateSettings() {
   const balanceSnapshots = Number(storage.balanceSnapshots || 0);
   const metricSnapshots = Number(storage.metricSnapshots || 0);
   const syncEvents = Number(storage.syncEvents || 0);
-  els.historyStorageSummary.textContent = `${balanceSnapshots + metricSnapshots + syncEvents} 条`;
-  els.historyStorageDetail.textContent = `${metricSnapshots} 条指标快照 · ${balanceSnapshots} 条余额兼容快照 · ${syncEvents} 条同步记录`;
+  els.historyStorageSummary.textContent = t("historyStorageSummary", { count: balanceSnapshots + metricSnapshots + syncEvents });
+  els.historyStorageDetail.textContent = t("historyStorageDetail", { metrics: metricSnapshots, balances: balanceSnapshots, syncs: syncEvents });
   els.clearHistoryButton.disabled = balanceSnapshots + metricSnapshots + syncEvents === 0;
 }
 
@@ -1159,7 +1023,7 @@ function updateCredentialFields() {
   els.volcAccessKey.required = isVolcengine;
   els.volcSecretKey.required = isVolcengine;
   els.mimoApiKey.required = isMimo;
-  els.accountName.placeholder = isVolcengine ? "例如：火山工作账户" : isOpenAI ? "例如：OpenAI 个人账户" : isMimo ? "例如：MiMo Token Plan" : isKimi ? "例如：Kimi 工作账户" : "例如：工作室主账户";
+  els.accountName.placeholder = isVolcengine ? t("accountPlaceholderVolcengine") : isOpenAI ? t("accountPlaceholderOpenAi") : isMimo ? t("accountPlaceholderMimo") : isKimi ? t("accountPlaceholderKimi") : t("accountNamePlaceholder");
   syncMimoEndpointPresets();
 }
 
@@ -1173,8 +1037,8 @@ function syncMimoEndpointPresets(targetId = "mimoBaseUrl") {
 function openConnectionDialog(account) {
   if (!account || account.provider === "openai") return;
   state.connectionAccountId = account.id;
-  els.connectionDialogTitle.textContent = `${account.name} · 连接设置`;
-  els.connectionDialogSubtitle.textContent = `${providers[account.provider]?.name || account.provider} · ${account.keyHint || "当前凭据已保存"}`;
+  els.connectionDialogTitle.textContent = t("connectionDialogTitle", { name: accountDisplayName(account) });
+  els.connectionDialogSubtitle.textContent = `${providers[account.provider]?.name || account.provider} · ${account.keyHint || t("connectionCredentialSaved")}`;
   els.editDeepseekCredentials.hidden = !["deepseek", "kimi"].includes(account.provider);
   els.editVolcengineCredentials.hidden = account.provider !== "volcengine";
   els.editMimoCredentials.hidden = account.provider !== "mimo";
@@ -1193,10 +1057,10 @@ function renderDynamicTable(product) {
   const columns = product.columns || [];
   const productRows = product.rows || [];
   if (!columns.length || !productRows.length) {
-    els.dynamicTable.innerHTML = `<div class="history-empty"><b>${escapeHtml(product.name)}</b><br>该产品没有可公开展示的明细字段；Prismeter 不会用其他产品或本地估算补齐。</div>`;
+    els.dynamicTable.innerHTML = `<div class="history-empty"><b>${escapeHtml(product.name)}</b><br>${escapeHtml(t("tableNoPublicDetails"))}</div>`;
     return;
   }
-  const header = `<div class="data-row header" style="--columns:${columns.length}"><span>模型 / 能力</span>${columns.map(c=>`<span>${escapeHtml(c)}</span>`).join("")}<span></span></div>`;
+  const header = `<div class="data-row header" style="--columns:${columns.length}"><span>${t("tableModelCapability")}</span>${columns.map(c=>`<span>${escapeHtml(c)}</span>`).join("")}<span></span></div>`;
   const rows = productRows.map((row, index) => `<div class="data-row" data-row="${index}" style="--columns:${columns.length}">
     <div class="resource-cell"><div class="resource-badge">${escapeHtml(row.badge)}</div><div><b>${escapeHtml(row.name)}</b><span>${escapeHtml(row.type)}</span></div></div>
     ${row.metrics.map(([v,u])=>`<div class="metric-cell"><b>${escapeHtml(v)}</b><span>${escapeHtml(u)}</span></div>`).join("")}<span class="chevron">›</span>
@@ -1206,7 +1070,7 @@ function renderDynamicTable(product) {
 
 function modelFamilyDefinition(id) {
   return {
-    all:{ label:"全部模型与产品", aliases:[] },
+    all:{ label:t("modelsAllModels"), aliases:[] },
     deepseek:{ label:"DeepSeek", aliases:["deepseek","深度求索"] },
     glm:{ label:"GLM", aliases:["glm","智谱"] },
     doubao:{ label:"Doubao", aliases:["doubao","豆包"] },
@@ -1240,7 +1104,7 @@ function collectRemoteModelRecords(familyId, levelFilter = "all", query = "") {
     if (levelFilter !== "all" && record.level !== levelFilter) return false;
     if (!normalizedQuery) return true;
     const provider = providers[record.account.provider];
-    return [provider?.name, record.account.name, record.product.name, record.product.kind, record.row?.name, record.row?.type]
+    return [provider?.name, accountDisplayName(record.account), record.product.name, record.product.kind, record.row?.name, record.row?.type]
       .some(value => String(value || "").toLocaleLowerCase().includes(normalizedQuery));
   });
   return { definition, accounts, familyRecords, records };
@@ -1258,12 +1122,12 @@ function renderComparisons() {
   els.modelTotal.textContent = String(records.length);
   els.modelRowTotal.textContent = String(rowCount);
   els.modelProductTotal.textContent = String(productCount);
-  els.modelTotalUnit.textContent = records.length ? `${definition.label} · 当前筛选结果` : `${definition.label} · 暂无匹配记录`;
-  els.mainSource.textContent = connectedProviderIds.length ? `${coveredProviderIds.length} / ${connectedProviderIds.length} 个平台` : "尚未连接平台";
+  els.modelTotalUnit.textContent = records.length ? t("modelsFilteredResult", { family: definition.label }) : t("modelsNoMatchingResult", { family: definition.label });
+  els.mainSource.textContent = connectedProviderIds.length ? t("modelCoveredPlatforms", { covered:coveredProviderIds.length, total:connectedProviderIds.length }) : t("noConnectedPlatform");
   const latestSync = accounts.map(account => account.lastSync).filter(Boolean).sort().at(-1);
-  els.modelLatestSync.textContent = latestSync ? relativeSyncTime(latestSync) : "从未同步";
-  els.modelResultCount.textContent = `${records.length} 条`;
-  els.modelResultsTitle.textContent = query.trim() ? `“${query.trim()}”的远端结果` : `${definition.label} · ${levelFilter === "row" ? "模型级记录" : levelFilter === "product" ? "产品级记录" : "全部远端记录"}`;
+  els.modelLatestSync.textContent = latestSync ? relativeSyncTime(latestSync) : t("modelsNeverSynced");
+  els.modelResultCount.textContent = t("modelResultUnit", { count:records.length });
+  els.modelResultsTitle.textContent = query.trim() ? t("modelResultsFor", { query:query.trim() }) : `${definition.label} · ${levelFilter === "row" ? t("modelRowRecords") : levelFilter === "product" ? t("modelProductRecords") : t("modelAllRecords")}`;
 
   els.modelCoverage.innerHTML = connectedProviderIds.map(id => {
     const providerAccounts = accounts.filter(account => account.provider === id);
@@ -1272,37 +1136,37 @@ function renderComparisons() {
     const products = providerRecords.filter(record => record.level === "product").length;
     const paused = providerAccounts.filter(account => account.enabled === false).length;
     return `<article class="glass-panel model-coverage-item ${providerRecords.length ? "covered" : "uncovered"}">
-      ${platformLogo(id, "activity-brand-logo")}<div><b>${escapeHtml(providers[id]?.name || id)}</b><span>${providerAccounts.length} 个账户${paused ? ` · ${paused} 个已暂停` : ""}</span></div>
-      <strong>${providerRecords.length ? `${rows} 模型级 · ${products} 产品级` : `无 ${escapeHtml(definition.label)} 字段`}</strong>
+      ${platformLogo(id, "activity-brand-logo")}<div><b>${escapeHtml(providers[id]?.name || id)}</b><span>${t("modelProviderAccounts", { count:providerAccounts.length, paused:paused ? t("modelPausedSuffix", { count:paused }) : "" })}</span></div>
+      <strong>${providerRecords.length ? t("modelLevelSummary", { rows, products }) : t("modelNoFields", { family:definition.label })}</strong>
     </article>`;
   }).join("");
 
   if (!accounts.length) {
     els.modelCoverage.innerHTML = "";
-    els.comparisonCards.innerHTML = '<article class="comparison-card remote-empty"><div class="comparison-card-top"><div><h4>请先连接平台账户</h4><span>账户连接成功并完成远端同步后，Prismeter 才会分析平台实际返回的模型或产品字段。</span></div></div><button class="soft-button model-account-link" data-target-view="accounts">前往账户中心</button></article>';
+    els.comparisonCards.innerHTML = `<article class="comparison-card remote-empty"><div class="comparison-card-top"><div><h4>${t("modelConnectTitle")}</h4><span>${t("modelConnectDetail")}</span></div></div><button class="soft-button model-account-link" data-target-view="accounts">${t("goToAccounts")}</button></article>`;
     return;
   }
 
   const cards = records.map(record => {
     const provider = providers[record.account.provider];
     const metricItems = record.row
-      ? (record.row.metrics || []).slice(0, 4).map((metric,index) => ({ label:(record.product.columns || [])[index] || "指标 " + (index + 1), value:metric.value || "—", unit:metric.unit || "远端" }))
-      : (record.product.summaries || []).slice(0, 4).map(metric => ({ label:metric.label || "远端指标", value:metric.value || "—", unit:metric.note || "平台返回" }));
+      ? (record.row.metrics || []).slice(0, 4).map((metric,index) => ({ label:(record.product.columns || [])[index] || t("metricFallback", { count:index + 1 }), value:metric.value || "—", unit:metric.unit || t("remote") }))
+      : (record.product.summaries || []).slice(0, 4).map(metric => ({ label:metric.label || t("remoteMetrics"), value:metric.value || "—", unit:metric.note || t("platformReturned") }));
     if (!metricItems.length) metricItems.push(
-      { label:record.product.usageLabel || "远端用量", value:record.product.usage || "—", unit:record.product.kind || "官方产品" },
-      { label:"产品状态", value:record.product.status || "正常", unit:"平台返回" }
+      { label:record.product.usageLabel || t("remoteUsage"), value:record.product.usage || "—", unit:record.product.kind || t("officialProduct") },
+      { label:t("productStatus"), value:record.product.status || t("normal"), unit:t("platformReturned") }
     );
     const freshness = accountFreshness(record.account);
     return '<article class="comparison-card remote-model-card">' +
-      '<div class="model-source-head">' + platformLogo(record.account.provider, "activity-brand-logo") + '<div><h4>' + escapeHtml(record.row?.name || record.product.name || definition.label) + '</h4><span>' + escapeHtml(provider?.name || record.account.provider) + ' · ' + escapeHtml(record.account.name) + ' · ' + escapeHtml(record.product.name || "远端产品") + '</span></div><span class="model-level-badge ' + record.level + '">' + (record.level === "row" ? "模型级" : "产品级") + '</span></div>' +
+      '<div class="model-source-head">' + platformLogo(record.account.provider, "activity-brand-logo") + '<div><h4>' + escapeHtml(record.row?.name || record.product.name || definition.label) + '</h4><span>' + escapeHtml(provider?.name || record.account.provider) + ' · ' + escapeHtml(accountDisplayName(record.account)) + ' · ' + escapeHtml(record.product.name || t("remoteProduct")) + '</span></div><span class="model-level-badge ' + record.level + '">' + (record.level === "row" ? t("modelRowRecords") : t("modelProductRecords")) + '</span></div>' +
       '<div class="model-metrics">' + metricItems.map(metric => '<div><span>' + escapeHtml(metric.label) + '</span><strong>' + escapeHtml(metric.value) + '</strong><small>' + escapeHtml(metric.unit) + '</small></div>').join("") + '</div>' +
-      '<div class="model-record-foot"><span class="freshness-text ' + freshness.level + '">' + escapeHtml(freshness.label) + ' · ' + escapeHtml(relativeSyncTime(record.account.lastSync)) + '</span><button class="text-button" data-view-account="' + escapeHtml(record.account.id) + '" data-account-provider="' + escapeHtml(record.account.provider) + '">查看账户数据 →</button></div>' +
+      '<div class="model-record-foot"><span class="freshness-text ' + freshness.level + '">' + escapeHtml(freshness.label) + ' · ' + escapeHtml(relativeSyncTime(record.account.lastSync)) + '</span><button class="text-button" data-view-account="' + escapeHtml(record.account.id) + '" data-account-provider="' + escapeHtml(record.account.provider) + '">' + t("viewAccountData") + '</button></div>' +
     '</article>';
   });
   const uncovered = connectedProviderIds.filter(id => !coveredProviderIds.includes(id)).map(id => providers[id]?.name || id);
-  const note = familyId !== "all" && uncovered.length ? '<article class="comparison-coverage-note"><b>' + escapeHtml(uncovered.join("、")) + '</b><span>当前远端响应没有 ' + escapeHtml(definition.label) + ' 模型级字段，因此未纳入；不会使用账户余额、套餐窗口或本地日志代替。</span></article>' : "";
-  const emptyReason = query.trim() ? `没有包含“${escapeHtml(query.trim())}”的远端记录，请尝试账户名、模型名或产品名。` : `已检查 ${connectedProviderIds.map(id => escapeHtml(providers[id]?.name || id)).join("、")}，当前筛选条件下没有可展示字段。`;
-  els.comparisonCards.innerHTML = cards.length ? cards.join("") + note : '<article class="comparison-card remote-empty"><div class="comparison-card-top"><div><h4>没有匹配的 ' + escapeHtml(definition.label) + ' 记录</h4><span>' + emptyReason + ' Prismeter 不会用其他口径或本地日志补齐。</span></div></div></article>' + note;
+  const note = familyId !== "all" && uncovered.length ? '<article class="comparison-coverage-note"><b>' + escapeHtml(uncovered.join("、")) + '</b><span>' + escapeHtml(t("modelsCoverageMissing", { family: definition.label })) + '</span></article>' : "";
+  const emptyReason = query.trim() ? t("modelsSearchEmpty", { query: query.trim() }) : t("modelsFilterEmpty", { providers: connectedProviderIds.map(id => providers[id]?.name || id).join("、") });
+  els.comparisonCards.innerHTML = cards.length ? cards.join("") + note : '<article class="comparison-card remote-empty"><div class="comparison-card-top"><div><h4>' + escapeHtml(t("modelsNoMatchesTitle", { family: definition.label })) + '</h4><span>' + escapeHtml(emptyReason) + ' ' + escapeHtml(t("modelsNoLocalFill")) + '</span></div></div></article>' + note;
 }
 
 function renderAlerts() {
@@ -1325,21 +1189,25 @@ function renderAlerts() {
     return settings.lowBalanceThreshold != null || settings.usageThreshold != null || settings.staleAfterMinutes != null;
   }).length;
   els.alertRuleSummary.textContent = ruleAccounts.length
-    ? `${ruleAccounts.length - disabledRules} 个启用${disabledRules ? ` · ${disabledRules} 个关闭` : ""}${customizedRules ? ` · ${customizedRules} 个自定义` : ""}`
-    : "尚未连接支持账户";
+    ? t("alertRuleSummary", {
+      enabled: ruleAccounts.length - disabledRules,
+      disabled: disabledRules ? t("alertRuleDisabledCount", { count: disabledRules }) : "",
+      customized: customizedRules ? t("alertRuleCustomizedCount", { count: customizedRules }) : ""
+    })
+    : t("alertsNoAccounts");
   els.alertRuleList.innerHTML = ruleAccounts.length ? ruleAccounts.map(account => {
     const settings = account.alertSettings || {};
     const disabled = settings.enabled === false;
     const overrides = [];
-    if (settings.lowBalanceThreshold != null) overrides.push(`余额 ${settings.lowBalanceThreshold}`);
-    if (settings.usageThreshold != null) overrides.push(`额度 ${settings.usageThreshold}%`);
-    if (settings.staleAfterMinutes != null) overrides.push(`时效 ${formatRuleDuration(settings.staleAfterMinutes)}`);
-    const stateLabel = disabled ? "提醒已关闭" : overrides.length ? overrides.join(" · ") : "跟随全局规则";
+    if (settings.lowBalanceThreshold != null) overrides.push(t("alertBalanceOverride", { value:settings.lowBalanceThreshold }));
+    if (settings.usageThreshold != null) overrides.push(t("alertQuotaOverride", { value:settings.usageThreshold }));
+    if (settings.staleAfterMinutes != null) overrides.push(t("alertFreshnessOverride", { value:formatRuleDuration(settings.staleAfterMinutes) }));
+    const stateLabel = disabled ? t("alertRuleDisabled") : overrides.length ? overrides.join(" · ") : t("alertRuleGlobal");
     return `<article class="alert-rule-item ${disabled ? "disabled" : overrides.length ? "custom" : "inherited"}">
-      ${platformLogo(account.provider, "activity-brand-logo")}<div><b>${escapeHtml(account.name)}</b><span>${escapeHtml(stateLabel)}</span></div>
-      <button type="button" class="mini-button" data-account-alerts="${escapeHtml(account.id)}">${disabled ? "重新启用" : "调整规则"}</button>
+      ${platformLogo(account.provider, "activity-brand-logo")}<div><b>${escapeHtml(accountDisplayName(account))}</b><span>${escapeHtml(stateLabel)}</span></div>
+      <button type="button" class="mini-button" data-account-alerts="${escapeHtml(account.id)}">${disabled ? t("alertReenable") : t("actionAdjustRules")}</button>
     </article>`;
-  }).join("") : `<div class="alert-rule-empty">连接 OpenAI/Codex、火山方舟或 DeepSeek 后，可在这里管理账户提醒规则。</div>`;
+  }).join("") : `<div class="alert-rule-empty">${t("alertRuleSupport")}</div>`;
   document.querySelectorAll("[data-alert-filter]").forEach(button => {
     const active = button.dataset.alertFilter === state.alertFilter;
     button.classList.toggle("active", active);
@@ -1347,40 +1215,40 @@ function renderAlerts() {
   });
   const visibleAlerts = state.alertFilter === "all" ? allAlerts : allAlerts.filter(item => category(item) === state.alertFilter);
   const snoozedCount = visibleAlerts.filter(isAlertSnoozed).length;
-  els.alertFilterResult.textContent = `${visibleAlerts.length} 条提醒${snoozedCount ? ` · ${snoozedCount} 条已暂缓` : ""}`;
+  els.alertFilterResult.textContent = t("alertFilterSummary", { count:visibleAlerts.length, suffix:snoozedCount ? t("alertSnoozedCount", { count:snoozedCount }) : "" });
   const symbols = { balance:"¥", quota:"%", sync:"!", freshness:"↻", status:"!" };
-  const badges = { balance:"余额", quota:"额度", sync:"同步", freshness:"时效", status:"状态" };
+  const badges = { balance:t("alertsBalance"), quota:t("alertsQuota"), sync:t("syncSettings"), freshness:t("alertsSyncFreshness"), status:t("remoteStatusAttention") };
   els.alertList.innerHTML = visibleAlerts.length ? visibleAlerts.map(item => {
     const account = (state.backend.accounts || []).find(candidate => candidate.id === item.accountId);
     const kind = category(item);
     const snoozed = isAlertSnoozed(item);
-    const snoozeButton = item.alertKey ? `<button class="mini-button" ${snoozed ? "data-resume-alert" : "data-snooze-alert"}="${escapeHtml(item.alertKey)}">${snoozed ? "恢复提醒" : "暂缓 24 小时"}</button>` : "";
+    const snoozeButton = item.alertKey ? `<button class="mini-button" ${snoozed ? "data-resume-alert" : "data-snooze-alert"}="${escapeHtml(item.alertKey)}">${snoozed ? t("alertResume") : t("alertSnooze")}</button>` : "";
     return `<article class="alert-item glass-panel live-alert ${kind}${snoozed ? " snoozed" : ""}" data-alert-kind="${kind}">
       <div class="alert-symbol">${symbols[item.kind] || "!"}</div>
-      <div class="alert-copy"><div class="alert-title-row">${platformLogo(item.provider || account?.provider, "activity-brand-logo")}<div><h4>${escapeHtml(item.title || item.accountName || "远端状态需要关注")}</h4><span>${escapeHtml(providers[item.provider || account?.provider]?.name || "已连接平台")} · ${escapeHtml(item.accountName || account?.name || "账户")}</span></div></div><p>${escapeHtml(item.message || "远端状态需要关注")}</p></div>
-      <div class="alert-side"><span class="official-alert${snoozed ? " snoozed" : ""}">${snoozed ? `已暂缓至 ${escapeHtml(formatDate(item.snoozedUntil))}` : `${badges[item.kind] || "提醒"} · 远端`}</span><div class="alert-actions">${snoozeButton}${account ? `<button class="mini-button" data-account-alerts="${escapeHtml(account.id)}">调整规则</button><button class="mini-button" data-view-account="${escapeHtml(account.id)}" data-account-provider="${escapeHtml(account.provider)}">查看数据</button><button class="mini-button alert-sync-button" data-sync-account="${escapeHtml(account.id)}"><span>立即同步</span></button>` : ""}</div></div>
+      <div class="alert-copy"><div class="alert-title-row">${platformLogo(item.provider || account?.provider, "activity-brand-logo")}<div><h4>${escapeHtml(item.title || item.accountName || t("remoteStatusAttention"))}</h4><span>${escapeHtml(providers[item.provider || account?.provider]?.name || t("platformConnected"))} · ${escapeHtml(account ? accountDisplayName(account) : item.accountName || t("accountName"))}</span></div></div><p>${escapeHtml(item.message || t("remoteStatusAttention"))}</p></div>
+      <div class="alert-side"><span class="official-alert${snoozed ? " snoozed" : ""}">${snoozed ? t("alertSnoozedUntil", { time:formatDate(item.snoozedUntil) }) : t("alertBadgeRemote", { kind:badges[item.kind] || t("alertsCenter") })}</span><div class="alert-actions">${snoozeButton}${account ? `<button class="mini-button" data-account-alerts="${escapeHtml(account.id)}">${t("actionAdjustRules")}</button><button class="mini-button" data-view-account="${escapeHtml(account.id)}" data-account-provider="${escapeHtml(account.provider)}">${t("viewAccountData")}</button><button class="mini-button alert-sync-button" data-sync-account="${escapeHtml(account.id)}"><span>${t("actionSyncNow")}</span></button>` : ""}</div></div>
     </article>`;
   }).join("") : allAlerts.length
-    ? `<article class="alert-empty glass-panel"><div class="alert-symbol">✓</div><div><h4>此分类暂无提醒</h4><p>可以切换其他分类，或前往设置调整余额和额度阈值。</p></div></article>`
+    ? `<article class="alert-empty glass-panel"><div class="alert-symbol">✓</div><div><h4>${t("alertNoneInCategory")}</h4><p>${t("alertNoneInCategoryDetail")}</p></div></article>`
     : accounts.length
-      ? `<article class="alert-empty glass-panel good"><div class="alert-symbol">✓</div><div><h4>暂无远端提醒</h4><p>当前账户没有余额、套餐额度、同步结果或数据时效提醒。</p></div></article>`
-      : `<article class="alert-empty glass-panel"><div class="alert-symbol">i</div><div><h4>尚未连接账户</h4><p>添加平台账户并完成远端同步后，这里会显示余额、额度和同步状态提醒。</p></div></article>`;
+      ? `<article class="alert-empty glass-panel good"><div class="alert-symbol">✓</div><div><h4>${t("alertNoneRemote")}</h4><p>${t("alertNoneRemoteDetail")}</p></div></article>`
+      : `<article class="alert-empty glass-panel"><div class="alert-symbol">i</div><div><h4>${t("noAccounts")}</h4><p>${t("alertConnectDetail")}</p></div></article>`;
 }
 
 function formatRuleDuration(minutes) {
   const value = Number(minutes || 0);
-  if (value >= 10080 && value % 10080 === 0) return `${value / 10080} 周`;
-  if (value >= 1440 && value % 1440 === 0) return `${value / 1440} 天`;
-  if (value >= 60 && value % 60 === 0) return `${value / 60} 小时`;
-  return `${value} 分钟`;
+  if (value >= 10080 && value % 10080 === 0) return t("weeks", { count:value / 10080 });
+  if (value >= 1440 && value % 1440 === 0) return t("days", { count:value / 1440 });
+  if (value >= 60 && value % 60 === 0) return t("hours", { count:value / 60 });
+  return t("minutes", { count:value });
 }
 
 function openAccountAlertsDialog(account) {
   if (!account || account.provider === "mimo") return;
   const settings = account.alertSettings || {};
   state.alertAccountId = account.id;
-  els.accountAlertsTitle.textContent = `${account.name} · 提醒规则`;
-  els.accountAlertsSummary.textContent = `未单独设置的阈值将跟随全局规则：低余额 ${state.backend.settings?.lowBalanceThreshold ?? 10}，套餐额度 ${state.backend.settings?.usageThreshold ?? 80}% 已用。`;
+  els.accountAlertsTitle.textContent = t("alertRulesTitle", { name:accountDisplayName(account) });
+  els.accountAlertsSummary.textContent = t("alertRulesSummary", { balance:state.backend.settings?.lowBalanceThreshold ?? 10, quota:state.backend.settings?.usageThreshold ?? 80 });
   els.accountAlertsEnabled.checked = settings.enabled !== false;
   els.accountLowBalanceThreshold.value = settings.lowBalanceThreshold ?? "";
   els.accountUsageThreshold.value = settings.usageThreshold ?? "";
@@ -1407,22 +1275,22 @@ function renderSyncCenter(accounts) {
   const activeIds = new Set(sync.activeAccountIds || []);
   const activeCount = activeIds.size;
   els.syncCenterBadge.className = `sync-center-badge${activeCount ? " active" : ""}`;
-  els.syncCenterBadge.textContent = activeCount ? `${activeCount} 个任务进行中` : "当前空闲";
+  els.syncCenterBadge.textContent = activeCount ? t("syncActiveTasks", { count: activeCount }) : t("syncIdle");
   els.syncCenterSummary.innerHTML = [
-    ["监控账户", String(sync.monitoredCount ?? accounts.filter(account => account.enabled !== false).length)],
-    ["同步失败", String(sync.failedCount ?? accounts.filter(account => account.lastError).length)],
-    ["最近尝试", relativeSyncTime(sync.lastAttemptAt)],
-    ["最近成功", relativeSyncTime(sync.lastSuccessAt)]
+    [t("syncMonitored"), String(sync.monitoredCount ?? accounts.filter(account => account.enabled !== false).length)],
+    [t("syncFailures"), String(sync.failedCount ?? accounts.filter(account => account.lastError).length)],
+    [t("syncLatestAttempt"), relativeSyncTime(sync.lastAttemptAt)],
+    [t("syncLatestSuccess"), relativeSyncTime(sync.lastSuccessAt)]
   ].map(([label,value]) => `<div><span>${escapeHtml(label)}</span><strong>${escapeHtml(value)}</strong></div>`).join("");
 
   els.syncQueueList.innerHTML = accounts.length ? accounts.map(account => {
     const active = activeIds.has(account.id);
     const freshness = accountFreshness(account);
     const retryLabel = Number(state.backend.settings?.autoSyncMinutes || 0) > 0 ? relativeFutureTime(account.nextRetryAt) : "";
-    const status = active ? "正在读取远端" : account.enabled === false ? "已暂停" : retryLabel ? retryLabel : account.lastError ? "等待下次同步" : account.lastSync ? "等待下次同步" : "等待首次同步";
-    const detail = active ? "同步结束前仍可浏览已有数据" : account.lastError && retryLabel ? `${account.consecutiveFailures || 1} 次连续失败 · 最近尝试 ${relativeSyncTime(account.lastAttemptAt)}` : account.lastAttemptAt ? `最近尝试 ${relativeSyncTime(account.lastAttemptAt)}` : "尚未发起远端请求";
-    return `<div class="sync-queue-row ${active ? "active" : ""}">${platformLogo(account.provider, "sync-provider-logo")}<div><b>${escapeHtml(account.name)}</b><span>${escapeHtml(providers[account.provider]?.name || account.provider)} · ${escapeHtml(detail)}</span></div><span class="sync-queue-status ${active ? "active" : freshness.level}"><i></i>${escapeHtml(status)}</span></div>`;
-  }).join("") : `<div class="sync-center-empty">连接账户后，这里会显示每个远端同步任务的实时状态。</div>`;
+    const status = active ? t("syncReadingRemote") : account.enabled === false ? t("healthPaused") : retryLabel ? retryLabel : account.lastError ? t("syncWaitingNext") : account.lastSync ? t("syncWaitingNext") : t("syncWaitingFirst");
+    const detail = active ? t("syncBrowseExisting") : account.lastError && retryLabel ? t("syncConsecutiveFailure", { count: account.consecutiveFailures || 1, time: relativeSyncTime(account.lastAttemptAt) }) : account.lastAttemptAt ? t("syncRecentAttempt", { time: relativeSyncTime(account.lastAttemptAt) }) : t("syncNoRemoteRequest");
+    return `<div class="sync-queue-row ${active ? "active" : ""}">${platformLogo(account.provider, "sync-provider-logo")}<div><b>${escapeHtml(accountDisplayName(account))}</b><span>${escapeHtml(providers[account.provider]?.name || account.provider)} · ${escapeHtml(detail)}</span></div><span class="sync-queue-status ${active ? "active" : freshness.level}"><i></i>${escapeHtml(status)}</span></div>`;
+  }).join("") : `<div class="sync-center-empty">${t("syncQueueEmpty")}</div>`;
 }
 
 function renderCapabilityMatrix() {
@@ -1432,11 +1300,11 @@ function renderCapabilityMatrix() {
     const items = (platform.items || []).map(item => {
       const isObserved = observed.has(item.id) || (platform.provider === "deepseek" && item.id === "balance" && platform.connected);
       const statusClass = item.support === "unavailable" || item.support === "console_only" || item.support === "disabled" ? "limited" : isObserved ? "available" : "supported";
-      const statusText = item.support === "disabled" ? "暂不可添加" : item.support === "unavailable" ? "接口未提供" : item.support === "console_only" ? "仅控制台" : isObserved ? "已读取" : platform.connected ? "尚未返回" : "支持连接";
-      return `<div class="capability-item"><span><b>${escapeHtml(item.label)}</b><small>${escapeHtml(item.source)}</small></span><em class="${statusClass}">${statusText}</em></div>`;
+      const statusText = item.support === "disabled" ? t("capabilityUnavailable") : item.support === "unavailable" ? t("capabilityNoEndpoint") : item.support === "console_only" ? t("capabilityConsoleOnly") : isObserved ? t("capabilityRead") : platform.connected ? t("capabilityWaiting") : t("capabilityCanConnect");
+      return `<div class="capability-item"><span><b>${escapeHtml(i18nField(item.label, item.labelKey))}</b><small>${escapeHtml(i18nField(item.source, item.sourceKey))}</small></span><em class="${statusClass}">${statusText}</em></div>`;
     }).join("");
-    return `<section class="capability-provider"><header>${platformLogo(platform.provider, "capability-provider-logo")}<div><b>${escapeHtml(platform.label)}</b><span>${platform.connected ? `${platform.accountCount} 个账户已连接` : "尚未连接账户"}</span></div></header>${items}</section>`;
-  }).join("") : `<div class="sync-center-empty">正在读取平台能力定义…</div>`;
+    return `<section class="capability-provider"><header>${platformLogo(platform.provider, "capability-provider-logo")}<div><b>${escapeHtml(i18nField(platform.label, platform.labelKey))}</b><span>${platform.connected ? t("capabilityAccountsConnected", { count: platform.accountCount }) : t("capabilityNoAccount")}</span></div></header>${items}</section>`;
+  }).join("") : `<div class="sync-center-empty">${t("capabilityLoading")}</div>`;
 }
 
 function renderSyncHistory(accounts) {
@@ -1445,10 +1313,10 @@ function renderSyncHistory(accounts) {
   const failedCount = events.length - successCount;
   const averageDuration = events.length ? Math.round(events.reduce((sum,event) => sum + Number(event.durationMs || 0), 0) / events.length) : 0;
   els.syncEventSummary.innerHTML = [
-    ["全部任务", String(events.length), "本机保存的同步元数据"],
-    ["同步成功", String(successCount), events.length ? `${Math.round(successCount / events.length * 100)}% 成功率` : "暂无记录"],
-    ["同步失败", String(failedCount), failedCount ? "可以直接重试账户" : "当前无失败"],
-    ["平均耗时", formatDuration(averageDuration), "最近 120 条记录"]
+    [t("historyAllTasks"), String(events.length), t("historyLocalSyncMetadata")],
+    [t("historySyncSuccess"), String(successCount), events.length ? t("historySuccessRate", { count: Math.round(successCount / events.length * 100) }) : t("historyNoRecords")],
+    [t("historySyncFailed"), String(failedCount), failedCount ? t("historyRetryAccount") : t("historyNoFailures")],
+    [t("historyAverageDuration"), formatDuration(averageDuration), t("historyRecent120")]
   ].map(([label,value,note]) => `<div><span>${escapeHtml(label)}</span><strong>${escapeHtml(value)}</strong><small>${escapeHtml(note)}</small></div>`).join("");
   document.querySelectorAll("[data-sync-history-filter]").forEach(button => {
     const active = button.dataset.syncHistoryFilter === state.syncEventFilter;
@@ -1456,17 +1324,17 @@ function renderSyncHistory(accounts) {
     button.setAttribute("aria-pressed", String(active));
   });
   const visible = events.filter(event => state.syncEventFilter === "all" || (state.syncEventFilter === "success" ? event.success : !event.success));
-  els.syncEventCount.textContent = `${visible.length} 条记录`;
+  els.syncEventCount.textContent = t("historyRecordCount", { count: visible.length });
   els.syncEventList.innerHTML = visible.length ? visible.slice(0, 40).map(event => {
     const account = accounts.find(item => item.id === event.accountId);
     const logo = account ? platformLogo(account.provider, "sync-provider-logo") : '<span class="sync-event-fallback">?</span>';
     return `<article class="sync-event-row ${event.success ? "success" : "failed"}">
-      ${logo}<div class="sync-event-main"><b>${escapeHtml(account?.name || "已移除账户")}</b><span>${escapeHtml(account ? providers[account.provider]?.name || account.provider : "历史账户")} · ${escapeHtml(formatDate(event.timestamp))}</span></div>
-      <div class="sync-event-metrics"><span>${formatDuration(event.durationMs)}</span><span>${event.productCount || 0} 项远端数据</span></div>
-      <div class="sync-event-result"><strong>${event.success ? "同步成功" : "同步失败"}</strong><small>${escapeHtml(event.message || (event.success ? "远端数据已更新" : "远端请求失败"))}</small></div>
-      ${!event.success && account ? `<button class="mini-button" data-sync-account="${escapeHtml(account.id)}"><span>重试</span></button>` : ""}
+      ${logo}<div class="sync-event-main"><b>${escapeHtml(account ? accountDisplayName(account) : t("historyRemovedAccount"))}</b><span>${escapeHtml(account ? providers[account.provider]?.name || account.provider : t("historyArchivedAccount"))} · ${escapeHtml(formatDate(event.timestamp))}</span></div>
+      <div class="sync-event-metrics"><span>${formatDuration(event.durationMs)}</span><span>${t("historyRemoteItems", { count: event.productCount || 0 })}</span></div>
+      <div class="sync-event-result"><strong>${event.success ? t("historySyncSuccess") : t("historySyncFailed")}</strong><small>${escapeHtml(localizeSyncEventMessage(event))}</small></div>
+      ${!event.success && account ? `<button class="mini-button" data-sync-account="${escapeHtml(account.id)}"><span>${t("historyRetry")}</span></button>` : ""}
     </article>`;
-  }).join("") : `<div class="sync-history-empty">${events.length ? "此分类暂无同步记录。" : "完成一次账户同步后，这里会显示任务结果和耗时。"}</div>`;
+  }).join("") : `<div class="sync-history-empty">${events.length ? t("historyNoCategory") : t("historyAfterSync")}</div>`;
 }
 
 function renderAccounts() {
@@ -1476,37 +1344,37 @@ function renderAccounts() {
   renderSyncCenter(accounts);
   renderCapabilityMatrix();
   renderSyncHistory(accounts);
-  els.accountListTitle.textContent = `账户列表 · ${accounts.length}`;
+  els.accountListTitle.textContent = t("accountsListTitle", { count: accounts.length });
   els.accountsEmpty.hidden = accounts.length > 0;
   els.accountsList.innerHTML = accounts.map(account => {
     const provider = providers[account.provider];
     const balance = account.balances?.find(item => item.currency === "CNY") || account.balances?.[0];
     const primaryProduct = account.products?.[0];
-    const metricLabel = balance ? "当前余额" : "主要指标";
+    const metricLabel = balance ? t("accountsCurrentBalance") : t("accountsPrimaryMetric");
     const metricValue = balance ? `${moneySymbol(balance.currency)} ${balance.total}` : primaryProduct?.usage || "—";
     const syncing = (state.backend.sync?.activeAccountIds || []).includes(account.id);
-    const availability = syncing ? "正在同步" : account.enabled === false ? "监控已暂停" : account.isAvailable ? ((account.provider === "volcengine" || account.provider === "openai" || account.provider === "mimo") ? `${account.products?.length || 0} 个产品` : "可用") : "同步异常";
-    const freshness = syncing ? { level:"syncing", label:"正在同步" } : accountFreshness(account);
+    const availability = syncing ? t("accountsSyncing") : account.enabled === false ? t("accountsMonitoringPaused") : account.isAvailable ? ((account.provider === "volcengine" || account.provider === "openai" || account.provider === "mimo") ? t("accountsProductCount", { count: account.products?.length || 0 }) : t("accountsAvailable")) : t("accountsSyncError");
+    const freshness = syncing ? { level:"syncing", label:t("accountsSyncing") } : accountFreshness(account);
     const accountId = escapeHtml(account.id);
     return `<article class="saved-account directory-account ${account.id === state.accountId ? 'selected' : ''} ${account.enabled === false ? 'paused-account' : ''}" data-sort-account="${accountId}">
       <div class="saved-account-head">
         ${platformLogo(account.provider, "account-brand-logo")}
-        <div><b>${escapeHtml(account.name)}</b><span>${escapeHtml(provider?.name || account.provider)} · ${escapeHtml(account.keyHint)}</span></div>
+        <div><b>${escapeHtml(accountDisplayName(account))}</b><span>${escapeHtml(provider?.name || account.provider)} · ${escapeHtml(account.keyHint)}</span></div>
         <span class="freshness-badge ${freshness.level}"><i></i>${escapeHtml(freshness.label)}</span>
-        <i class="drag-handle account-drag-handle" data-drag-account="${accountId}" title="按住拖拽调整账户顺序" aria-label="拖拽调整账户顺序">⋮⋮</i>
+        <i class="drag-handle account-drag-handle" data-drag-account="${accountId}" title="${t("dragAccountOrder")}" aria-label="${t("dragAccountOrder")}">⋮⋮</i>
       </div>
-      <div class="account-directory-metrics"><div><span>连接状态</span><strong>${escapeHtml(availability)}</strong></div><div><span>${metricLabel}</span><strong>${escapeHtml(metricValue)}</strong></div><div><span>最近同步</span><strong>${escapeHtml(relativeSyncTime(account.lastSync))}</strong><small>${escapeHtml(formatDate(account.lastSync))} · 远端耗时 ${escapeHtml(formatDuration(account.lastSyncDurationMs))}</small></div></div>
-      ${account.lastError ? `<p class="account-error">${escapeHtml(account.lastError)}</p>` : ""}
-      ${(account.productErrors || []).length ? `<p class="account-error">${(account.productErrors || []).map(escapeHtml).join("<br>")}</p>` : ""}
-      <div class="account-actions"><button class="soft-button compact" data-view-account="${accountId}" data-account-provider="${escapeHtml(account.provider)}">查看数据</button><span><button class="mini-button" data-diagnose-account="${accountId}">连接诊断</button>${account.provider === "mimo" ? "" : `<button class="mini-button" data-account-alerts="${accountId}">${account.alertSettings?.enabled === false ? "提醒已关闭" : "提醒规则"}</button>`}${account.provider === "openai" ? "" : `<button class="mini-button" data-edit-connection="${accountId}" ${syncing ? "disabled" : ""}>连接设置</button>`}<button class="mini-button" data-rename-account="${accountId}">重命名</button><button class="mini-button" data-toggle-account="${accountId}">${account.enabled === false ? "恢复监控" : "暂停监控"}</button><button class="mini-button" data-sync-account="${accountId}" ${syncing ? "disabled" : ""}><span>${syncing ? "同步中" : "立即同步"}</span></button><button class="danger-link" data-delete-account="${accountId}" ${syncing ? "disabled" : ""}>移除</button></span></div>
+      <div class="account-directory-metrics"><div><span>${t("accountsConnectionStatus")}</span><strong>${escapeHtml(availability)}</strong></div><div><span>${metricLabel}</span><strong>${escapeHtml(metricValue)}</strong></div><div><span>${t("accountsLatestSync")}</span><strong>${escapeHtml(relativeSyncTime(account.lastSync))}</strong><small>${escapeHtml(formatDate(account.lastSync))} · ${t("accountsRemoteDuration", { duration: formatDuration(account.lastSyncDurationMs) })}</small></div></div>
+      ${account.lastError ? `<p class="account-error">${escapeHtml(account.lastErrorCode ? errorMessage({ errorCode: account.lastErrorCode }, localizeRemoteCopy(account.lastError)) : localizeRemoteCopy(account.lastError))}</p>` : ""}
+      ${(account.productErrors || []).length ? `<p class="account-error">${localizeBackendErrors(account.productErrors, account.productErrorCodes).map(escapeHtml).join("<br>")}</p>` : ""}
+      <div class="account-actions"><button class="soft-button compact" data-view-account="${accountId}" data-account-provider="${escapeHtml(account.provider)}">${t("viewAccountData")}</button><span><button class="mini-button" data-diagnose-account="${accountId}">${t("diagnosticConnection")}</button>${account.provider === "mimo" ? "" : `<button class="mini-button" data-account-alerts="${accountId}">${account.alertSettings?.enabled === false ? t("accountsAlertsOff") : t("accountRules")}</button>`}${account.provider === "openai" ? "" : `<button class="mini-button" data-edit-connection="${accountId}" ${syncing ? "disabled" : ""}>${t("connectionTitle")}</button>`}<button class="mini-button" data-rename-account="${accountId}">${t("renameTitle")}</button><button class="mini-button" data-toggle-account="${accountId}">${account.enabled === false ? t("accountsResumeMonitoring") : t("accountsPauseMonitoring")}</button><button class="mini-button" data-sync-account="${accountId}" ${syncing ? "disabled" : ""}><span>${syncing ? t("accountsSyncInProgress") : t("actionSyncNow")}</span></button><button class="danger-link" data-delete-account="${accountId}" ${syncing ? "disabled" : ""}>${t("dialogRemove")}</button></span></div>
     </article>`;
   }).join("");
 
-  els.historyCount.textContent = `${history.length} 条记录`;
+  els.historyCount.textContent = t("historyRecordCount", { count: history.length });
   els.historyList.innerHTML = history.length ? history.slice(0, 24).map(item => {
     const account = accounts.find(candidate => candidate.id === item.accountId);
-    return `<div class="history-row"><i></i><div><b>${escapeHtml(account?.name || "已移除账户")}</b><span>${escapeHtml(formatDate(item.timestamp))}</span></div><strong>${escapeHtml(`${moneySymbol(item.currency)} ${item.total}`)}</strong><small>${escapeHtml(item.currency)}</small></div>`;
-  }).join("") : `<div class="history-empty">DeepSeek 完成远端同步后，这里会保存官方余额快照；快照不参与用量推算。</div>`;
+    return `<div class="history-row"><i></i><div><b>${escapeHtml(account ? accountDisplayName(account) : t("historyRemovedAccount"))}</b><span>${escapeHtml(formatDate(item.timestamp))}</span></div><strong>${escapeHtml(`${moneySymbol(item.currency)} ${item.total}`)}</strong><small>${escapeHtml(item.currency)}</small></div>`;
+  }).join("") : `<div class="history-empty">${t("accountsBalanceHistoryEmpty")}</div>`;
 }
 
 function updateAccountAlertFieldState() {
@@ -1549,9 +1417,9 @@ function switchView(view, providerId, accountId) {
 function diagnosticPayload(account) {
   const freshness = accountFreshness(account);
   return {
-    appVersion: state.backend.version || "未知版本",
+    appVersion: state.backend.version || t("diagnosticUnknownVersion"),
     generatedAt: new Date().toISOString(),
-    account: account.name,
+    account: accountDisplayName(account),
     platform: providers[account.provider]?.name || account.provider,
     accountHint: account.keyHint || "—",
     monitoring: account.enabled === false ? "paused" : "active",
@@ -1572,22 +1440,22 @@ function showAccountDiagnostics(account) {
   if (!account) return;
   state.diagnosticAccountId = account.id;
   const freshness = accountFreshness(account);
-  els.diagnosticTitle.textContent = account.name;
-  els.diagnosticSubtitle.textContent = `${providers[account.provider]?.name || account.provider} · ${account.keyHint || "已连接账户"}`;
+  els.diagnosticTitle.textContent = accountDisplayName(account);
+  els.diagnosticSubtitle.textContent = `${providers[account.provider]?.name || account.provider} · ${account.keyHint || t("diagnosticConnectedAccount")}`;
   els.diagnosticBadge.className = `freshness-badge ${freshness.level}`;
   els.diagnosticBadge.querySelector("b").textContent = freshness.label;
   const metrics = [
-    ["监控状态", account.enabled === false ? "已暂停" : "正在监控", account.enabled === false ? "不参与自动同步" : "参与自动同步"],
-    ["最近尝试", relativeSyncTime(account.lastAttemptAt), formatDate(account.lastAttemptAt)],
-    ["最近成功", relativeSyncTime(account.lastSync), formatDate(account.lastSync)],
-    ["远端耗时", formatDuration(account.lastSyncDurationMs), "最近一次请求"],
-    ["连续失败", String(account.consecutiveFailures || 0), Number(state.backend.settings?.autoSyncMinutes || 0) > 0 && account.nextRetryAt ? relativeFutureTime(account.nextRetryAt) : Number(account.consecutiveFailures || 0) ? "建议检查凭据或手动重试" : "连接稳定"],
-    ["发现产品", String((account.products || []).length), (account.productErrors || []).length ? `${account.productErrors.length} 条产品警告` : "无产品警告"]
+    [t("diagnosticMonitoring"), account.enabled === false ? t("healthPaused") : t("diagnosticMonitoringActive"), account.enabled === false ? t("diagnosticExcludedSync") : t("diagnosticIncludedSync")],
+    [t("diagnosticLastAttempt"), relativeSyncTime(account.lastAttemptAt), formatDate(account.lastAttemptAt)],
+    [t("diagnosticLastSuccess"), relativeSyncTime(account.lastSync), formatDate(account.lastSync)],
+    [t("diagnosticRemoteDuration"), formatDuration(account.lastSyncDurationMs), t("diagnosticLastRequest")],
+    [t("diagnosticConsecutiveFailures"), String(account.consecutiveFailures || 0), Number(state.backend.settings?.autoSyncMinutes || 0) > 0 && account.nextRetryAt ? relativeFutureTime(account.nextRetryAt) : Number(account.consecutiveFailures || 0) ? t("diagnosticCheckCredentials") : t("diagnosticStable")],
+    [t("diagnosticProductsFound"), String((account.products || []).length), (account.productErrors || []).length ? t("diagnosticProductWarnings", { count: account.productErrors.length }) : t("diagnosticNoProductWarnings")]
   ];
   els.diagnosticMetrics.innerHTML = metrics.map(item => `<div><span>${escapeHtml(item[0])}</span><strong>${escapeHtml(item[1])}</strong><small>${escapeHtml(item[2])}</small></div>`).join("");
   const errors = [account.lastError, ...(account.productErrors || [])].filter(Boolean);
   els.diagnosticError.hidden = !errors.length;
-  els.diagnosticError.innerHTML = errors.length ? `<b>远端返回信息</b><p>${errors.map(escapeHtml).join("<br>")}</p>` : "";
+  els.diagnosticError.innerHTML = errors.length ? `<b>${t("diagnosticRemoteResponse")}</b><p>${errors.map(escapeHtml).join("<br>")}</p>` : "";
   els.diagnosticDialog.showModal();
 }
 
@@ -1596,8 +1464,8 @@ function showRowDialog(index) {
   const product = provider.products[state.products[state.provider]];
   const row = product.rows[index];
   els.dialogTitle.textContent = row.name;
-  els.dialogDescription.textContent = localizeRemoteCopy(`${provider.name} · ${product.name} · ${row.type}。这里只展示当前产品和该资源实际支持的指标；不支持的字段不会按 0 处理。`);
-  els.dialogMetrics.innerHTML = product.columns.map((label,i)=>`<div><span>${escapeHtml(localizeRemoteCopy(label))}</span><strong>${escapeHtml(row.metrics[i]?.[0] || "—")}</strong><small>${escapeHtml(localizeRemoteCopy(row.metrics[i]?.[1] || "远端"))}</small></div>`).join("");
+  els.dialogDescription.textContent = t("metricDialogDescription", { provider: provider.name, product: product.name, type: row.type });
+  els.dialogMetrics.innerHTML = product.columns.map((label,i)=>`<div><span>${escapeHtml(localizeRemoteCopy(label))}</span><strong>${escapeHtml(row.metrics[i]?.[0] || "—")}</strong><small>${escapeHtml(localizeRemoteCopy(row.metrics[i]?.[1] || t("remote")))}</small></div>`).join("");
   els.metricDialog.showModal();
 }
 
@@ -1626,7 +1494,7 @@ function setUpdateStatus(text, tone = "") {
 
 function renderUpdateNotes(notes) {
   const source = String(notes || "").trim();
-  if (!source) return "<p>此版本暂未提供更新说明。</p>";
+  if (!source) return `<p>${t("updateNoNotes")}</p>`;
   let inList = false;
   const output = [];
   const closeList = () => {
@@ -1652,48 +1520,48 @@ function renderUpdateNotes(notes) {
 
 function showUpdateDialog(update) {
   state.availableUpdate = update;
-  els.updateDialogTitle.textContent = `Prismeter ${update.version} 已可用`;
-  els.updateDialogSummary.textContent = `当前版本 ${update.currentVersion}。下载安装前会验证更新签名，安装时应用将自动关闭。`;
+  els.updateDialogTitle.textContent = t("updateAvailableTitle", { version: update.version });
+  els.updateDialogSummary.textContent = t("updateAvailableSummary", { currentVersion: update.currentVersion });
   els.updateReleaseNotes.innerHTML = renderUpdateNotes(update.notes);
   els.updateProgress.hidden = true;
   els.updateProgressBar.style.width = "0%";
-  els.updateProgressText.textContent = "准备下载…";
+  els.updateProgressText.textContent = t("updatePreparingDownload");
   [els.updateDialogClose, els.skipUpdateButton, els.laterUpdateButton, els.installUpdateButton].forEach(button => button.disabled = false);
-  els.installUpdateButton.querySelector("span").textContent = "下载并安装";
+  els.installUpdateButton.querySelector("span").textContent = t("updateDownloadInstall");
   if (!els.updateDialog.open) els.updateDialog.showModal();
 }
 
 async function checkForUpdates({manual = false} = {}) {
   const invoke = window.__TAURI__?.core?.invoke;
   if (!invoke) {
-    if (manual) showToast("仅安装版支持应用内更新", "info");
+  if (manual) showToast(t("updateInstalledOnly"), "info");
     return;
   }
   const button = els.checkUpdateButton;
   button.disabled = true;
   button.classList.add("checking");
-  button.querySelector("span").textContent = "正在检查…";
-  setUpdateStatus("正在连接 GitHub Release…");
+  button.querySelector("span").textContent = t("updateChecking");
+  setUpdateStatus(t("updateConnectingRelease"));
   try {
     const update = await invoke("check_for_update");
     if (!update) {
       state.availableUpdate = null;
-      setUpdateStatus("当前已是最新版本", "success");
-      if (manual) showToast("当前已是最新版本");
+    setUpdateStatus(t("updateLatest"), "success");
+    if (manual) showToast(t("updateLatest"));
       return;
     }
-    setUpdateStatus(`发现 ${update.version}`, "available");
+    setUpdateStatus(t("updateFound", { version: update.version }), "available");
     const skipped = state.backend.settings?.skippedUpdateVersion === update.version;
     if (manual || !skipped) showUpdateDialog(update);
   } catch (error) {
-    const message = String(error || "无法检查更新");
-    setUpdateStatus("检查失败，请稍后重试", "error");
+    const message = String(error || t("updateCheckError"));
+    setUpdateStatus(t("updateCheckFailed"), "error");
     if (manual) showToast(message, "error");
     else console.warn("自动检查更新失败", message);
   } finally {
     button.disabled = false;
     button.classList.remove("checking");
-    button.querySelector("span").textContent = "检查更新";
+    button.querySelector("span").textContent = t("updateCheck");
   }
 }
 
@@ -1708,7 +1576,7 @@ function maybeCheckForUpdates() {
 async function installAvailableUpdate() {
   const invoke = window.__TAURI__?.core?.invoke;
   const Channel = window.__TAURI__?.core?.Channel;
-  if (!invoke || !Channel) { showToast("当前环境无法安装更新", "error"); return; }
+  if (!invoke || !Channel) { showToast(t("updateEnvironmentInstall"), "error"); return; }
   let downloaded = 0;
   let contentLength = 0;
   const channel = new Channel();
@@ -1717,29 +1585,29 @@ async function installAvailableUpdate() {
     const data = message?.data || {};
     if (event === "started") {
       contentLength = Number(data.contentLength ?? data.content_length ?? 0);
-      els.updateProgressText.textContent = contentLength ? "开始下载更新…" : "正在下载更新…";
+  els.updateProgressText.textContent = contentLength ? t("updateStartingDownload") : t("updateDownloading");
     } else if (event === "progress") {
       downloaded += Number(data.chunkLength ?? data.chunk_length ?? 0);
       if (contentLength > 0) {
         const percent = Math.min(100, Math.round(downloaded / contentLength * 100));
         els.updateProgressBar.style.width = `${percent}%`;
-        els.updateProgressText.textContent = `已下载 ${percent}%`;
+      els.updateProgressText.textContent = t("updateDownloaded", { percent });
       }
     } else if (event === "finished") {
       els.updateProgressBar.style.width = "100%";
-      els.updateProgressText.textContent = "下载完成，正在验证并安装…";
+    els.updateProgressText.textContent = t("updateVerifyingInstall");
     }
   };
   [els.updateDialogClose, els.skipUpdateButton, els.laterUpdateButton, els.installUpdateButton].forEach(button => button.disabled = true);
   els.updateProgress.hidden = false;
-  els.installUpdateButton.querySelector("span").textContent = "正在安装…";
+    els.installUpdateButton.querySelector("span").textContent = t("updateInstalling");
   try {
     await invoke("install_update", { onEvent: channel });
   } catch (error) {
-    setUpdateStatus("安装失败，请重新检查", "error");
-    showToast(String(error || "更新安装失败"), "error");
+    setUpdateStatus(t("updateInstallFailed"), "error");
+    showToast(String(error || t("updateInstallError")), "error");
     [els.updateDialogClose, els.skipUpdateButton, els.laterUpdateButton, els.installUpdateButton].forEach(button => button.disabled = false);
-    els.installUpdateButton.querySelector("span").textContent = "重新检查";
+    els.installUpdateButton.querySelector("span").textContent = t("updateRetryCheck");
     state.availableUpdate = null;
   }
 }
@@ -1805,7 +1673,7 @@ function updateProviderOrder(providerOrder) {
   animateSortableLayout(layout);
 }
 
-async function persistAccountOrder(nextAccounts, successText = "顺序已保存") {
+async function persistAccountOrder(nextAccounts, successText = t("orderSaved")) {
   const previousAccounts = [...(state.backend.accounts || [])];
   updateOrderedAccountSurfaces(nextAccounts);
   try {
@@ -1829,7 +1697,7 @@ function moveAccount(sourceId, targetId, insertAfter) {
   let insertion = accounts.findIndex(account => account.id === targetId);
   if (insertAfter) insertion += 1;
   accounts.splice(insertion, 0, source);
-  persistAccountOrder(accounts, "账户顺序已保存");
+  persistAccountOrder(accounts, t("accountOrderSaved"));
 }
 
 function moveProvider(sourceProvider, targetProvider, insertAfter) {
@@ -1853,7 +1721,7 @@ async function persistProviderOrder(providerOrder) {
       body:JSON.stringify({providerIds:providerOrder})
     });
     state.backend.providerOrder = result.providerOrder || providerOrder;
-    showToast("平台顺序已保存");
+  showToast(t("platformOrderSaved"));
   } catch (error) {
     updateProviderOrder(previousOrder);
     showToast(errorMessage(error), "error");
@@ -1995,7 +1863,7 @@ document.addEventListener("click", async e => {
     try {
       await apiRequest("/api/alerts/snooze", { method:resume ? "DELETE" : "POST", body:JSON.stringify({alertKey}) });
       await loadBackendState({quiet:true});
-      showToast(resume ? "已恢复此提醒的 Windows 通知" : "此提醒已暂缓 24 小时");
+      showToast(resume ? t("alertNotificationsResumed") : t("alertSnoozed"));
     } catch (error) { showToast(errorMessage(error), "error"); }
     finally { snoozeAlert.disabled = false; }
   }
@@ -2047,30 +1915,30 @@ document.addEventListener("click", async e => {
     try {
       await apiRequest(`/api/accounts/${toggleAccount.dataset.toggleAccount}`, { method:"PATCH", body:JSON.stringify({enabled:nextEnabled}) });
       await loadBackendState({quiet:true});
-      showToast(nextEnabled ? "账户监控已恢复" : "账户监控已暂停；已有数据会保留");
+      showToast(nextEnabled ? t("accountMonitoringResumed") : t("accountMonitoringPausedNotice"));
     } catch (error) { showToast(errorMessage(error)); }
   }
   const syncAccount = e.target.closest("[data-sync-account]");
   if (syncAccount) {
     syncAccount.disabled = true;
     const label = syncAccount.querySelector("span");
-    if (label) label.textContent = "同步中…";
+  if (label) label.textContent = t("syncingEllipsis");
     startSyncPolling();
     try {
       await apiRequest(`/api/accounts/${syncAccount.dataset.syncAccount}/sync`, { method:"POST" });
       await loadBackendState({quiet:true});
       const synced = state.backend.accounts.find(account => account.id === syncAccount.dataset.syncAccount);
-      showToast(synced?.enabled === false ? "远端数据已同步；账户监控仍处于暂停状态" : synced?.provider === "volcengine" ? "火山方舟用量已同步" : synced?.provider === "openai" ? "Codex 远端用量已同步" : synced?.provider === "mimo" ? "MiMo 官方模型列表已同步" : "DeepSeek 余额已同步");
+      showToast(synced?.enabled === false ? t("syncSinglePaused") : synced?.provider === "volcengine" ? t("syncArkDone") : synced?.provider === "openai" ? t("syncOpenAiDone") : synced?.provider === "mimo" ? t("syncMimoDone") : t("syncDeepSeekDone"));
     } catch (error) { await loadBackendState({quiet:true}); showToast(errorMessage(error)); }
-    finally { stopSyncPolling(); syncAccount.disabled = false; if (label) label.textContent = "立即同步"; }
+  finally { stopSyncPolling(); syncAccount.disabled = false; if (label) label.textContent = t("actionSyncNow"); }
   }
   const deleteAccount = e.target.closest("[data-delete-account]");
   if (deleteAccount) {
     const account = (state.backend.accounts || []).find(item => item.id === deleteAccount.dataset.deleteAccount);
     if (!account) return;
     state.deleteAccountId = account.id;
-    els.deleteAccountDialogTitle.textContent = `移除“${account.name}”？`;
-    els.deleteAccountDialogSummary.textContent = "移除后，本机保存的连接凭据和该账户的历史记录会一并删除；平台侧账户与远端数据不会受到影响。";
+  els.deleteAccountDialogTitle.textContent = t("removeAccountTitle", { name: accountDisplayName(account) });
+  els.deleteAccountDialogSummary.textContent = t("dialogRemoveSummary");
     els.deleteAccountDialog.showModal();
   }
 });
@@ -2113,8 +1981,8 @@ els.refreshButton.addEventListener("click", async () => {
   els.refreshButton.classList.add("spinning");
   els.refreshButton.disabled = true;
   els.refreshButton.setAttribute("aria-busy", "true");
-  els.refreshButton.title = "正在从远端同步…";
-  els.syncText.textContent = "正在同步…";
+  els.refreshButton.title = t("syncRefreshing");
+  els.syncText.textContent = t("syncRefreshing");
   startSyncPolling();
   try {
     const result = await apiRequest("/api/sync", { method:"POST" }, true);
@@ -2122,15 +1990,15 @@ els.refreshButton.addEventListener("click", async () => {
     const results = result.results || [];
     const succeeded = results.filter(item => item.ok).length;
     const failed = results.length - succeeded;
-    els.syncText.textContent = failed ? `${succeeded} 成功 · ${failed} 失败` : succeeded ? `${succeeded} 个账户已同步` : "尚未添加账户";
-    showToast(failed ? `同步完成：${succeeded} 个成功，${failed} 个失败` : succeeded ? `已从远端更新 ${succeeded} 个账户` : "尚未添加真实账户", failed ? "warning" : succeeded ? "success" : "info");
-  } catch (error) { els.syncText.textContent = "同步失败"; showToast(errorMessage(error)); }
+    els.syncText.textContent = failed ? t("syncStatusSummary", { succeeded, failed }) : succeeded ? t("syncAccountsDone", { count: succeeded }) : t("syncNoAccounts");
+    showToast(failed ? t("syncFinished", { succeeded, failed }) : succeeded ? t("syncUpdatedAccounts", { count: succeeded }) : t("accountNoReal"), failed ? "warning" : succeeded ? "success" : "info");
+  } catch (error) { els.syncText.textContent = t("historySyncFailed"); showToast(errorMessage(error)); }
   finally {
     stopSyncPolling();
     els.refreshButton.classList.remove("spinning");
     els.refreshButton.disabled = false;
     els.refreshButton.removeAttribute("aria-busy");
-    els.refreshButton.title = "从远端刷新数据";
+    els.refreshButton.title = t("overviewRefresh");
   }
 });
 els.accountForm.addEventListener("submit", async event => {
@@ -2139,7 +2007,7 @@ els.accountForm.addEventListener("submit", async event => {
   const provider = els.accountProvider.value;
   button.disabled = true;
   button.classList.add("loading");
-  button.querySelector("span").textContent = provider === "volcengine" ? "正在发现产品…" : provider === "openai" ? "正在读取 Codex…" : "正在验证…";
+  button.querySelector("span").textContent = provider === "volcengine" ? t("workingDiscover") : provider === "openai" ? t("workingReadCodex") : t("workingVerify");
   try {
     const body = provider === "volcengine"
       ? { provider, name:els.accountName.value, accessKey:els.volcAccessKey.value, secretKey:els.volcSecretKey.value, region:els.volcRegion.value, projectName:els.volcProject.value }
@@ -2159,31 +2027,31 @@ els.accountForm.addEventListener("submit", async event => {
     updateCredentialFields();
     await loadBackendState({quiet:true});
     els.accountDialog.close();
-    showToast(provider === "volcengine" ? `火山方舟已连接 · 发现 ${result.account.products?.length || 0} 个产品` : provider === "openai" ? `OpenAI 已连接 · ChatGPT 与 Codex 已分开` : provider === "mimo" ? "Xiaomi MiMo 已连接 · 官方模型列表已同步" : "DeepSeek 账户连接成功");
+    showToast(provider === "volcengine" ? t("connectArk", { count: result.account.products?.length || 0 }) : provider === "openai" ? t("connectOpenAi") : provider === "mimo" ? t("connectMimo") : t("connectDeepSeek"));
   } catch (error) { showToast(errorMessage(error)); }
   finally {
     button.disabled = false;
     button.classList.remove("loading");
-    button.querySelector("span").textContent = "连接并验证";
+  button.querySelector("span").textContent = t("accountConnectVerify");
   }
 });
 els.syncAccountsButton.addEventListener("click", () => els.refreshButton.click());
 els.retryFailedButton.addEventListener("click", async () => {
   const failed = (state.backend.accounts || []).filter(account => account.enabled !== false && account.lastError);
-  if (!failed.length) { showToast("当前没有需要重试的账户"); return; }
+  if (!failed.length) { showToast(t("retryNone")); return; }
   els.retryFailedButton.disabled = true;
-  els.retryFailedButton.textContent = `正在重试 0/${failed.length}`;
+  els.retryFailedButton.textContent = t("workingRetry", { current: 0, total: failed.length });
   startSyncPolling();
   let succeeded = 0;
   for (let index = 0; index < failed.length; index++) {
-    els.retryFailedButton.textContent = `正在重试 ${index + 1}/${failed.length}`;
+  els.retryFailedButton.textContent = t("workingRetry", { current: index + 1, total: failed.length });
     try { await apiRequest(`/api/accounts/${failed[index].id}/sync`, { method:"POST" }); succeeded++; } catch (_) {}
   }
   await loadBackendState({quiet:true});
   stopSyncPolling();
-  els.retryFailedButton.textContent = "重试失败账户";
+  els.retryFailedButton.textContent = t("accountRetryFailed");
   renderAccounts();
-  showToast(succeeded === failed.length ? `已恢复 ${succeeded} 个账户` : `重试完成：${succeeded} 成功，${failed.length - succeeded} 仍失败`);
+  showToast(succeeded === failed.length ? t("retryRecovered", { count: succeeded }) : t("retryResult", { succeeded, failed: failed.length - succeeded }));
 });
 els.exportProductButton.addEventListener("click", exportCurrentProduct);
 els.dialogClose.addEventListener("click",()=>els.metricDialog.close());
@@ -2193,8 +2061,8 @@ els.copyDiagnosticButton.addEventListener("click", async () => {
   const account = (state.backend.accounts || []).find(item => item.id === state.diagnosticAccountId);
   if (!account) return;
   const text = JSON.stringify(diagnosticPayload(account), null, 2);
-  try { await navigator.clipboard.writeText(text); showToast("脱敏诊断信息已复制"); }
-  catch (_) { downloadText(`Prismeter-diagnostic-${safeFilePart(account.name)}.json`, text, "application/json;charset=utf-8"); showToast("诊断信息已导出为 JSON"); }
+  try { await navigator.clipboard.writeText(text); showToast(t("diagnosticCopied")); }
+  catch (_) { downloadText(`Prismeter-diagnostic-${safeFilePart(account.name)}.json`, text, "application/json;charset=utf-8"); showToast(t("diagnosticExported")); }
 });
 els.addAccountButton.addEventListener("click",()=>{ updateCredentialFields(); els.accountDialog.showModal(); });
 els.accountDialogClose.addEventListener("click",()=>els.accountDialog.close());
@@ -2213,7 +2081,7 @@ els.connectionForm.addEventListener("submit", async event => {
   if (!account) return;
   const button = els.connectionSave;
   button.disabled = true;
-  button.querySelector("span").textContent = "正在验证…";
+  button.querySelector("span").textContent = t("workingVerify");
   const body = account.provider === "volcengine"
     ? { accessKey:els.editVolcAccessKey.value, secretKey:els.editVolcSecretKey.value, region:els.editVolcRegion.value, projectName:els.editVolcProject.value }
     : account.provider === "mimo"
@@ -2224,23 +2092,23 @@ els.connectionForm.addEventListener("submit", async event => {
     await apiRequest(`/api/accounts/${account.id}/connection`, { method:"PUT", body:JSON.stringify(body) });
     await loadBackendState({quiet:true});
     els.connectionDialog.close();
-    showToast(`${providers[account.provider]?.name || account.provider} 连接设置已更新`);
+    showToast(t("connectionUpdated", { provider: providers[account.provider]?.name || account.provider }));
   } catch (error) { showToast(errorMessage(error)); }
-  finally { stopSyncPolling(); button.disabled = false; button.querySelector("span").textContent = "验证并保存"; }
+  finally { stopSyncPolling(); button.disabled = false; button.querySelector("span").textContent = t("connectionSave"); }
 });
 els.renameAccountForm.addEventListener("submit", async event => {
   event.preventDefault();
   if (!state.renameAccountId) return;
   const button = els.renameAccountSave;
   button.disabled = true;
-  button.querySelector("span").textContent = "保存中…";
+  button.querySelector("span").textContent = t("workingSave");
   try {
     await apiRequest(`/api/accounts/${state.renameAccountId}`, { method:"PATCH", body:JSON.stringify({name:els.renameAccountName.value}) });
     await loadBackendState({quiet:true});
     els.renameAccountDialog.close();
-    showToast("账户名称已更新");
+    showToast(t("accountNameUpdated"));
   } catch (error) { showToast(errorMessage(error)); }
-  finally { button.disabled = false; button.querySelector("span").textContent = "保存名称"; }
+  finally { button.disabled = false; button.querySelector("span").textContent = t("renameSave"); }
 });
 els.accountAlertsForm.addEventListener("submit", async event => {
   event.preventDefault();
@@ -2248,11 +2116,11 @@ els.accountAlertsForm.addEventListener("submit", async event => {
   const button = els.accountAlertsSave;
   const optionalNumber = input => input.value.trim() === "" ? null : Number(input.value);
   if (!els.accountLowBalanceThreshold.checkValidity() || !els.accountUsageThreshold.checkValidity()) {
-    showToast("请检查账户提醒阈值", "error");
+    showToast(t("alertThresholdInvalid"), "error");
     return;
   }
   button.disabled = true;
-  button.querySelector("span").textContent = "正在应用…";
+  button.querySelector("span").textContent = t("workingApply");
   try {
     await apiRequest(`/api/accounts/${state.alertAccountId}/alerts`, {
       method:"PUT",
@@ -2265,39 +2133,39 @@ els.accountAlertsForm.addEventListener("submit", async event => {
     });
     await loadBackendState({quiet:true});
     els.accountAlertsDialog.close();
-    showToast("账户提醒规则已更新");
-  } catch (error) { showToast(errorMessage(error, "无法更新账户提醒规则"), "error"); }
-  finally { button.disabled = false; button.querySelector("span").textContent = "应用规则"; }
+    showToast(t("alertRulesUpdated"));
+  } catch (error) { showToast(errorMessage(error, t("alertRulesUpdateFailed")), "error"); }
+  finally { button.disabled = false; button.querySelector("span").textContent = t("accountApplyRules"); }
 });
 els.deleteAccountConfirm.addEventListener("click", async () => {
   const accountId = state.deleteAccountId;
   if (!accountId) { els.deleteAccountDialog.close(); return; }
   const button = els.deleteAccountConfirm;
   button.disabled = true;
-  button.querySelector("span").textContent = "正在移除…";
+  button.querySelector("span").textContent = t("workingRemove");
   try {
     await apiRequest(`/api/accounts/${accountId}`, { method:"DELETE" });
     state.metricHistoryCache.clear();
     state.deleteAccountId = null;
     await loadBackendState({quiet:true});
     els.deleteAccountDialog.close();
-    showToast("账户及其本地数据已移除");
+    showToast(t("accountRemoved"));
   } catch (error) {
-    showToast(errorMessage(error, "无法移除账户"), "error");
+    showToast(errorMessage(error, t("accountRemoveFailed")), "error");
   } finally {
     button.disabled = false;
-    button.querySelector("span").textContent = "确认移除";
+  button.querySelector("span").textContent = t("confirmRemove");
   }
 });
 els.testNotificationButton.addEventListener("click", async () => {
   const button = els.testNotificationButton;
   button.disabled = true;
-  button.textContent = "正在发送…";
+  button.textContent = t("testNotificationSending");
   try {
     await apiRequest("/api/notifications/test", { method:"POST" });
-    showToast("测试通知已发送到 Windows 通知中心");
+    showToast(t("testNotificationSent"));
   } catch (error) { showToast(errorMessage(error)); }
-  finally { button.disabled = false; button.textContent = "发送测试通知"; }
+  finally { button.disabled = false; button.textContent = t("settingsTestNotification"); }
 });
 els.checkUpdateButton.addEventListener("click", () => checkForUpdates({manual:true}));
 els.updateDialogClose.addEventListener("click", () => els.updateDialog.close());
@@ -2307,8 +2175,8 @@ els.skipUpdateButton.addEventListener("click", () => {
   state.backend.settings.skippedUpdateVersion = state.availableUpdate.version;
   queueSettingsSave();
   els.updateDialog.close();
-  setUpdateStatus(`${state.availableUpdate.version} 已跳过`);
-  showToast(`已跳过 ${state.availableUpdate.version}，仍可手动检查`, "info");
+  setUpdateStatus(t("updateSkippedStatus", { version: state.availableUpdate.version }));
+  showToast(t("updateSkipped", { version: state.availableUpdate.version }), "info");
 });
 els.installUpdateButton.addEventListener("click", () => {
   if (state.availableUpdate) installAvailableUpdate();
@@ -2319,7 +2187,7 @@ els.clearHistoryButton.addEventListener("click", () => {
   const balanceSnapshots = Number(storage.balanceSnapshots || 0);
   const metricSnapshots = Number(storage.metricSnapshots || 0);
   const syncEvents = Number(storage.syncEvents || 0);
-  els.clearHistoryDialogSummary.textContent = `将删除本机保存的 ${metricSnapshots} 条远端指标快照、${balanceSnapshots} 条余额兼容快照和 ${syncEvents} 条同步记录。已连接账户、凭据、设置和当前远端数据不会受到影响。`;
+  els.clearHistoryDialogSummary.textContent = t("clearHistorySummary", { metrics: metricSnapshots, balances: balanceSnapshots, syncs: syncEvents });
   els.clearHistoryDialog.showModal();
 });
 els.clearHistoryDialogClose.addEventListener("click", () => els.clearHistoryDialog.close());
@@ -2327,31 +2195,31 @@ els.clearHistoryCancel.addEventListener("click", () => els.clearHistoryDialog.cl
 els.clearHistoryConfirm.addEventListener("click", async () => {
   const button = els.clearHistoryConfirm;
   button.disabled = true;
-  button.querySelector("span").textContent = "正在清除…";
+  button.querySelector("span").textContent = t("workingClear");
   try {
     const result = await apiRequest("/api/history", { method:"DELETE" });
     const removed = Number(result.removed?.balanceSnapshots || 0) + Number(result.removed?.metricSnapshots || 0) + Number(result.removed?.syncEvents || 0);
     state.metricHistoryCache.clear();
     await loadBackendState({quiet:true});
     els.clearHistoryDialog.close();
-    showToast(removed ? `已清除 ${removed} 条本地历史记录` : "当前没有可清除的历史记录", removed ? "success" : "info");
+    showToast(removed ? t("historyCleared", { count: removed }) : t("historyNothingToClear"), removed ? "success" : "info");
   } catch (error) {
-    showToast(errorMessage(error, "无法清除历史记录"), "error");
+    showToast(errorMessage(error, t("historyClearFailed")), "error");
   } finally {
     button.disabled = false;
-    button.querySelector("span").textContent = "确认清除";
+  button.querySelector("span").textContent = t("confirmClear");
   }
 });
 els.exitAppButton.addEventListener("click", async () => {
   const invoke = window.__TAURI__?.core?.invoke;
-  if (!invoke) { showToast("仅桌面应用支持退出操作", "info"); return; }
+  if (!invoke) { showToast(t("desktopOnlyExit"), "info"); return; }
   els.exitAppButton.disabled = true;
-  els.exitAppButton.textContent = "正在退出…";
+  els.exitAppButton.textContent = t("workingExit");
   try { await invoke("exit_app"); }
   catch (error) {
     els.exitAppButton.disabled = false;
-    els.exitAppButton.textContent = "退出 Prismeter";
-    showToast(errorMessage(error, "无法退出应用"), "error");
+    els.exitAppButton.textContent = t("trayQuit");
+    showToast(errorMessage(error, t("exitFailed")), "error");
   }
 });
 
@@ -2385,7 +2253,7 @@ function setSettingsSaveStatus(text, tone = "idle") {
 function queueSettingsSave(delay = 0) {
   if (!state.backend.settings) return;
   clearTimeout(settingsSaveTimer);
-  setSettingsSaveStatus("等待保存…", "pending");
+  setSettingsSaveStatus(t("settingsPending"), "pending");
   settingsSaveTimer = setTimeout(() => {
     settingsSaveQueued = true;
     flushSettingsSave();
@@ -2396,7 +2264,7 @@ async function flushSettingsSave() {
   if (settingsSaveRunning || !settingsSaveQueued) return;
   settingsSaveQueued = false;
   settingsSaveRunning = true;
-  setSettingsSaveStatus("正在保存…", "saving");
+  setSettingsSaveStatus(t("settingsSaving"), "saving");
   const previousSettings = state.backend.settings;
   const nextSettings = settingsPayload();
   const retentionChanged = previousSettings?.historyRetentionDays !== nextSettings.historyRetentionDays;
@@ -2408,13 +2276,13 @@ async function flushSettingsSave() {
     applyTheme(result.settings.appearanceMode || "system");
     els.syncText.textContent = formatSyncSetting();
     if (retentionChanged) await loadBackendState({quiet:true});
-    setSettingsSaveStatus("已自动保存", "saved");
+    setSettingsSaveStatus(t("settingsSaved"), "saved");
   } catch (error) {
     strictDesktopKeys.forEach(key => { state.desktopPreferences[key] = null; });
     await syncDesktopPreferences(previousSettings);
     populateSettings();
     applyTheme(state.backend.settings?.appearanceMode || "system");
-    setSettingsSaveStatus("保存失败", "error");
+    setSettingsSaveStatus(t("settingsSaveFailed"), "error");
     showToast(errorMessage(error), "error");
   } finally {
     settingsSaveRunning = false;
@@ -2476,7 +2344,7 @@ document.addEventListener("DOMContentLoaded",()=>{
     }
     catch(error) {
       console.error(`窗口操作 ${action} 失败`,error);
-      showToast(errorMessage(error, "窗口操作未完成"), "error");
+      showToast(errorMessage(error, t("windowOperationFailed")), "error");
     }
   };
   document.getElementById("windowMinimize")?.addEventListener("click",runWindowAction("minimize"));

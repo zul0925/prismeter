@@ -150,6 +150,14 @@ fn build_subscription_product(email: &str, plan: &str) -> Value {
     json!({
         "id": "chatgpt", "name": format!("ChatGPT {name}"), "kind": "账户订阅",
         "usage": name, "usageLabel": "当前订阅", "status": "Running",
+        "i18n": {
+            "summaryKeys": [
+                { "labelKey":"codex.subscription.plan", "noteKey":"codex.subscription.remoteAccount" },
+                { "labelKey":"codex.subscription.identity", "noteKey":"codex.subscription.officialSignIn" },
+                { "labelKey":"codex.subscription.usage", "valueKey":"codex.subscription.separateProduct", "noteKey":"codex.subscription.switchToCodex" },
+                { "labelKey":"codex.subscription.chatUsage", "valueKey":"codex.subscription.unavailable", "noteKey":"codex.subscription.noPublicUsageApi" }
+            ]
+        },
         "summaries": [
             metric("订阅套餐", name, "OpenAI 远端账户"),
             metric("账户身份", if email.is_empty() { "已登录" } else { email }, "Codex 官方登录态"),
@@ -183,6 +191,7 @@ fn build_codex_product(plan: &str, limits_result: &Value, usage_result: &Value) 
         let peak_ratio = if peak > 0 { format!("{:.1}%", tokens as f64 * 100.0 / peak as f64) } else { "—".into() };
         json!({
             "name": date, "type": "每日远端统计", "badge": "日",
+            "i18n": { "metricUnitKeys": ["codex.column.date", "codex.column.tokens", "codex.column.peakRatio", "codex.note.openaiRemote"] },
             "metrics": [
                 platform_value(&date, "日期"),
                 platform_value(&token_value, "Token"),
@@ -200,8 +209,19 @@ fn build_codex_product(plan: &str, limits_result: &Value, usage_result: &Value) 
     json!({
         "id": "codex", "name": format!("Codex · {}", plan_name(plan)), "kind": "Codex 用量",
         "usage": primary_value, "usageLabel": format!("{}已用", window_label(duration)),
+        "usageLabelKey": "codex.usage.windowUsed",
+        "usageLabelParams": { "minutes": duration },
         "resetAt": unix_seconds_iso(reset_timestamp),
         "status": first_non_empty(&[text(limits, "rateLimitReachedType"), "Running".into()]),
+        "i18n": {
+            "summaryKeys": [
+                { "labelKey":"codex.summary.currentWindow" },
+                { "labelKey":"codex.summary.secondaryWindow" },
+                { "labelKey":"codex.summary.lifetimeTokens", "noteKey":"codex.note.openaiRemote" },
+                { "labelKey":"codex.summary.activeStreak" }
+            ],
+            "columnKeys": ["codex.column.date", "codex.column.tokens", "codex.column.peakRatio", "codex.column.source"]
+        },
         "summaries": [
             metric("当前周期", &primary_value, &format!("{} · {} 重置", window_label(duration), reset)),
             metric("次级周期", &secondary_value, &secondary_note),
