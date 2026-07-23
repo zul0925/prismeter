@@ -155,6 +155,27 @@ fn update_startup_registry(_value: bool) -> Result<(), String> {
 #[tauri::command]
 fn set_launch_on_startup(value: bool) -> Result<(), String> { update_startup_registry(value) }
 
+#[cfg(target_os = "windows")]
+#[tauri::command]
+fn get_system_locale() -> Result<String, String> {
+    use windows::Win32::Globalization::GetUserDefaultLocaleName;
+
+    // Windows defines LOCALE_NAME_MAX_LENGTH as 85 UTF-16 code units.
+    let mut locale = [0u16; 85];
+    let length = unsafe { GetUserDefaultLocaleName(&mut locale) };
+    if length == 0 {
+        return Err("Unable to read the Windows user locale.".into());
+    }
+    String::from_utf16(&locale[..length.saturating_sub(1) as usize])
+        .map_err(|error| format!("Invalid Windows user locale: {error}"))
+}
+
+#[cfg(not(target_os = "windows"))]
+#[tauri::command]
+fn get_system_locale() -> String {
+    std::env::var("LANG").unwrap_or_else(|_| "en".into())
+}
+
 #[tauri::command]
 fn exit_app(app: AppHandle) { app.exit(0); }
 
@@ -193,6 +214,7 @@ fn main() {
         .invoke_handler(tauri::generate_handler![
             set_close_to_tray,
             set_launch_on_startup,
+            get_system_locale,
             exit_app,
             set_tray_tooltip,
             app_updates::check_for_update,

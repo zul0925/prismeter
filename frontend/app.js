@@ -71,7 +71,7 @@ function platformLogo(providerId, sizeClass = "") {
 
 function resource(name, type, badge, metrics) { return { name, type, badge, metrics }; }
 
-const state = { view: "overview", provider: "volcengine", accountId: null, renameAccountId: null, deleteAccountId: null, alertAccountId: null, connectionAccountId: null, diagnosticAccountId: null, alertFilter: "all", products: {}, syncPollTimer: null, syncPollUsers: 0, updateCheckStarted: false, availableUpdate: null, storageNoticeShown: false, metricRangeDays: 7, metricHistoryCache: new Map(), metricSelections: {}, metricHistoryRequestKey: "", trayTooltip: "", interfaceLanguage: "zh-CN", interfaceLanguagePreference:"zh-CN", languagePreferenceDirty:false };
+const state = { view: "overview", provider: "volcengine", accountId: null, renameAccountId: null, deleteAccountId: null, alertAccountId: null, connectionAccountId: null, diagnosticAccountId: null, alertFilter: "all", products: {}, syncPollTimer: null, syncPollUsers: 0, updateCheckStarted: false, availableUpdate: null, storageNoticeShown: false, metricRangeDays: 7, metricHistoryCache: new Map(), metricSelections: {}, metricHistoryRequestKey: "", trayTooltip: "", interfaceLanguage: "zh-CN", interfaceLanguagePreference:"system", languagePreferenceInitialized:false, languagePreferenceDirty:false, systemInterfaceLanguage:null };
 Object.entries(providers).forEach(([id, p]) => state.products[id] = p.primaryProduct);
 function remotePlaceholder(platformName, supported = false) {
   return {
@@ -206,9 +206,33 @@ function localizeSubtree(root) {
   }
 }
 
-function applyInterfaceLanguage(language = "zh-CN") {
+function normalizeInterfaceLanguagePreference(language) {
+  return ["system", "zh-CN", "en"].includes(language) ? language : "system";
+}
+
+function browserSystemInterfaceLanguage() {
+  return (navigator.languages?.[0] || navigator.language || "").toLowerCase().startsWith("zh") ? "zh-CN" : "en";
+}
+
+async function initializeSystemInterfaceLanguage() {
+  const invoke = window.__TAURI__?.core?.invoke;
+  if (!invoke) {
+    state.systemInterfaceLanguage = browserSystemInterfaceLanguage();
+    return;
+  }
+  try {
+    const locale = String(await invoke("get_system_locale") || "").toLowerCase();
+    state.systemInterfaceLanguage = locale.startsWith("zh") ? "zh-CN" : "en";
+  } catch (error) {
+    console.error("Unable to read the system interface language", error);
+    state.systemInterfaceLanguage = browserSystemInterfaceLanguage();
+  }
+}
+
+function applyInterfaceLanguage(language = "system") {
+  const preference = normalizeInterfaceLanguagePreference(language);
   const normalized = language === "system"
-    ? ((navigator.languages?.[0] || navigator.language || "").toLowerCase().startsWith("zh") ? "zh-CN" : "en")
+    ? (state.systemInterfaceLanguage || browserSystemInterfaceLanguage())
     : language === "en" ? "en" : "zh-CN";
   state.interfaceLanguage = normalized;
   window.PrismeterI18n.setLanguage(normalized);
@@ -217,7 +241,7 @@ function applyInterfaceLanguage(language = "zh-CN") {
   // Combobox labels are derived from option text. Refresh them after the
   // catalog has updated the option nodes, rather than retaining the old locale.
   if (els.interfaceLanguage) {
-    const value = language === "system" ? "system" : normalized;
+    const value = preference === "system" ? "system" : normalized;
     const option = [...els.interfaceLanguage.closest("[data-combobox]")?.querySelectorAll(".combo-option[data-value]") || []]
       .find(item => item.dataset.value === value);
     const label = option?.querySelector("span")?.textContent || option?.textContent;
@@ -598,40 +622,56 @@ function applyMimoAccountData(account = getSelectedAccount("mimo")) {
   if (!provider.products[state.products.mimo]) state.products.mimo = provider.primaryProduct;
 }
 
-async function loadBackendState({quiet = false} = {}) {
+function runUiStateStep(name, callback) {
   try {
-    const payload = await apiRequest("/api/state");
-    state.backend = payload;
-    updateTrayTooltip(payload);
-    const incomingLanguage = payload.settings?.interfaceLanguage || "system";
-    const language = state.languagePreferenceDirty ? state.interfaceLanguagePreference : incomingLanguage;
-    if (state.languagePreferenceDirty) payload.settings.interfaceLanguage = state.interfaceLanguagePreference;
-    applyInterfaceLanguage(language);
-    applyTheme(payload.settings?.appearanceMode || "system");
-    await syncDesktopPreferences(payload.settings);
-    if (state.accountId && !payload.accounts.some(account => account.id === state.accountId)) state.accountId = null;
-    applyDeepSeekAccountData();
-    applyOpenAIAccountData();
-    applyVolcengineAccountData();
-    applyMimoAccountData();
-    renderNavigation();
-    renderOverview();
-    renderAccounts();
-    renderAlerts();
-    populateSettings();
-    maybeCheckForUpdates();
-    if (state.view === "platforms") renderPlatform();
-    if (state.view === "models") renderComparisons();
-    switchView(state.view);
-    if (!quiet) els.syncText.textContent = state.backend.accounts.length ? formatSyncSetting() : t("waitingForAccounts");
-    if (payload.startupNotice && !state.storageNoticeShown) {
-      state.storageNoticeShown = true;
-      showToast(payload.startupNotice, "warning");
-    }
+    const result = callback();
+    if (result?.catch) result.catch(error => console.error(`Async UI state step failed: ${name}`, error));
+  } catch (error) {
+    console.error(`UI state step failed: ${name}`, error);
+  }
+}
+
+async function loadBackendState({quiet = false} = {}) {
+  let payload;
+  try {
+    payload = await apiRequest("/api/state");
   } catch (error) {
     els.syncText.textContent = t("localServiceUnavailable");
     if (!quiet) showToast(errorMessage(error));
+    return false;
   }
+
+  state.backend = payload;
+  if (!state.languagePreferenceInitialized) {
+    state.interfaceLanguagePreference = normalizeInterfaceLanguagePreference(payload.settings?.interfaceLanguage);
+    state.languagePreferenceInitialized = true;
+  }
+  if (state.languagePreferenceDirty && payload.settings) payload.settings.interfaceLanguage = state.interfaceLanguagePreference;
+
+  runUiStateStep("language", () => applyInterfaceLanguage(state.interfaceLanguagePreference));
+  runUiStateStep("theme", () => applyTheme(payload.settings?.appearanceMode || "system"));
+  if (state.accountId && !payload.accounts.some(account => account.id === state.accountId)) state.accountId = null;
+  runUiStateStep("deepseek account adapter", () => applyDeepSeekAccountData());
+  runUiStateStep("openai account adapter", () => applyOpenAIAccountData());
+  runUiStateStep("volcengine account adapter", () => applyVolcengineAccountData());
+  runUiStateStep("mimo account adapter", () => applyMimoAccountData());
+  runUiStateStep("navigation", renderNavigation);
+  runUiStateStep("overview", renderOverview);
+  runUiStateStep("accounts", renderAccounts);
+  runUiStateStep("alerts", renderAlerts);
+  runUiStateStep("settings", populateSettings);
+  runUiStateStep("updates", maybeCheckForUpdates);
+  if (state.view === "platforms") runUiStateStep("platform", renderPlatform);
+  if (state.view === "models") runUiStateStep("comparisons", renderComparisons);
+  runUiStateStep("active view", () => switchView(state.view));
+  updateTrayTooltip(payload).catch(error => console.error("Unable to update the tray tooltip", error));
+  syncDesktopPreferences(payload.settings).catch(error => console.error("Unable to apply desktop preferences", error));
+  if (!quiet) els.syncText.textContent = state.backend.accounts.length ? formatSyncSetting() : t("waitingForAccounts");
+  if (payload.startupNotice && !state.storageNoticeShown) {
+    state.storageNoticeShown = true;
+    showToast(payload.startupNotice, "warning");
+  }
+  return true;
 }
 
 function monitoringSummary(payload = state.backend) {
@@ -2012,8 +2052,9 @@ els.modelLevelSelect.addEventListener("change", renderComparisons);
 els.modelSearchInput.addEventListener("input", renderComparisons);
 els.accountProvider.addEventListener("change", updateCredentialFields);
 els.interfaceLanguage.addEventListener("change", () => {
-  const language = ["system", "en"].includes(els.interfaceLanguage.value) ? els.interfaceLanguage.value : "zh-CN";
+  const language = normalizeInterfaceLanguagePreference(els.interfaceLanguage.value);
   state.languagePreferenceDirty = true;
+  state.languagePreferenceInitialized = true;
   state.interfaceLanguagePreference = language;
   if (state.backend.settings) state.backend.settings.interfaceLanguage = language;
   applyInterfaceLanguage(language);
@@ -2371,12 +2412,26 @@ async function flushSettingsSave() {
   input.addEventListener("change", () => { if (input.checkValidity() && input.value !== "") queueSettingsSave(); });
 });
 
-try {
-  initializeRemoteOnlyProviders(); applyDeepSeekAccountData(null); applyKimiAccountData(null); applyOpenAIAccountData(null); applyVolcengineAccountData(null); updateCredentialFields(); applyInterfaceLanguage(); interfaceLanguageObserver.observe(document.body, { childList:true, subtree:true, characterData:true }); renderNavigation(); renderOverview(); renderAlerts(); renderComparisons(); renderAccounts(); switchView("overview");
-  loadBackendState();
-} catch (error) {
-  console.error("Prismeter bootstrap failed", error);
+async function bootstrapApplication() {
+  initializeRemoteOnlyProviders();
+  applyDeepSeekAccountData(null);
+  applyKimiAccountData(null);
+  applyOpenAIAccountData(null);
+  applyVolcengineAccountData(null);
+  updateCredentialFields();
+  await initializeSystemInterfaceLanguage();
+  applyInterfaceLanguage(state.interfaceLanguagePreference);
+  interfaceLanguageObserver.observe(document.body, { childList:true, subtree:true, characterData:true });
+  renderNavigation();
+  renderOverview();
+  renderAlerts();
+  renderComparisons();
+  renderAccounts();
+  switchView("overview");
+  await loadBackendState();
 }
+
+bootstrapApplication().catch(error => console.error("Prismeter bootstrap failed", error));
 setInterval(() => { if (!state.backend.accounts?.length) return; renderOverview(); renderAccounts(); renderAlerts(); if (state.view === "platforms") renderPlatform(); }, RELATIVE_TIME_REFRESH_MS);
 setInterval(() => { if (state.backend.accounts?.length) loadBackendState({quiet:true}); }, BACKGROUND_STATE_REFRESH_MS);
 
