@@ -2266,7 +2266,12 @@ document.addEventListener("click", async e => {
 
 document.addEventListener("keydown", event => { if (event.key === "Escape") closeComboboxes(); });
 window.addEventListener("resize", () => document.querySelectorAll("[data-combobox].open").forEach(positionComboboxMenu));
-document.addEventListener("scroll", () => document.querySelectorAll("[data-combobox].open").forEach(positionComboboxMenu), true);
+document.addEventListener("scroll", (event) => {
+    // Scrolling inside an open combo menu must not reposition it: repositioning
+    // clears the menu's scrollTop and snaps it back to the first option.
+    if (event.target instanceof Element && event.target.closest(".combo-menu")) return;
+    document.querySelectorAll("[data-combobox].open").forEach(positionComboboxMenu);
+  }, true);
 document.querySelectorAll(".nav-item").forEach(b => b.addEventListener("click",()=>switchView(b.dataset.view)));
 els.modelFamilySelect.addEventListener("change", renderComparisons);
 els.modelLevelSelect.addEventListener("change", renderComparisons);
@@ -2359,7 +2364,7 @@ els.accountForm.addEventListener("submit", async event => {
     updateCredentialFields();
     await loadBackendState({quiet:true});
     els.accountDialog.close();
-    showToast(provider === "volcengine" ? t("connectArk", { count: result.account.products?.length || 0 }) : provider === "openai" ? t("connectOpenAi") : provider === "mimo" ? t("connectMimo") : t("connectDeepSeek"));
+    showToast(provider === "volcengine" ? t("connectArk", { count: result.account.products?.length || 0 }) : provider === "openai" ? t("connectOpenAi") : provider === "mimo" ? t("connectMimo") : provider === "kimi" ? t("connectKimi") : provider === "siliconflow" ? t("connectSiliconFlow") : provider === "bailian" ? t("connectBailian") : provider === "openrouter" ? t("connectOpenRouter") : t("connectDeepSeek"));
   } catch (error) { showToast(errorMessage(error)); }
   finally {
     button.disabled = false;

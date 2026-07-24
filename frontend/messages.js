@@ -296,14 +296,14 @@ const englishFragments = Object.freeze({
   });
   const interactionMessages = Object.freeze({
     "zh-CN": Object.freeze({
-      connectArk:"火山方舟已连接 · 发现 {count} 个产品", connectOpenAi:"OpenAI 已连接 · ChatGPT 与 Codex 已分开", connectMimo:"Xiaomi MiMo 已连接 · 官方模型列表已同步", connectDeepSeek:"DeepSeek 账户连接成功",
+      connectArk:"火山方舟已连接 · 发现 {count} 个产品", connectOpenAi:"OpenAI 已连接 · ChatGPT 与 Codex 已分开", connectMimo:"Xiaomi MiMo 已连接 · 官方模型列表已同步", connectDeepSeek:"DeepSeek 账户连接成功", connectKimi:"Kimi 账户连接成功", connectSiliconFlow:"硅基流动账户连接成功", connectBailian:"阿里云百炼账户连接成功", connectOpenRouter:"OpenRouter 账户连接成功",
       retryNone:"当前没有需要重试的账户", retryRecovered:"已恢复 {count} 个账户", retryResult:"重试完成：{succeeded} 成功，{failed} 仍失败",
       diagnosticCopied:"脱敏诊断信息已复制", diagnosticExported:"诊断信息已导出为 JSON", connectionUpdated:"{provider} 连接设置已更新", accountNameUpdated:"账户名称已更新",
       alertThresholdInvalid:"请检查账户提醒阈值", alertRulesUpdated:"账户提醒规则已更新", alertRulesUpdateFailed:"无法更新账户提醒规则", accountRemoved:"账户及其本地数据已移除", accountRemoveFailed:"无法移除账户",
       testNotificationSent:"测试通知已发送到 Windows 通知中心", testNotificationSending:"正在发送…", updateSkipped:"已跳过 {version}，仍可手动检查", updateSkippedStatus:"{version} 已跳过", historyCleared:"已清除 {count} 条本地历史记录", historyNothingToClear:"当前没有可清除的历史记录", historyClearFailed:"无法清除历史记录", desktopOnlyExit:"仅桌面应用支持退出操作", exitFailed:"无法退出应用", windowOperationFailed:"窗口操作未完成", settingsPending:"等待保存…", settingsSaving:"正在保存…", settingsSaved:"已自动保存", settingsSaveFailed:"保存失败"
     }),
     en: Object.freeze({
-      connectArk:"Volcengine Ark connected · {count} products discovered", connectOpenAi:"OpenAI connected · ChatGPT and Codex are separate", connectMimo:"Xiaomi MiMo connected · official model list synced", connectDeepSeek:"DeepSeek account connected",
+      connectArk:"Volcengine Ark connected · {count} products discovered", connectOpenAi:"OpenAI connected · ChatGPT and Codex are separate", connectMimo:"Xiaomi MiMo connected · official model list synced", connectDeepSeek:"DeepSeek account connected", connectKimi:"Kimi account connected", connectSiliconFlow:"SiliconFlow account connected", connectBailian:"Alibaba Cloud Model Studio account connected", connectOpenRouter:"OpenRouter account connected",
       retryNone:"No accounts need retrying", retryRecovered:"Recovered {count} accounts", retryResult:"Retry finished: {succeeded} succeeded, {failed} still failed",
       diagnosticCopied:"Redacted diagnostics copied", diagnosticExported:"Diagnostics exported as JSON", connectionUpdated:"{provider} connection settings updated", accountNameUpdated:"Account name updated",
       alertThresholdInvalid:"Check the account alert thresholds", alertRulesUpdated:"Account alert rules updated", alertRulesUpdateFailed:"Could not update account alert rules", accountRemoved:"Account and its local data removed", accountRemoveFailed:"Could not remove account",
