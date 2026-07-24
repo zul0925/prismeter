@@ -7,6 +7,7 @@ mod credential;
 mod kimi;
 mod mimo;
 mod notifications;
+mod openrouter;
 mod siliconflow;
 mod volcengine;
 

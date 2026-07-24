@@ -7,7 +7,7 @@
 [![平台](https://img.shields.io/badge/platform-Windows-3578e5)](https://github.com/zul0925/prismeter)
 [![Tauri](https://img.shields.io/badge/Tauri-2-24c8db)](https://tauri.app/)
 [![Rust](https://img.shields.io/badge/backend-Rust-b7410e)](https://www.rust-lang.org/)
-[![版本](https://img.shields.io/badge/version-0.21.5-7458d6)](https://github.com/zul0925/prismeter/releases)
+[![版本](https://img.shields.io/badge/version-0.22.14-7458d6)](https://github.com/zul0925/prismeter/releases)
 [![许可证](https://img.shields.io/badge/license-Apache--2.0-3da639)](LICENSE)
 
 Prismeter（棱镜计量）将不同 AI 平台返回的数据汇聚到一个桌面应用中，再按平台、账户、套餐和模型能力分别展示。它只呈现平台实际提供的远端指标，不读取本地会话日志，也不会用模拟数据补齐平台未开放的字段。
@@ -40,6 +40,7 @@ Prismeter（棱镜计量）将不同 AI 平台返回的数据汇聚到一个桌�
 | DeepSeek | API 可用状态、总余额、赠送余额和充值余额 | API Key | 官方接口暂不提供模型级 Token 与历史用量明细 |
 | 硅基流动 | 官方余额、充值余额和总余额 | API Key | 官方账户接口暂不提供模型级 Token 与历史用量明细 |
 | 阿里云百炼 | 官方可用模型列表 | DashScope API Key | 账单、Token Plan 额度和用量记录仅在百炼控制台提供，Prismeter 不会估算 |
+| OpenRouter | 剩余额度、额度上限与累计用量 | API Key | 官方 key 接口暂不提供模型级 Token 与历史用量明细 |
 | Xiaomi MiMo | 已有连接可验证 Key 并读取官方模型列表 | 暂不开放新连接 | 官方尚未开放第三方余额、Credits 或历史用量统计 API |
 
 平台未提供的数据会显示为“—”或明确标注“接口未提供”，不会按 `0` 计算，也不会通过其他数据推算。

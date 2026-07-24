@@ -561,6 +561,7 @@
                   <button type="button" class="combo-option" data-value="kimi" role="option"><span>Kimi API</span><span data-i18n="providerKimiBalance">官方余额接口</span></button>
                   <button type="button" class="combo-option" data-value="siliconflow" role="option"><span data-i18n="providerSiliconFlow">硅基流动</span><span data-i18n="providerSiliconFlowBalance">官方余额接口</span></button>
                   <button type="button" class="combo-option" data-value="bailian" role="option"><span data-i18n="providerBailian">阿里云百炼</span><span data-i18n="providerBailianModels">官方模型列表</span></button>
+                  <button type="button" class="combo-option" data-value="openrouter" role="option"><span data-i18n="providerOpenRouter">OpenRouter</span><span data-i18n="providerOpenRouterBalance">官方额度与用量</span></button>
             <button type="button" class="combo-option" data-value="volcengine" role="option"><span data-i18n="providerArk">火山方舟</span><span data-i18n="providerAgentCodingApi">Agent / Coding / API</span></button>
                   <button type="button" class="combo-option disabled-option" data-value="mimo" role="option" disabled aria-disabled="true"><span>Xiaomi MiMo</span><span data-i18n="providerMimoUnavailable">暂不可添加 · 官方未开放第三方用量统计接口</span></button>
                   <button type="button" class="combo-option" data-value="openai" role="option"><span>OpenAI</span><span data-i18n="providerOpenAiUsage">ChatGPT 订阅 / Codex 用量</span></button>
@@ -615,6 +616,11 @@
       <b data-i18n="capabilityBailian">阿里云百炼官方可用指标</b>
       <span data-i18n="capabilityBailianMetrics">API Key 有效性 · 官方可用模型列表</span>
       <small data-i18n="capabilityBailianNote">通过 DashScope 官方 /models 接口读取。用量、账单与套餐额度仅在百炼控制台提供，Prismeter 不会估算或替代这些数据。</small>
+    </div>
+    <div id="openrouterCapability" class="capability-note" hidden>
+      <b data-i18n="capabilityOpenRouter">OpenRouter 官方可用指标</b>
+      <span data-i18n="capabilityOpenRouterMetrics">剩余额度 · 累计用量 · 额度上限</span>
+      <small data-i18n="capabilityOpenRouterNote">通过 OpenRouter 官方 /key 接口读取。额度以美元计价并参与低余额提醒与耗尽预估；模型级 Token 历史官方接口暂未提供。</small>
     </div>
     <div id="volcengineCapability" class="capability-note volcengine-note" hidden>
       <b data-i18n="capabilityArk">火山方舟按实际授权发现产品</b>

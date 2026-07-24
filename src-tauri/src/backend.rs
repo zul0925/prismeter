@@ -14,7 +14,7 @@ use serde_json::{json, Value};
 use tiny_http::{Header, Method, Request, Response, Server, StatusCode};
 use uuid::Uuid;
 
-use crate::{bailian, codex, credential, kimi, mimo, notifications, siliconflow, volcengine};
+use crate::{bailian, codex, credential, kimi, mimo, notifications, openrouter, siliconflow, volcengine};
 
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 const DEEPSEEK_BALANCE_URL: &str = "https://api.deepseek.com/user/balance";
@@ -417,6 +417,8 @@ impl Store {
 
     fn bailian(&self, api_key: &str) -> AppResult<Vec<Value>> { bailian::discover(&self.http, api_key) }
 
+    fn openrouter(&self, api_key: &str) -> AppResult<openrouter::KeyData> { openrouter::key_info(&self.http, api_key) }
+
     fn mimo(&self, api_key: &str, base_url: &str) -> AppResult<mimo::MimoDiscovery> {
         mimo::discover(&self.http, api_key, base_url)
     }
@@ -528,6 +530,19 @@ impl Store {
                     last_sync: now, ..Account::default()
                 }
             }
+            "openrouter" => {
+                if input.api_key.trim().is_empty() { return Err("Please enter an OpenRouter API key.".to_string()); }
+                let remote = self.openrouter(input.api_key.trim())?;
+                let mut account = Account {
+                    id: new_id(), provider: "openrouter".into(),
+                    name: default_name(&input.name, "OpenRouter primary account"),
+                    encrypted_key: self.protect(input.api_key.trim())?,
+                    key_hint: key_hint("sk-or-", input.api_key.trim()),
+                    created_at: now, enabled: Some(true), ..Account::default()
+                };
+                apply_openrouter(&mut account, remote);
+                account
+            }
             _ => return Err("暂不支持该平台。".to_string()),
         };
 
@@ -536,7 +551,7 @@ impl Store {
         if account.provider == "openai" && state.accounts.iter().any(|item| item.provider == "openai") {
             return Err("当前 Windows 用户的 OpenAI 登录账户已经连接。".to_string());
         }
-        if matches!(account.provider.as_str(), "deepseek" | "kimi" | "siliconflow") { add_snapshots(&mut state, &account); }
+        if matches!(account.provider.as_str(), "deepseek" | "kimi" | "siliconflow" | "openrouter") { add_snapshots(&mut state, &account); }
         add_metric_snapshots(&mut state, &account);
         if !state.provider_order.iter().any(|provider| provider == &account.provider) {
             state.provider_order.push(account.provider.clone());
@@ -587,7 +602,7 @@ impl Store {
                 updated.consecutive_failures = 0;
                 updated.last_sync_duration_ms = started.elapsed().as_millis() as u64;
                 state.accounts[index] = updated.clone();
-                if matches!(updated.provider.as_str(), "deepseek" | "kimi" | "siliconflow") { add_snapshots(&mut state, &updated); }
+                if matches!(updated.provider.as_str(), "deepseek" | "kimi" | "siliconflow" | "openrouter") { add_snapshots(&mut state, &updated); }
                 add_metric_snapshots(&mut state, &updated);
                 add_sync_event(&mut state, &updated, true, "同步成功".into());
                 self.save_locked(&state)?;
@@ -685,6 +700,14 @@ impl Store {
                     updated.key_hint = key_hint("DashScope ", &api_key);
                 }
             }
+            "openrouter" => {
+                let api_key = if input.api_key.trim().is_empty() { self.unprotect(&original.encrypted_key)? } else { input.api_key.trim().to_string() };
+                apply_openrouter(&mut updated, self.openrouter(&api_key)?);
+                if !input.api_key.trim().is_empty() {
+                    updated.encrypted_key = self.protect(&api_key)?;
+                    updated.key_hint = key_hint("sk-or-", &api_key);
+                }
+            }
             "volcengine" => {
                 let access_key = if input.access_key.trim().is_empty() {
                     self.unprotect(&original.encrypted_key)?
@@ -757,7 +780,7 @@ impl Store {
         let index = state.accounts.iter().position(|account| account.id == id)
             .ok_or("账户不存在。")?;
         state.accounts[index] = updated.clone();
-        if matches!(updated.provider.as_str(), "deepseek" | "kimi" | "siliconflow") { add_snapshots(&mut state, &updated); }
+        if matches!(updated.provider.as_str(), "deepseek" | "kimi" | "siliconflow" | "openrouter") { add_snapshots(&mut state, &updated); }
         add_metric_snapshots(&mut state, &updated);
         add_sync_event(&mut state, &updated, true, "连接设置验证成功".into());
         self.save_locked(&state)?;
@@ -813,6 +836,10 @@ impl Store {
                 update.is_available = true;
                 update.last_sync = now();
                 update.last_error = None;
+            }
+            "openrouter" => {
+                let api_key = self.unprotect(&account.encrypted_key)?;
+                apply_openrouter(&mut update, self.openrouter(&api_key)?);
             }
             _ => return Err("暂不支持该平台。".to_string()),
         }
@@ -1301,6 +1328,17 @@ fn apply_siliconflow(account: &mut Account, remote: Value) {
     account.last_error = None;
 }
 
+fn apply_openrouter(account: &mut Account, remote: openrouter::KeyData) {
+    account.is_available = true;
+    let (total, granted, topped_up) = openrouter::balance_fields(&remote);
+    account.balances = vec![BalanceInfo {
+        currency: "USD".into(),
+        total, granted, topped_up,
+    }];
+    account.last_sync = now();
+    account.last_error = None;
+}
+
 fn add_snapshots(state: &mut PersistedState, account: &Account) {
     for balance in &account.balances {
         state.history.push(BalanceSnapshot {
@@ -1586,6 +1624,10 @@ fn capability_matrix(accounts: &[Account]) -> Vec<Value> {
             json!({ "id":"models", "label":"官方可用模型", "support":"supported", "source":"DashScope 官方 /models 接口" }),
             json!({ "id":"usage", "label":"模型与 Token 用量明细", "support":"unavailable", "source":"仅在百炼控制台提供" }),
         ]),
+        provider("openrouter", "OpenRouter", vec![
+            json!({ "id":"balance", "label":"剩余额度、额度上限与累计用量", "support":"supported", "source":"OpenRouter 官方 /key 接口" }),
+            json!({ "id":"usage", "label":"模型与 Token 用量明细", "support":"unavailable", "source":"官方接口暂未提供模型级用量" }),
+        ]),
     ]
 }
 
@@ -1618,6 +1660,7 @@ fn default_account_name_key(account: &Account) -> Option<&'static str> {
         ("kimi", "Kimi 主账户") => Some("account.default.kimi"),
         ("siliconflow", "硅基流动主账户") => Some("account.default.siliconflow"),
         ("bailian", "Alibaba Cloud Model Studio primary account") => Some("account.default.bailian"),
+        ("openrouter", "OpenRouter primary account") => Some("account.default.openrouter"),
         _ => None,
     }
 }

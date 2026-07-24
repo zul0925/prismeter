@@ -7,7 +7,7 @@
 [![Platform](https://img.shields.io/badge/platform-Windows-3578e5)](https://github.com/zul0925/prismeter)
 [![Tauri](https://img.shields.io/badge/Tauri-2-24c8db)](https://tauri.app/)
 [![Rust](https://img.shields.io/badge/backend-Rust-b7410e)](https://www.rust-lang.org/)
-[![Version](https://img.shields.io/badge/version-0.22.12-7458d6)](https://github.com/zul0925/prismeter/releases)
+[![Version](https://img.shields.io/badge/version-0.22.14-7458d6)](https://github.com/zul0925/prismeter/releases)
 [![License](https://img.shields.io/badge/license-Apache--2.0-3da639)](LICENSE)
 
 Prismeter brings usage data returned by different AI platforms into one desktop app and presents it by platform, account, plan, and model capability. It only displays metrics actually provided by remote services. It does not read local conversation logs or fill unavailable fields with simulated data.
@@ -40,6 +40,7 @@ Prismeter brings usage data returned by different AI platforms into one desktop 
 | DeepSeek | API availability, total balance, granted balance, and topped-up balance | API Key | The official API currently provides no model-level token history or detailed historical usage |
 | SiliconFlow | Official balance, charge balance, and total balance | API Key | The official account endpoint currently provides no model-level token history or detailed historical usage |
 | Alibaba Cloud Model Studio (Bailian) | Official available-model list | DashScope API Key | Billing, Token Plan allowances, and usage records are available only in Model Studio Console; no values are estimated |
+| OpenRouter | Remaining credits, credit limit, and all-time usage | API Key | The official key endpoint provides no per-model token history or detailed historical usage |
 | Xiaomi MiMo | Existing connections can validate a key and retrieve the official model list | New connections are currently disabled | No official third-party API is currently available for balances, credits, or historical usage |
 
 Data that a platform does not provide is shown as “—” or explicitly marked as unavailable. It is never counted as `0` or inferred from unrelated fields.

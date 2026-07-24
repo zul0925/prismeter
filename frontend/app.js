@@ -61,6 +61,15 @@ const providers = {
     description: "Official DashScope model discovery; usage reporting remains in Model Studio Console",
     primaryProduct: "remote",
     products: {}
+  },
+  openrouter: {
+    name: "OpenRouter",
+    short: "OR",
+    color: "#7d5fff",
+    gradient: "linear-gradient(135deg,#6d4dff,#9a7fff)",
+    description: "Official OpenRouter credit balance and all-time usage; per-model token history is not exposed",
+    primaryProduct: "remote",
+    products: {}
   }
 };
 
@@ -140,6 +149,7 @@ function localizeBootstrapProviders() {
   Object.assign(providers.kimi, { description:t("bootstrapKimiDescription") });
   Object.assign(providers.siliconflow, { name:t("providerSiliconFlow"), description:t("bootstrapSiliconFlowDescription") });
   Object.assign(providers.bailian, { name:t("providerBailian"), description:t("bootstrapBailianDescription") });
+  Object.assign(providers.openrouter, { name:t("providerOpenRouter"), description:t("bootstrapOpenRouterDescription") });
 }
 
 function translateStatic(value) {
@@ -560,6 +570,29 @@ function applySiliconFlowAccountData(account = getSelectedAccount("siliconflow")
   if (!provider.products[state.products.siliconflow]) state.products.siliconflow = "api";
 }
 
+function applyOpenRouterAccountData(account = getSelectedAccount("openrouter")) {
+  const provider = providers.openrouter;
+  if (!account) {
+    provider.products = { remote: remotePlaceholder(provider.name, true) };
+    provider.primaryProduct = "remote";
+    provider.description = t("providerNoBalanceAccount", { provider: `${provider.name} ` });
+    state.products.openrouter = "remote";
+    return;
+  }
+  const balance = account.balances?.find(item => item.currency === "USD") || account.balances?.[0];
+  const historyCount = state.backend.history.filter(item => item.accountId === account.id).length;
+  provider.description = t("providerBalanceDescription", { account: accountDisplayName(account), provider: `${provider.name} `, hint: account.keyHint });
+  provider.products = { api: {
+    name: "OpenRouter API", kind: t("providerPayg"), usage: balance ? `$ ${balance.total}` : "-", usageLabel: t("providerOpenRouterRemaining"), progress: 0,
+    reset: t("providerSyncedAt", { time: formatDate(account.lastSync) }),
+    summaries: [[t("providerOpenRouterRemaining"), balance ? `$ ${balance.total}` : "-", `${provider.name} ${t("providerOfficial")}`], [t("providerOpenRouterUsed"), balance ? `$ ${balance.toppedUp}` : "-", `${provider.name} ${t("providerOfficial")}`], [t("providerOpenRouterLimit"), balance ? `$ ${balance.granted}` : "-", `${provider.name} ${t("providerOfficial")}`], [t("providerLocalSnapshots"), t("providerSnapshotCount", { count: historyCount }), t("providerCollectedAfterConnect")]],
+    columns: [t("providerCurrency"), t("providerOpenRouterRemaining"), t("providerOpenRouterUsed"), t("providerOpenRouterLimit")],
+    rows: (account.balances || []).map(item => resource(accountDisplayName(account), account.isAvailable ? t("providerApiAvailable") : t("providerBalanceUnavailable"), "OR", [[item.currency, t("providerOfficial")], [`$ ${item.total}`, t("providerOfficial")], [`$ ${item.toppedUp}`, t("providerOfficial")], [`$ ${item.granted}`, t("providerOfficial")]]))
+  }};
+  provider.primaryProduct = "api";
+  if (!provider.products[state.products.openrouter]) state.products.openrouter = "api";
+}
+
 function i18nField(value, key, params) {
   return key && window.PrismeterI18n.has(key) ? t(key, params) : localizeRemoteCopy(value);
 }
@@ -906,10 +939,10 @@ function renderOverview() {
   }
   els.activityList.innerHTML = accounts.length ? accounts.map(account => {
     const provider = providers[account.provider];
-    const primary = ["deepseek", "kimi", "siliconflow"].includes(account.provider)
+    const primary = ["deepseek", "kimi", "siliconflow", "openrouter"].includes(account.provider)
       ? account.balances?.[0]
       : account.products?.[0];
-    const value = ["deepseek", "kimi", "siliconflow"].includes(account.provider)
+    const value = ["deepseek", "kimi", "siliconflow", "openrouter"].includes(account.provider)
       ? (primary ? escapeHtml(`${moneySymbol(primary.currency)} ${primary.total}`) : "—")
       : escapeHtml(primary?.usage || "—");
     const freshness = accountFreshness(account); return `<div class="activity-item">${platformLogo(account.provider, "activity-brand-logo")}<div class="activity-main"><b>${escapeHtml(accountDisplayName(account))}</b><span>${escapeHtml(provider?.name || account.provider)} · ${t("remoteSync")}</span></div><div class="activity-value"><b>${value}</b><span class="freshness-text ${freshness.level}">${escapeHtml(freshness.label)} · ${escapeHtml(relativeSyncTime(account.lastSync))}</span></div></div>`;
@@ -944,6 +977,7 @@ function renderPlatform() {
   if (id === "kimi") applyKimiAccountData(account);
   if (id === "siliconflow") applySiliconFlowAccountData(account);
   if (id === "bailian") applyBailianAccountData(account);
+  if (id === "openrouter") applyOpenRouterAccountData(account);
   if (id === "openai") applyOpenAIAccountData(account);
   if (id === "volcengine") applyVolcengineAccountData(account);
   if (id === "mimo") applyMimoAccountData(account);
@@ -1275,14 +1309,16 @@ function updateCredentialFields() {
   const isKimi = provider === "kimi";
   const isSiliconFlow = provider === "siliconflow";
   const isBailian = provider === "bailian";
+  const isOpenRouter = provider === "openrouter";
   els.deepseekCredentials.hidden = isVolcengine || isOpenAI || isMimo;
   els.volcengineCredentials.hidden = !isVolcengine;
   els.openaiCredentials.hidden = !isOpenAI;
   els.mimoCredentials.hidden = !isMimo;
-  els.deepseekCapability.hidden = isVolcengine || isOpenAI || isMimo || isKimi || isSiliconFlow || isBailian;
+  els.deepseekCapability.hidden = isVolcengine || isOpenAI || isMimo || isKimi || isSiliconFlow || isBailian || isOpenRouter;
   els.kimiCapability.hidden = !isKimi;
   els.siliconflowCapability.hidden = !isSiliconFlow;
   els.bailianCapability.hidden = !isBailian;
+  els.openrouterCapability.hidden = !isOpenRouter;
   els.volcengineCapability.hidden = !isVolcengine;
   els.openaiCapability.hidden = !isOpenAI;
   els.mimoCapability.hidden = !isMimo;
@@ -1290,7 +1326,7 @@ function updateCredentialFields() {
   els.volcAccessKey.required = isVolcengine;
   els.volcSecretKey.required = isVolcengine;
   els.mimoApiKey.required = isMimo;
-  els.accountName.placeholder = isVolcengine ? t("accountPlaceholderVolcengine") : isOpenAI ? t("accountPlaceholderOpenAi") : isMimo ? t("accountPlaceholderMimo") : isKimi ? t("accountPlaceholderKimi") : isSiliconFlow ? t("accountPlaceholderSiliconFlow") : isBailian ? t("accountPlaceholderBailian") : t("accountNamePlaceholder");
+  els.accountName.placeholder = isVolcengine ? t("accountPlaceholderVolcengine") : isOpenAI ? t("accountPlaceholderOpenAi") : isMimo ? t("accountPlaceholderMimo") : isKimi ? t("accountPlaceholderKimi") : isSiliconFlow ? t("accountPlaceholderSiliconFlow") : isBailian ? t("accountPlaceholderBailian") : isOpenRouter ? t("accountPlaceholderOpenRouter") : t("accountNamePlaceholder");
   syncMimoEndpointPresets();
 }
 
@@ -1306,7 +1342,7 @@ function openConnectionDialog(account) {
   state.connectionAccountId = account.id;
   els.connectionDialogTitle.textContent = t("connectionDialogTitle", { name: accountDisplayName(account) });
   els.connectionDialogSubtitle.textContent = `${providers[account.provider]?.name || account.provider} · ${account.keyHint || t("connectionCredentialSaved")}`;
-  els.editDeepseekCredentials.hidden = !["deepseek", "kimi", "siliconflow", "bailian"].includes(account.provider);
+  els.editDeepseekCredentials.hidden = !["deepseek", "kimi", "siliconflow", "bailian", "openrouter"].includes(account.provider);
   els.editVolcengineCredentials.hidden = account.provider !== "volcengine";
   els.editMimoCredentials.hidden = account.provider !== "mimo";
   els.editAccountKey.value = "";
@@ -2213,7 +2249,7 @@ document.addEventListener("click", async e => {
       await apiRequest(`/api/accounts/${syncAccount.dataset.syncAccount}/sync`, { method:"POST" });
       await loadBackendState({quiet:true});
       const synced = state.backend.accounts.find(account => account.id === syncAccount.dataset.syncAccount);
-      showToast(synced?.enabled === false ? t("syncSinglePaused") : synced?.provider === "volcengine" ? t("syncArkDone") : synced?.provider === "openai" ? t("syncOpenAiDone") : synced?.provider === "mimo" ? t("syncMimoDone") : synced?.provider === "siliconflow" ? t("syncSiliconFlowDone") : synced?.provider === "bailian" ? t("syncBailianDone") : t("syncDeepSeekDone"));
+      showToast(synced?.enabled === false ? t("syncSinglePaused") : synced?.provider === "volcengine" ? t("syncArkDone") : synced?.provider === "openai" ? t("syncOpenAiDone") : synced?.provider === "mimo" ? t("syncMimoDone") : synced?.provider === "siliconflow" ? t("syncSiliconFlowDone") : synced?.provider === "bailian" ? t("syncBailianDone") : synced?.provider === "openrouter" ? t("syncOpenRouterDone") : t("syncDeepSeekDone"));
     } catch (error) { await loadBackendState({quiet:true}); showToast(errorMessage(error)); }
   finally { stopSyncPolling(); syncAccount.disabled = false; if (label) label.textContent = t("actionSyncNow"); }
   }
@@ -2603,6 +2639,7 @@ async function bootstrapApplication() {
   runUiStateStep("initialize kimi", () => applyKimiAccountData(null));
   runUiStateStep("initialize siliconflow", () => applySiliconFlowAccountData(null));
   runUiStateStep("initialize bailian", () => applyBailianAccountData(null));
+  runUiStateStep("initialize openrouter", () => applyOpenRouterAccountData(null));
   runUiStateStep("initialize openai", () => applyOpenAIAccountData(null));
   runUiStateStep("initialize volcengine", () => applyVolcengineAccountData(null));
   runUiStateStep("initialize credential fields", updateCredentialFields);
