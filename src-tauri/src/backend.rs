@@ -110,6 +110,9 @@ struct BalanceInfo {
     #[serde(default)] total: String,
     #[serde(default)] granted: String,
     #[serde(default)] topped_up: String,
+    #[serde(default)] usage_daily: String,
+    #[serde(default)] usage_weekly: String,
+    #[serde(default)] usage_monthly: String,
 }
 
 #[derive(Clone, Default, Serialize, Deserialize)]
@@ -1289,7 +1292,7 @@ fn route_api(method: &Method, path: &str, body: &str, store: &Arc<Store>) -> App
 fn apply_deepseek(account: &mut Account, remote: DeepSeekResponse) {
     account.is_available = remote.is_available;
     account.balances = remote.balance_infos.into_iter().map(|b| BalanceInfo {
-        currency: b.currency, total: b.total_balance, granted: b.granted_balance, topped_up: b.topped_up_balance,
+        currency: b.currency, total: b.total_balance, granted: b.granted_balance, topped_up: b.topped_up_balance, ..Default::default()
     }).collect();
     account.last_sync = now();
     account.last_error = None;
@@ -1303,6 +1306,7 @@ fn apply_kimi(account: &mut Account, remote: kimi::KimiResponse) {
         total: format!("{:.4}", balance.available_balance),
         granted: format!("{:.4}", balance.voucher_balance),
         topped_up: format!("{:.4}", balance.cash_balance),
+        ..Default::default()
     }];
     account.last_sync = now();
     account.last_error = None;
@@ -1323,6 +1327,7 @@ fn apply_siliconflow(account: &mut Account, remote: Value) {
         total: official_balance_text(&remote, "totalBalance"),
         granted: official_balance_text(&remote, "balance"),
         topped_up: official_balance_text(&remote, "chargeBalance"),
+        ..Default::default()
     }];
     account.last_sync = now();
     account.last_error = None;
@@ -1331,9 +1336,10 @@ fn apply_siliconflow(account: &mut Account, remote: Value) {
 fn apply_openrouter(account: &mut Account, remote: openrouter::KeyData) {
     account.is_available = true;
     let (total, granted, topped_up) = openrouter::balance_fields(&remote);
+    let (usage_daily, usage_weekly, usage_monthly) = openrouter::periodic_usage_usd(&remote);
     account.balances = vec![BalanceInfo {
         currency: "USD".into(),
-        total, granted, topped_up,
+        total, granted, topped_up, usage_daily, usage_weekly, usage_monthly,
     }];
     account.last_sync = now();
     account.last_error = None;

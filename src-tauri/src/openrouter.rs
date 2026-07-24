@@ -24,6 +24,12 @@ pub struct KeyData {
     pub limit_remaining: Option<f64>,
     #[serde(default)]
     pub usage: f64,
+    #[serde(default)]
+    pub usage_daily: f64,
+    #[serde(default)]
+    pub usage_weekly: f64,
+    #[serde(default)]
+    pub usage_monthly: f64,
 }
 
 /// Reads the official API-key status exposed by OpenRouter. `limit_remaining`
@@ -62,6 +68,16 @@ pub fn balance_fields(data: &KeyData) -> (String, String, String) {
     (total, granted, topped_up)
 }
 
+/// Returns (daily, weekly, monthly) usage in USD. These are the cumulative
+/// spend windows for the current UTC day/week/month, straight from /key.
+pub fn periodic_usage_usd(data: &KeyData) -> (String, String, String) {
+    (
+        credits_to_usd(data.usage_daily),
+        credits_to_usd(data.usage_weekly),
+        credits_to_usd(data.usage_monthly),
+    )
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -75,7 +91,7 @@ mod tests {
 
     #[test]
     fn unlimited_keys_report_no_remaining_balance() {
-        let data = KeyData { limit: None, limit_remaining: None, usage: 1234.0 };
+        let data = KeyData { limit: None, limit_remaining: None, usage: 1234.0, ..Default::default() };
         let (total, granted, topped_up) = balance_fields(&data);
         assert_eq!(total, "-"); // unlimited -> nothing to alert on
         assert_eq!(granted, "-"); // unlimited -> no cap
@@ -84,7 +100,7 @@ mod tests {
 
     #[test]
     fn limited_keys_report_remaining_and_cap_in_usd() {
-        let data = KeyData { limit: Some(5000.0), limit_remaining: Some(3250.0), usage: 1750.0 };
+        let data = KeyData { limit: Some(5000.0), limit_remaining: Some(3250.0), usage: 1750.0, ..Default::default() };
         let (total, granted, topped_up) = balance_fields(&data);
         assert_eq!(total, "32.50"); // $32.50 remaining
         assert_eq!(granted, "50.00"); // $50.00 cap
@@ -101,9 +117,21 @@ mod tests {
         assert_eq!(data.limit, Some(5000.0));
         assert_eq!(data.limit_remaining, Some(3250.0));
         assert_eq!(data.usage, 1750.0);
+        assert_eq!(data.usage_daily, 50.0);
+        assert_eq!(data.usage_weekly, 300.0);
+        assert_eq!(data.usage_monthly, 1000.0);
         let (total, granted, topped_up) = balance_fields(&data);
         assert_eq!(total, "32.50");
         assert_eq!(granted, "50.00");
         assert_eq!(topped_up, "17.50");
+    }
+
+    #[test]
+    fn periodic_usage_converts_each_window_to_usd() {
+        let data = KeyData { usage_daily: 50.0, usage_weekly: 300.0, usage_monthly: 1000.0, ..Default::default() };
+        let (daily, weekly, monthly) = periodic_usage_usd(&data);
+        assert_eq!(daily, "0.50");
+        assert_eq!(weekly, "3.00");
+        assert_eq!(monthly, "10.00");
     }
 }
