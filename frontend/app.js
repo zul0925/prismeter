@@ -73,6 +73,8 @@ const providers = {
   }
 };
 
+const BALANCE_PROVIDERS = new Set(["deepseek", "kimi", "siliconflow", "openrouter"]);
+
 const APP_DEFAULTS = Object.freeze({
   volcengineRegion: "cn-beijing",
   volcengineProject: "default",
@@ -939,10 +941,10 @@ function renderOverview() {
   }
   els.activityList.innerHTML = accounts.length ? accounts.map(account => {
     const provider = providers[account.provider];
-    const primary = ["deepseek", "kimi", "siliconflow", "openrouter"].includes(account.provider)
+    const primary = BALANCE_PROVIDERS.has(account.provider)
       ? account.balances?.[0]
       : account.products?.[0];
-    const value = ["deepseek", "kimi", "siliconflow", "openrouter"].includes(account.provider)
+    const value = BALANCE_PROVIDERS.has(account.provider)
       ? (primary ? escapeHtml(`${moneySymbol(primary.currency)} ${primary.total}`) : "—")
       : escapeHtml(primary?.usage || "—");
     const freshness = accountFreshness(account); return `<div class="activity-item">${platformLogo(account.provider, "activity-brand-logo")}<div class="activity-main"><b>${escapeHtml(accountDisplayName(account))}</b><span>${escapeHtml(provider?.name || account.provider)} · ${t("remoteSync")}</span></div><div class="activity-value"><b>${value}</b><span class="freshness-text ${freshness.level}">${escapeHtml(freshness.label)} · ${escapeHtml(relativeSyncTime(account.lastSync))}</span></div></div>`;

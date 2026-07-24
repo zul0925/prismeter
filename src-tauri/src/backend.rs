@@ -554,7 +554,7 @@ impl Store {
         if account.provider == "openai" && state.accounts.iter().any(|item| item.provider == "openai") {
             return Err("当前 Windows 用户的 OpenAI 登录账户已经连接。".to_string());
         }
-        if matches!(account.provider.as_str(), "deepseek" | "kimi" | "siliconflow" | "openrouter") { add_snapshots(&mut state, &account); }
+        if is_balance_provider(account.provider.as_str()) { add_snapshots(&mut state, &account); }
         add_metric_snapshots(&mut state, &account);
         if !state.provider_order.iter().any(|provider| provider == &account.provider) {
             state.provider_order.push(account.provider.clone());
@@ -605,7 +605,7 @@ impl Store {
                 updated.consecutive_failures = 0;
                 updated.last_sync_duration_ms = started.elapsed().as_millis() as u64;
                 state.accounts[index] = updated.clone();
-                if matches!(updated.provider.as_str(), "deepseek" | "kimi" | "siliconflow" | "openrouter") { add_snapshots(&mut state, &updated); }
+                if is_balance_provider(updated.provider.as_str()) { add_snapshots(&mut state, &updated); }
                 add_metric_snapshots(&mut state, &updated);
                 add_sync_event(&mut state, &updated, true, "同步成功".into());
                 self.save_locked(&state)?;
@@ -783,7 +783,7 @@ impl Store {
         let index = state.accounts.iter().position(|account| account.id == id)
             .ok_or("账户不存在。")?;
         state.accounts[index] = updated.clone();
-        if matches!(updated.provider.as_str(), "deepseek" | "kimi" | "siliconflow" | "openrouter") { add_snapshots(&mut state, &updated); }
+        if is_balance_provider(updated.provider.as_str()) { add_snapshots(&mut state, &updated); }
         add_metric_snapshots(&mut state, &updated);
         add_sync_event(&mut state, &updated, true, "连接设置验证成功".into());
         self.save_locked(&state)?;
@@ -1345,6 +1345,14 @@ fn apply_openrouter(account: &mut Account, remote: openrouter::KeyData) {
     account.last_error = None;
 }
 
+/// Providers whose remote data is a balance (currency + amounts) rather than a
+/// product list. They receive balance snapshots for trend, low-balance alerting,
+/// and depletion forecasts. Single source of truth so a new balance provider
+/// cannot silently miss a snapshot call site.
+fn is_balance_provider(provider: &str) -> bool {
+    matches!(provider, "deepseek" | "kimi" | "siliconflow" | "openrouter")
+}
+
 fn add_snapshots(state: &mut PersistedState, account: &Account) {
     for balance in &account.balances {
         state.history.push(BalanceSnapshot {
@@ -1886,6 +1894,16 @@ fn public_alerts(state: &PersistedState) -> Vec<Value> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn balance_provider_set_is_the_single_source_of_truth() {
+        for provider in ["deepseek", "kimi", "siliconflow", "openrouter"] {
+            assert!(is_balance_provider(provider), "{provider} should be a balance provider");
+        }
+        for provider in ["volcengine", "openai", "mimo", "bailian"] {
+            assert!(!is_balance_provider(provider), "{provider} should not be a balance provider");
+        }
+    }
 
     #[test]
     fn automatic_sync_due_respects_interval_and_disabled_setting() {
