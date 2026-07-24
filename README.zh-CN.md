@@ -38,6 +38,8 @@ Prismeter（棱镜计量）将不同 AI 平台返回的数据汇聚到一个桌�
 | OpenAI / Codex | ChatGPT 套餐身份、Codex 周期额度、日用量和 Token 统计 | 复用当前 Windows 用户的 Codex 官方登录状态 | 不提供个人 ChatGPT 对话用量；同一 Windows 用户只需连接一次 |
 | 火山引擎方舟 | Agent Plan / AFP、Coding Plan 配额与席位、按量推理 Token、请求数和接入点 | Access Key / Secret Key | 实际字段取决于账户已开通产品及 Ark、费用中心权限 |
 | DeepSeek | API 可用状态、总余额、赠送余额和充值余额 | API Key | 官方接口暂不提供模型级 Token 与历史用量明细 |
+| 硅基流动 | 官方余额、充值余额和总余额 | API Key | 官方账户接口暂不提供模型级 Token 与历史用量明细 |
+| 阿里云百炼 | 官方可用模型列表 | DashScope API Key | 账单、Token Plan 额度和用量记录仅在百炼控制台提供，Prismeter 不会估算 |
 | Xiaomi MiMo | 已有连接可验证 Key 并读取官方模型列表 | 暂不开放新连接 | 官方尚未开放第三方余额、Credits 或历史用量统计 API |
 
 平台未提供的数据会显示为“—”或明确标注“接口未提供”，不会按 `0` 计算，也不会通过其他数据推算。

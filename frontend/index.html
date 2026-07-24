@@ -559,6 +559,8 @@
           <div class="combo-menu" role="listbox">
             <button type="button" class="combo-option selected" data-value="deepseek" role="option"><span data-i18n="providerDeepSeek">DeepSeek 官方 API</span><span data-i18n="providerBalanceEndpoint">余额接口</span></button>
                   <button type="button" class="combo-option" data-value="kimi" role="option"><span>Kimi API</span><span data-i18n="providerKimiBalance">官方余额接口</span></button>
+                  <button type="button" class="combo-option" data-value="siliconflow" role="option"><span data-i18n="providerSiliconFlow">硅基流动</span><span data-i18n="providerSiliconFlowBalance">官方余额接口</span></button>
+                  <button type="button" class="combo-option" data-value="bailian" role="option"><span data-i18n="providerBailian">阿里云百炼</span><span data-i18n="providerBailianModels">官方模型列表</span></button>
             <button type="button" class="combo-option" data-value="volcengine" role="option"><span data-i18n="providerArk">火山方舟</span><span data-i18n="providerAgentCodingApi">Agent / Coding / API</span></button>
                   <button type="button" class="combo-option disabled-option" data-value="mimo" role="option" disabled aria-disabled="true"><span>Xiaomi MiMo</span><span data-i18n="providerMimoUnavailable">暂不可添加 · 官方未开放第三方用量统计接口</span></button>
                   <button type="button" class="combo-option" data-value="openai" role="option"><span>OpenAI</span><span data-i18n="providerOpenAiUsage">ChatGPT 订阅 / Codex 用量</span></button>
@@ -603,6 +605,16 @@
       <b data-i18n="capabilityKimi">Kimi 官方可用指标</b>
       <span data-i18n="capabilityKimiMetrics">可用余额 · 代金券余额 · 现金余额</span>
       <small data-i18n="capabilityKimiNote">通过 Kimi 官方余额接口读取。API Key 仅经 Windows DPAPI 加密保存；连接后将采集趋势快照并参与低余额提醒与耗尽预估。</small>
+    </div>
+    <div id="siliconflowCapability" class="capability-note" hidden>
+      <b data-i18n="capabilitySiliconFlow">硅基流动官方可用指标</b>
+      <span data-i18n="capabilitySiliconFlowMetrics">余额 · 充值余额 · 总余额</span>
+      <small data-i18n="capabilitySiliconFlowNote">通过硅基流动官方用户信息接口读取。API Key 仅经 Windows DPAPI 加密保存；连接后将采集趋势快照并参与低余额提醒与耗尽预估。</small>
+    </div>
+    <div id="bailianCapability" class="capability-note" hidden>
+      <b data-i18n="capabilityBailian">阿里云百炼官方可用指标</b>
+      <span data-i18n="capabilityBailianMetrics">API Key 有效性 · 官方可用模型列表</span>
+      <small data-i18n="capabilityBailianNote">通过 DashScope 官方 /models 接口读取。用量、账单与套餐额度仅在百炼控制台提供，Prismeter 不会估算或替代这些数据。</small>
     </div>
     <div id="volcengineCapability" class="capability-note volcengine-note" hidden>
       <b data-i18n="capabilityArk">火山方舟按实际授权发现产品</b>

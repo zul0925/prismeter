@@ -1,11 +1,13 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 mod backend;
+mod bailian;
 mod codex;
 mod credential;
 mod kimi;
 mod mimo;
 mod notifications;
+mod siliconflow;
 mod volcengine;
 
 mod app_updates {

@@ -14,7 +14,7 @@ use serde_json::{json, Value};
 use tiny_http::{Header, Method, Request, Response, Server, StatusCode};
 use uuid::Uuid;
 
-use crate::{codex, credential, kimi, mimo, notifications, volcengine};
+use crate::{bailian, codex, credential, kimi, mimo, notifications, siliconflow, volcengine};
 
 const VERSION: &str = env!("CARGO_PKG_VERSION");
 const DEEPSEEK_BALANCE_URL: &str = "https://api.deepseek.com/user/balance";
@@ -413,6 +413,10 @@ impl Store {
 
     fn kimi(&self, api_key: &str) -> AppResult<kimi::KimiResponse> { kimi::balance(&self.http, api_key) }
 
+    fn siliconflow(&self, api_key: &str) -> AppResult<Value> { siliconflow::user_info(&self.http, api_key) }
+
+    fn bailian(&self, api_key: &str) -> AppResult<Vec<Value>> { bailian::discover(&self.http, api_key) }
+
     fn mimo(&self, api_key: &str, base_url: &str) -> AppResult<mimo::MimoDiscovery> {
         mimo::discover(&self.http, api_key, base_url)
     }
@@ -499,6 +503,31 @@ impl Store {
                 apply_kimi(&mut account, remote);
                 account
             }
+            "siliconflow" => {
+                if input.api_key.trim().is_empty() { return Err("请输入硅基流动 API Key。".to_string()); }
+                let remote = self.siliconflow(input.api_key.trim())?;
+                let mut account = Account {
+                    id: new_id(), provider: "siliconflow".into(),
+                    name: default_name(&input.name, "硅基流动主账户"),
+                    encrypted_key: self.protect(input.api_key.trim())?,
+                    key_hint: key_hint("SF ", input.api_key.trim()),
+                    created_at: now, enabled: Some(true), ..Account::default()
+                };
+                apply_siliconflow(&mut account, remote);
+                account
+            }
+            "bailian" => {
+                if input.api_key.trim().is_empty() { return Err("Please enter an Alibaba Cloud Model Studio API key.".to_string()); }
+                let products = self.bailian(input.api_key.trim())?;
+                Account {
+                    id: new_id(), provider: "bailian".into(),
+                    name: default_name(&input.name, "Alibaba Cloud Model Studio primary account"),
+                    encrypted_key: self.protect(input.api_key.trim())?,
+                    key_hint: key_hint("DashScope ", input.api_key.trim()),
+                    products, created_at: now.clone(), enabled: Some(true), is_available: true,
+                    last_sync: now, ..Account::default()
+                }
+            }
             _ => return Err("暂不支持该平台。".to_string()),
         };
 
@@ -507,7 +536,7 @@ impl Store {
         if account.provider == "openai" && state.accounts.iter().any(|item| item.provider == "openai") {
             return Err("当前 Windows 用户的 OpenAI 登录账户已经连接。".to_string());
         }
-        if matches!(account.provider.as_str(), "deepseek" | "kimi") { add_snapshots(&mut state, &account); }
+        if matches!(account.provider.as_str(), "deepseek" | "kimi" | "siliconflow") { add_snapshots(&mut state, &account); }
         add_metric_snapshots(&mut state, &account);
         if !state.provider_order.iter().any(|provider| provider == &account.provider) {
             state.provider_order.push(account.provider.clone());
@@ -558,7 +587,7 @@ impl Store {
                 updated.consecutive_failures = 0;
                 updated.last_sync_duration_ms = started.elapsed().as_millis() as u64;
                 state.accounts[index] = updated.clone();
-                if matches!(updated.provider.as_str(), "deepseek" | "kimi") { add_snapshots(&mut state, &updated); }
+                if matches!(updated.provider.as_str(), "deepseek" | "kimi" | "siliconflow") { add_snapshots(&mut state, &updated); }
                 add_metric_snapshots(&mut state, &updated);
                 add_sync_event(&mut state, &updated, true, "同步成功".into());
                 self.save_locked(&state)?;
@@ -637,6 +666,25 @@ impl Store {
                     updated.key_hint = key_hint("Kimi ", &api_key);
                 }
             }
+            "siliconflow" => {
+                let api_key = if input.api_key.trim().is_empty() { self.unprotect(&original.encrypted_key)? } else { input.api_key.trim().to_string() };
+                apply_siliconflow(&mut updated, self.siliconflow(&api_key)?);
+                if !input.api_key.trim().is_empty() {
+                    updated.encrypted_key = self.protect(&api_key)?;
+                    updated.key_hint = key_hint("SF ", &api_key);
+                }
+            }
+            "bailian" => {
+                let api_key = if input.api_key.trim().is_empty() { self.unprotect(&original.encrypted_key)? } else { input.api_key.trim().to_string() };
+                updated.products = self.bailian(&api_key)?;
+                updated.is_available = true;
+                updated.last_sync = now();
+                updated.last_error = None;
+                if !input.api_key.trim().is_empty() {
+                    updated.encrypted_key = self.protect(&api_key)?;
+                    updated.key_hint = key_hint("DashScope ", &api_key);
+                }
+            }
             "volcengine" => {
                 let access_key = if input.access_key.trim().is_empty() {
                     self.unprotect(&original.encrypted_key)?
@@ -709,7 +757,7 @@ impl Store {
         let index = state.accounts.iter().position(|account| account.id == id)
             .ok_or("账户不存在。")?;
         state.accounts[index] = updated.clone();
-        if matches!(updated.provider.as_str(), "deepseek" | "kimi") { add_snapshots(&mut state, &updated); }
+        if matches!(updated.provider.as_str(), "deepseek" | "kimi" | "siliconflow") { add_snapshots(&mut state, &updated); }
         add_metric_snapshots(&mut state, &updated);
         add_sync_event(&mut state, &updated, true, "连接设置验证成功".into());
         self.save_locked(&state)?;
@@ -754,6 +802,17 @@ impl Store {
             "kimi" => {
                 let api_key = self.unprotect(&account.encrypted_key)?;
                 apply_kimi(&mut update, self.kimi(&api_key)?);
+            }
+            "siliconflow" => {
+                let api_key = self.unprotect(&account.encrypted_key)?;
+                apply_siliconflow(&mut update, self.siliconflow(&api_key)?);
+            }
+            "bailian" => {
+                let api_key = self.unprotect(&account.encrypted_key)?;
+                update.products = self.bailian(&api_key)?;
+                update.is_available = true;
+                update.last_sync = now();
+                update.last_error = None;
             }
             _ => return Err("暂不支持该平台。".to_string()),
         }
@@ -1222,6 +1281,26 @@ fn apply_kimi(account: &mut Account, remote: kimi::KimiResponse) {
     account.last_error = None;
 }
 
+fn official_balance_text(balance: &Value, field: &str) -> String {
+    match balance.get(field) {
+        Some(Value::String(value)) => value.clone(),
+        Some(Value::Number(value)) => value.to_string(),
+        _ => "—".into(),
+    }
+}
+
+fn apply_siliconflow(account: &mut Account, remote: Value) {
+    account.is_available = true;
+    account.balances = vec![BalanceInfo {
+        currency: "CNY".into(),
+        total: official_balance_text(&remote, "totalBalance"),
+        granted: official_balance_text(&remote, "balance"),
+        topped_up: official_balance_text(&remote, "chargeBalance"),
+    }];
+    account.last_sync = now();
+    account.last_error = None;
+}
+
 fn add_snapshots(state: &mut PersistedState, account: &Account) {
     for balance in &account.balances {
         state.history.push(BalanceSnapshot {
@@ -1499,6 +1578,14 @@ fn capability_matrix(accounts: &[Account]) -> Vec<Value> {
             json!({ "id":"balance", "label":"可用、代金券与现金余额", "support":"supported", "source":"Kimi 官方余额接口" }),
             json!({ "id":"usage", "label":"模型与 Token 用量明细", "support":"unavailable", "source":"官方接口暂未提供" }),
         ]),
+        provider("siliconflow", "硅基流动", vec![
+            json!({ "id":"balance", "label":"余额、充值余额与总余额", "support":"supported", "source":"硅基流动官方用户信息接口" }),
+            json!({ "id":"usage", "label":"模型与 Token 用量明细", "support":"unavailable", "source":"官方接口暂未提供" }),
+        ]),
+        provider("bailian", "阿里云百炼", vec![
+            json!({ "id":"models", "label":"官方可用模型", "support":"supported", "source":"DashScope 官方 /models 接口" }),
+            json!({ "id":"usage", "label":"模型与 Token 用量明细", "support":"unavailable", "source":"仅在百炼控制台提供" }),
+        ]),
     ]
 }
 
@@ -1529,6 +1616,8 @@ fn default_account_name_key(account: &Account) -> Option<&'static str> {
         ("volcengine", "火山方舟主账户") => Some("account.default.volcengine"),
         ("deepseek", "DeepSeek 主账户") => Some("account.default.deepseek"),
         ("kimi", "Kimi 主账户") => Some("account.default.kimi"),
+        ("siliconflow", "硅基流动主账户") => Some("account.default.siliconflow"),
+        ("bailian", "Alibaba Cloud Model Studio primary account") => Some("account.default.bailian"),
         _ => None,
     }
 }

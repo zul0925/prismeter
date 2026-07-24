@@ -38,6 +38,8 @@ Prismeter brings usage data returned by different AI platforms into one desktop 
 | OpenAI / Codex | ChatGPT plan identity, Codex quota windows, daily usage, and token statistics | Reuses the official Codex sign-in state of the current Windows user | Personal ChatGPT conversation usage is unavailable; one connection is sufficient per Windows user |
 | Volcengine Ark | Agent Plan / AFP, Coding Plan quotas and seats, pay-as-you-go inference tokens, request counts, and endpoints | Access Key / Secret Key | Available fields depend on enabled products and permissions for Ark and the billing center |
 | DeepSeek | API availability, total balance, granted balance, and topped-up balance | API Key | The official API currently provides no model-level token history or detailed historical usage |
+| SiliconFlow | Official balance, charge balance, and total balance | API Key | The official account endpoint currently provides no model-level token history or detailed historical usage |
+| Alibaba Cloud Model Studio (Bailian) | Official available-model list | DashScope API Key | Billing, Token Plan allowances, and usage records are available only in Model Studio Console; no values are estimated |
 | Xiaomi MiMo | Existing connections can validate a key and retrieve the official model list | New connections are currently disabled | No official third-party API is currently available for balances, credits, or historical usage |
 
 Data that a platform does not provide is shown as “—” or explicitly marked as unavailable. It is never counted as `0` or inferred from unrelated fields.
